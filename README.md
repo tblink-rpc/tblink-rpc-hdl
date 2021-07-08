@@ -1,2 +1,2 @@
 # tblink-rpc-hdl
-Provides VPI- and DPI-based integrations
+Provides VPI-, DPI-, and SystemC--based implementations of tblink-rpc EndpointServices.
