@@ -37,4 +37,8 @@ install(TARGETS tblink_rpc_hdl
     DESTINATION lib
     EXPORT tblink_rpc_hdl-targets)
 
+add_subdirectory(${PACKAGES_DIR}/tblink-rpc-core)
+add_subdirectory(tests)
+
+
  

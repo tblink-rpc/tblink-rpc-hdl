@@ -1,0 +1,14 @@
+
+package:
+    name: tblink-rpc-hdl
+    version: 0.0.1
+
+    dev-deps:
+        - name: tblink-rpc-core
+          url:  https://github.com/tblink-rpc/tblink-rpc-core.git
+        - name: mkdv
+          url:  https://github.com/fvutils/mkdv.git
+        - name: googletest
+          url: https://github.com/google/googletest/archive/release-1.10.0.tar.gz
+          
+
