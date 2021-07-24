@@ -34,9 +34,11 @@ public:
 
 	virtual void shutdown() override;
 
-	virtual intptr_t add_time_cb(
-			uint64_t 	time,
-			intptr_t	callback_id) override;
+	virtual int32_t add_time_cb(
+			uint64_t 		time,
+			intptr_t		callback_id) override;
+
+	virtual uint64_t time() override { return 0; }
 
 	virtual void cancel_callback(intptr_t id) override;
 

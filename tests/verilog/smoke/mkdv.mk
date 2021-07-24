@@ -1,5 +1,6 @@
 MKDV_MK := $(abspath $(lastword $(MAKEFILE_LIST)))
 TEST_DIR := $(dir $(MKDV_MK))
+MKDV_TOOL ?= icarus
 
 MKDV_VL_SRCS += $(TEST_DIR)/smoke.v
 TOP_MODULE = smoke

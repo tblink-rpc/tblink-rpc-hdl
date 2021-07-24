@@ -6,10 +6,36 @@
  */
 #include <functional>
 #include <string.h>
+#include "CallbackClosureVpi.h"
 #include "EndpointServicesVpi.h"
 #include "InterfaceInstProxyVpi.h"
 #include "MethodCallVpi.h"
 #include "tblink_rpc/IInterfaceTypeBuilder.h"
+#include "glog/logging.h"
+
+#undef EN_DEBUG_ENDPOINT_SERVICES_VPI
+
+#ifdef EN_DEBUG_ENDPOINT_SERVICES_VPI
+#define DEBUG_ENTER(fmt, ...) \
+	fprintf(stdout, "--> EndpointServicesVpi::"); \
+	fprintf(stdout, fmt, ##__VA_ARGS__); \
+	fprintf(stdout, "\n"); \
+	fflush(stdout)
+#define DEBUG_LEAVE(fmt, ...) \
+	fprintf(stdout, "<-- EndpointServicesVpi::"); \
+	fprintf(stdout, fmt, ##__VA_ARGS__); \
+	fprintf(stdout, "\n"); \
+	fflush(stdout)
+#define DEBUG(fmt, ...) \
+	fprintf(stdout, "EndpointServicesVpi: "); \
+	fprintf(stdout, fmt, ##__VA_ARGS__); \
+	fprintf(stdout, "\n"); \
+	fflush(stdout)
+#else
+#define DEBUG(fmt, ...)
+#define DEBUG_ENTER(fmt, ...)
+#define DEBUG_LEAVE(fmt, ...)
+#endif
 
 using namespace tblink_rpc_core;
 
@@ -20,6 +46,7 @@ EndpointServicesVpi::EndpointServicesVpi(vpi_api_t *vpi) :
 
 	m_callback_id = 1;
 	m_endpoint = 0;
+	m_cached_time = 0;
 }
 
 EndpointServicesVpi::~EndpointServicesVpi() {
@@ -45,14 +72,16 @@ std::vector<std::string> EndpointServicesVpi::args() {
 
 void EndpointServicesVpi::shutdown() {
 	fprintf(stdout, "--> EndpointServicesVpi::shutdown\n");
+	fflush(stdout);
 	m_vpi->vpi_control(vpiFinish, 0);
 	fprintf(stdout, "<-- EndpointServicesVpi::shutdown\n");
+	fflush(stdout);
 }
 
 PLI_INT32 EndpointServicesVpi::time_cb(p_cb_data cbd) {
-	std::function<void()> *closure =
-			reinterpret_cast<std::function<void()> *>(cbd->user_data);
-	(*closure)();
+	std::function<void(intptr_t)> *closure =
+			reinterpret_cast<std::function<void(intptr_t)> *>(cbd->user_data);
+	(*closure)(reinterpret_cast<intptr_t>(cbd->obj));
 
 	delete closure;
 
@@ -60,19 +89,31 @@ PLI_INT32 EndpointServicesVpi::time_cb(p_cb_data cbd) {
 }
 
 void EndpointServicesVpi::notify_time_cb(intptr_t callback_id) {
-	fprintf(stdout, "notify_time_cb: %d\n", callback_id);
+	DEBUG_ENTER("notify_time_cb: %d", callback_id);
+
+	// Remove the callback from the map
+	std::map<intptr_t, CallbackClosureVpi *>::const_iterator it;
+
+	if ((it=m_cb_closure_m.find(callback_id)) != m_cb_closure_m.end()) {
+		m_cb_closure_m.erase(it);
+	}
+
 	m_endpoint->notify_callback(callback_id);
 
-   	fprintf(stdout, "--> notify_time_cb::yield\n");
+   	DEBUG_ENTER("notify_time_cb::yield");
    	int32_t ret;
    	while ((ret=m_endpoint->yield()) > 0) {
-   		fprintf(stdout, "... waiting\n");
+   		DEBUG("... waiting");
    	}
-   	fprintf(stdout, "<-- notify_time_cb::yield\n");
+   	DEBUG_LEAVE("notify_time_cb::yield");
+
+	DEBUG_LEAVE("notify_time_cb: %d", callback_id);
 }
 
 void EndpointServicesVpi::register_systf() {
     s_vpi_systf_data tf_data;
+
+    LOG(INFO) << "Registering system tasks";
 
     // pybfms_register
     tf_data.type = vpiSysFunc;
@@ -234,35 +275,55 @@ PLI_INT32 EndpointServicesVpi::ifinst_call_complete() {
 	return 0;
 }
 
-intptr_t EndpointServicesVpi::add_time_cb(
+int32_t EndpointServicesVpi::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
+	DEBUG_ENTER("add_time_callback");
 	vpi_api_t *vpi_api = get_vpi_api();
 
 	// Need to take another spin to be sure
 	s_cb_data cbd;
 	s_vpi_time vt;
 
-	std::function<void()> *closure =
-			new std::function<void()>(std::bind(&EndpointServicesVpi::notify_time_cb, this, callback_id));
-	intptr_t ret = m_callback_id;
-	m_callback_id += 1;
+	CallbackClosureVpi *closure = new CallbackClosureVpi(
+			std::bind(&EndpointServicesVpi::notify_time_cb, this, std::placeholders::_1),
+			callback_id);
 
 	memset(&cbd, 0, sizeof(cbd));
 	memset(&vt, 0, sizeof(vt));
 	vt.type = vpiSimTime;
+	vt.low = time;
+	vt.high = (time >> 32);
 	cbd.reason = cbAfterDelay;
-	cbd.cb_rtn = &EndpointServicesVpi::time_cb;
+	cbd.cb_rtn = &CallbackClosureVpi::callback;
 	cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(closure);
 	cbd.time = &vt;
-	vpi_api->vpi_register_cb(&cbd);
+	vpiHandle cb_id = vpi_api->vpi_register_cb(&cbd);
 
-	return ret;
+	closure->cb_h(cb_id);
+	m_cb_closure_m.insert({callback_id, closure});
+
+	DEBUG_LEAVE("add_time_callback");
+
+	return (cb_id != 0);
 }
 
 void EndpointServicesVpi::cancel_callback(intptr_t id) {
 	// TODO: find the callback id...
 
+}
+
+uint64_t EndpointServicesVpi::time() {
+	s_vpi_time tv;
+	tv.type = vpiSimTime;
+
+	m_vpi->vpi_get_time(0, &tv);
+
+	uint64_t ret = tv.high;
+	ret <<= 32;
+	ret |= tv.low;
+
+	return ret;
 }
 
 } /* namespace tblink_rpc_hdl */

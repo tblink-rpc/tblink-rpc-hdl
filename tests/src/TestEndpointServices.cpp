@@ -32,9 +32,9 @@ void TestEndpointServices::shutdown() {
 	FAIL() << "received unexpected shutdown";
 }
 
-intptr_t TestEndpointServices::add_time_cb(
-		uint64_t 	time,
-		intptr_t	callback_id) {
+int32_t TestEndpointServices::add_time_cb(
+		uint64_t		time,
+		intptr_t		callback_id) {
 	return -1;
 }
 

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <map>
 #include <memory>
 #include "vpi_api.h"
 #include "tblink_rpc/IEndpoint.h"
@@ -13,6 +14,8 @@
 #include "VpiHandle.h"
 
 namespace tblink_rpc_hdl {
+
+class CallbackClosureVpi;
 
 class EndpointServicesVpi;
 typedef std::unique_ptr<EndpointServicesVpi> EndpointServicesVpiUP;
@@ -31,11 +34,13 @@ public:
 
 	virtual void shutdown() override;
 
-	virtual intptr_t add_time_cb(
+	virtual int32_t add_time_cb(
 			uint64_t 		time,
 			intptr_t		callback_id) override;
 
 	virtual void cancel_callback(intptr_t id) override;
+
+	virtual uint64_t time() override;
 
 private:
 
@@ -65,10 +70,13 @@ private:
 	PLI_INT32 ifinst_call_complete();
 
 private:
-	vpi_api_t						*m_vpi;
-	VpiHandleSP						m_global;
-	intptr_t						m_callback_id;
-	tblink_rpc_core::IEndpoint		*m_endpoint;
+	vpi_api_t									*m_vpi;
+	VpiHandleSP									m_global;
+	intptr_t									m_callback_id;
+	std::map<intptr_t, CallbackClosureVpi *>	m_cb_closure_m;
+	tblink_rpc_core::IEndpoint					*m_endpoint;
+	int64_t										m_cached_time;
+	int32_t										m_depth;
 
 };
 

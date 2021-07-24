@@ -17,28 +17,29 @@
 #include "EndpointServicesVpi.h"
 #include "ILaunch.h"
 #include "tblink_rpc/IEndpoint.h"
+#include "glog/logging.h"
 
 using namespace tblink_rpc_core;
 using namespace tblink_rpc_hdl;
 
-static bool						prv_registered = false;
+static bool						prv_registered = true;
 static EndpointServicesVpiUP	prv_services;
 static IEndpointUP				prv_endpoint;
 
 static void tblink_vpi_atexit() {
 	fprintf(stdout, "tblink_vpi_atexit\n");
-
+	prv_endpoint->shutdown();
 }
 
 static void tblink_vpi_sigpipe(int sig) {
 	fprintf(stdout, "tblink_vpi_sigpipe\n");
 	fflush(stdout);
 	prv_endpoint->shutdown();
-
 }
 
 static PLI_INT32 end_elab_cb(p_cb_data cbd) {
     fprintf(stdout, "end_elab_cb\n");
+    fflush(stdout);
 
     if (!prv_registered) {
     	// If nothing else has registered, go ahead
@@ -53,12 +54,12 @@ static PLI_INT32 end_elab_cb(p_cb_data cbd) {
 
     	// TODO: process events until we've exhausted
     	// pending messages
-    	fprintf(stdout, "--> yield\n");
+    	fprintf(stdout, "--> yield_blocking\n");
     	int32_t ret;
-    	while ((ret=prv_endpoint->yield()) > 0) {
+    	while ((ret=prv_endpoint->yield_blocking()) > 0) {
     		fprintf(stdout, "... waiting\n");
     	}
-    	fprintf(stdout, "<-- yield\n");
+    	fprintf(stdout, "<-- yield_blocking\n");
 
     	if (ret == -1) {
     		// TODO: // Prevent
@@ -70,6 +71,8 @@ static PLI_INT32 end_elab_cb(p_cb_data cbd) {
     	// Need to take another spin to be sure
     	s_cb_data cbd;
     	s_vpi_time time;
+
+    	prv_registered = false;
 
 
     	memset(&cbd, 0, sizeof(cbd));
@@ -86,6 +89,7 @@ static PLI_INT32 end_elab_cb(p_cb_data cbd) {
 
 static PLI_INT32 on_shutdown(p_cb_data cbd) {
     fprintf(stdout, "on_shutdown\n");
+    fflush(stdout);
 
     // TODO: check status
     if (prv_endpoint) {
@@ -112,9 +116,10 @@ static PLI_INT32 on_startup(p_cb_data cbd) {
     	memset(&cbd, 0, sizeof(cbd));
     	memset(&time, 0, sizeof(time));
     	time.type = vpiSimTime;
-    	cbd.reason = cbAfterDelay;
+//    	cbd.reason = cbAfterDelay;
+    	cbd.reason = cbStartOfSimulation;
     	cbd.cb_rtn = &end_elab_cb;
-    	cbd.time = &time;
+//    	cbd.time = &time;
     	vpi_api->vpi_register_cb(&cbd);
     }
 
@@ -135,6 +140,13 @@ static PLI_INT32 on_startup(p_cb_data cbd) {
 static void register_tblink_tf(void) {
 	s_cb_data cbd;
     vpi_api_t *vpi_api = get_vpi_api();
+
+    FLAGS_log_dir = ".";
+//    FLAGS_logtostderr = 1;
+    google::InitGoogleLogging("tblink_vpi");
+
+    VLOG(1) << "Hello World";
+    VLOG(1) << "Hello World\n";
 
     if (!vpi_api) {
     	fprintf(stdout, "Error: failed to load VPI API (%s)\n",

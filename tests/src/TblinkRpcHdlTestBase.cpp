@@ -25,6 +25,8 @@ static const char PS = ';';
 #endif
 #include <spawn.h>
 #include <string.h>
+#include "glog/logging.h"
+#include <stdint.h>
 
 TblinkRpcHdlTestBase::TblinkRpcHdlTestBase() {
 	m_waiting_shutdown = false;
@@ -40,6 +42,10 @@ void TblinkRpcHdlTestBase::SetUp() {
 	fprintf(stdout, "SetUp\n");
 	std::vector<std::string> cmdline = ::testing::internal::GetArgvs();
 	int32_t port = -1;
+
+	FLAGS_log_dir = ".";
+	google::InitGoogleLogging(cmdline.at(0).c_str());
+
 
 	// Take the first non-option argument
 	for (uint32_t i=1; i<cmdline.size(); i++) {
@@ -66,6 +72,18 @@ void TblinkRpcHdlTestBase::SetUp() {
 
 	fprintf(stdout, "Note: connected\n");
 	fflush(stdout);
+
+	{
+	   int flag = 1;
+
+	   ::setsockopt(
+		   sockfd,
+		   IPPROTO_TCP,
+		   TCP_NODELAY,
+		   (char *)&flag,
+		   sizeof(int));
+	}
+
 
 	IFactory *factory = tblink_rpc_get_factory();
 	m_transport = factory->mkSocketTransport(0, sockfd);
@@ -117,9 +135,9 @@ void TblinkRpcHdlTestBase::shutdown() {
 	}
 }
 
-intptr_t TblinkRpcHdlTestBase::add_time_cb(
-		uint64_t 	time,
-		intptr_t	callback_id) {
+int32_t TblinkRpcHdlTestBase::add_time_cb(
+		uint64_t 		time,
+		intptr_t		callback_id) {
 	return -1;
 }
 
@@ -132,5 +150,24 @@ TEST_F(TblinkRpcHdlTestBase, smoke) {
 
 	m_endpoint->build_complete();
 	m_endpoint->connect_complete();
+
+	for (uint32_t i=0; i<10000; i++) {
+		volatile bool hit = false;
+		intptr_t callback_id = m_endpoint->add_time_callback(
+				10, [&]() {fprintf(stdout, "callback\n"); hit = true;});
+
+		fprintf(stdout, "callback_id: %lld\n", callback_id);
+
+		// Poll until the callback is hit
+		while (!hit) {
+			if (m_endpoint->yield() == -1) {
+				break;
+			}
+		}
+
+		fprintf(stdout, "[%lld] Done: hit=%d\n",
+				m_endpoint->time(), hit);
+		ASSERT_EQ(hit, true);
+	}
 
 }

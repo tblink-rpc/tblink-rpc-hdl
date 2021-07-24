@@ -12,6 +12,12 @@ ExternalProject_Add(GOOGLETEST
         -DCMAKE_SYSTEM_NAME:STRING=${CMAKE_SYSTEM_NAME}
         )
        
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	set(libglog glogd)
+else()
+	set(libglog glog)
+endif()
+       
 file(GLOB tblink_rpc_hdl_testlauncher_SRC
 	launcher/*.cpp
 	launcher/*.h)
@@ -26,6 +32,7 @@ target_include_directories(
 	PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../src
 	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+	${CMAKE_BINARY_DIR}/glog/include
 	)
 
 target_link_libraries(
@@ -34,10 +41,18 @@ target_link_libraries(
 	tblink_rpc_hdl
 	tblink_rpc_core
 	-Wl,--no-whole-archive
+	${libglog}
+	)
+
+target_link_directories(
+	tblink_rpc_hdl_testlauncher
+	PRIVATE
+	${CMAKE_BINARY_DIR}/glog/lib64
 	)
 	
 add_dependencies(tblink_rpc_hdl_testlauncher
 	tblink_rpc_core
+	GLOG
 	)
 
 file(GLOB tblink_rpc_hdl_testrunner_SRC
@@ -53,12 +68,14 @@ target_include_directories(
 	PRIVATE
 	${PACKAGES_DIR}/googletest/googletest/include
 	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+	${CMAKE_BINARY_DIR}/glog/include
 	)
 
 target_link_directories(
 	tblink_rpc_hdl_testrunner
 	PRIVATE
 	${CMAKE_BINARY_DIR}/googletest/lib
+	${CMAKE_BINARY_DIR}/glog/lib64
 	)
 
 target_link_libraries(
@@ -66,6 +83,7 @@ target_link_libraries(
 	-Wl,--whole-archive
 	tblink_rpc_core
 	-Wl,--no-whole-archive
+	${libglog}
 	gtest
 	gtest_main
 	pthread
@@ -74,5 +92,6 @@ target_link_libraries(
 
 add_dependencies(tblink_rpc_hdl_testrunner
 	GOOGLETEST
+	GLOG
 	)
 
