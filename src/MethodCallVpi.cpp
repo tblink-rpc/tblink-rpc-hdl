@@ -12,10 +12,10 @@ namespace tblink_rpc_hdl {
 
 MethodCallVpi::MethodCallVpi(
 		IInterfaceInst				*ifc,
-		intptr_t					method_id,
+		IMethodType					*method,
 		intptr_t					call_id,
 		IParamValVectorSP			params) :
-				m_ifc(ifc), m_method_id(method_id),
+				m_ifc(ifc), m_method(method),
 				m_call_id(call_id), m_params(params), m_idx(0) {
 
 }
@@ -36,10 +36,10 @@ tblink_rpc_core::IParamValSP MethodCallVpi::next() {
 
 MethodCallVpiUP MethodCallVpi::mk(
 			IInterfaceInst						*ifc,
-			intptr_t							method_id,
+			IMethodType							*method,
 			intptr_t							call_id,
 			tblink_rpc_core::IParamValVectorSP	params) {
-	return MethodCallVpiUP(new MethodCallVpi(ifc, method_id, call_id, params));
+	return MethodCallVpiUP(new MethodCallVpi(ifc, method, call_id, params));
 }
 
 } /* namespace tblink_rpc_hdl */

@@ -149,25 +149,65 @@ TEST_F(TblinkRpcHdlTestBase, smoke) {
 	fprintf(stdout, "smoke\n");
 
 	m_endpoint->build_complete();
+
+	IInterfaceInst *t0=0, *t1=0;
+
+	fprintf(stdout, "Test: post-build-complete\n");
+	fflush(stdout);
+	for (std::vector<IInterfaceInst*>::const_iterator
+			it=m_endpoint->getInterfaceInsts().begin();
+			it!=m_endpoint->getInterfaceInsts().end(); it++) {
+		if ((*it)->name() == "smoke.t0") {
+			t0 = *it;
+		} else if ((*it)->name() == "smoke.t1") {
+			t1 = *it;
+		}
+		fprintf(stdout, "InterfaceInst: %s\n", (*it)->name().c_str());
+	}
+	fprintf(stdout, "Test: post-print-interfaces\n");
+	fflush(stdout);
+
+	ASSERT_TRUE(t0);
+	ASSERT_TRUE(t1);
+
+	IMethodType *inc = t0->type()->methods().at(0);
+
 	m_endpoint->connect_complete();
 
-	for (uint32_t i=0; i<10000; i++) {
-		volatile bool hit = false;
-		intptr_t callback_id = m_endpoint->add_time_callback(
-				10, [&]() {fprintf(stdout, "callback\n"); hit = true;});
+	IParamValVectorSP params = t0->mkVector();
+	params->push_back(t0->mkValIntS(1));
+	IParamValSP ret = t0->invoke_nb(
+			inc,
+			params);
 
-		fprintf(stdout, "callback_id: %lld\n", callback_id);
+	for (uint32_t i=0; i<100; i++) {
+		fprintf(stdout, "--> Iteration %d\n", i);
+		fflush(stdout);
+		volatile bool hit = false;
+		fprintf(stdout, "--> add_callback\n");
+		intptr_t callback_id = m_endpoint->add_time_callback(
+				10, [&]() { hit = true;});
+		fprintf(stdout, "<-- add_callback %lld\n", callback_id);
+		fflush(stdout);
 
 		// Poll until the callback is hit
+		int ret = 0;
 		while (!hit) {
-			if (m_endpoint->yield() == -1) {
+			fprintf(stdout, "--> run_until_event\n");
+			if ((ret=m_endpoint->run_until_event()) == -1) {
 				break;
 			}
+			fprintf(stdout, "<-- run_until_event %d\n", ret);
 		}
 
 		fprintf(stdout, "[%lld] Done: hit=%d\n",
 				m_endpoint->time(), hit);
+		ASSERT_NE(ret, -1);
 		ASSERT_EQ(hit, true);
+		ASSERT_EQ(m_endpoint->time(), (i+1)*10);
+
+		fprintf(stdout, "<-- Iteration %d\n", i);
+		fflush(stdout);
 	}
 
 }

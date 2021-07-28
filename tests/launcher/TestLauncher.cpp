@@ -84,25 +84,26 @@ IEndpoint *TestLauncher::launch(
    	pid_t pid;
     {
     	std::vector<std::string> args;
-    	char tmp[16], hostname[16], m[4], module[16];
-    	char *exec_t = (char *)alloca(runner.size()+1);
 
-    	strcpy(m, "-m");
-    	strcpy(module, "tblink_rpc_hdl.runtime");
-    	strcpy(exec_t, runner.c_str());
+    	char tmp[16], hostname[16];
+
+//    	args.push_back("valgrind");
+//    	args.push_back("--tool=memcheck");
 
     	sprintf(tmp, "%d", ntohs(serv_addr.sin_port));
-    	char **argv = (char **)alloca(sizeof(char *)*6);
-    	argv[0] = exec_t;
-    	argv[1] = tmp;
+    	args.push_back(runner);
+    	args.push_back(tmp);
     	if (gtest_filter) {
     		char *gtest_filter_arg = (char *)alloca(strlen(gtest_filter)+64);
     		sprintf(gtest_filter_arg, "--gtest_filter=%s", gtest_filter);
-    		argv[2] = gtest_filter_arg;
-    		argv[3] = 0;
-    	} else {
-    		argv[2] = 0;
+    		args.push_back(gtest_filter_arg);
     	}
+    	char **argv = (char **)alloca(sizeof(char *)*(args.size()+1));
+
+    	for (uint32_t i=0; i<args.size(); i++) {
+    		argv[i] = strdup(args.at(i).c_str());
+    	}
+    	argv[args.size()] = 0;
 
     	int status = posix_spawnp(&pid, argv[0], 0, 0, (char *const *)argv, environ);
 

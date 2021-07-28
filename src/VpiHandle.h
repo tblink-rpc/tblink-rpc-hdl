@@ -20,6 +20,8 @@ public:
 
 	virtual ~VpiHandle();
 
+	vpi_api_t *vpi() const { return m_vpi; }
+
 	vpiHandle hndl() { return m_hndl; }
 
 	void hndl(vpiHandle h) { m_hndl = h; }
@@ -31,6 +33,8 @@ public:
 	VpiHandleSP tf_args();
 
 	VpiHandleSP scan();
+
+	int32_t get(int32_t property);
 
 	bool val_bool();
 

@@ -40,6 +40,8 @@ public:
 
 	virtual uint64_t time() override { return 0; }
 
+	virtual void run_until_event() override { }
+
 	virtual void cancel_callback(intptr_t id) override;
 
 

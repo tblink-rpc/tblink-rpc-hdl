@@ -42,6 +42,12 @@ public:
 
 	virtual uint64_t time() override;
 
+	virtual void run_until_event() override;
+
+	void inc_pending_nb_calls();
+
+	void dec_pending_nb_calls();
+
 private:
 
 	static PLI_INT32 time_cb(p_cb_data cbd);
@@ -55,6 +61,19 @@ private:
 		return (this_p->*M)();
 	}
 
+	template <PLI_INT32 (EndpointServicesVpi::*M)()> static PLI_INT32 vpi_cb(p_cb_data cbd) {
+		EndpointServicesVpi *this_p = reinterpret_cast<EndpointServicesVpi *>(cbd->user_data);
+		return (this_p->*M)();
+	}
+
+	PLI_INT32 on_startup();
+
+	PLI_INT32 start_of_simulation();
+
+	PLI_INT32 delta();
+
+	PLI_INT32 end_of_simulation();
+
 	PLI_INT32 find_iftype();
 
 	PLI_INT32 new_iftype_builder();
@@ -67,7 +86,13 @@ private:
 
 	PLI_INT32 ifinst_call_claim();
 
+	PLI_INT32 ifinst_call_id();
+
+	PLI_INT32 ifinst_call_next_ui();
+
 	PLI_INT32 ifinst_call_complete();
+
+	int32_t idle();
 
 private:
 	vpi_api_t									*m_vpi;
@@ -75,8 +100,14 @@ private:
 	intptr_t									m_callback_id;
 	std::map<intptr_t, CallbackClosureVpi *>	m_cb_closure_m;
 	tblink_rpc_core::IEndpoint					*m_endpoint;
+	bool										m_registered;
 	int64_t										m_cached_time;
 	int32_t										m_depth;
+	bool										m_run_until_event;
+	int32_t										m_pending_time_cbs;
+	int32_t										m_pending_nb_calls;
+	bool										m_shutdown;
+	int32_t										m_pending_bl_calls;
 
 };
 

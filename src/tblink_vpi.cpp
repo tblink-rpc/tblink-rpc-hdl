@@ -22,7 +22,6 @@
 using namespace tblink_rpc_core;
 using namespace tblink_rpc_hdl;
 
-static bool						prv_registered = true;
 static EndpointServicesVpiUP	prv_services;
 static IEndpointUP				prv_endpoint;
 
@@ -37,108 +36,7 @@ static void tblink_vpi_sigpipe(int sig) {
 	prv_endpoint->shutdown();
 }
 
-static PLI_INT32 end_elab_cb(p_cb_data cbd) {
-    fprintf(stdout, "end_elab_cb\n");
-    fflush(stdout);
-
-    if (!prv_registered) {
-    	// If nothing else has registered, go ahead
-    	// and mark ourselves built and connected
-    	fprintf(stdout, "--> build_complete\n");
-    	prv_endpoint->build_complete();
-    	fprintf(stdout, "<-- build_complete\n");
-
-    	fprintf(stdout, "--> connect_complete\n");
-    	prv_endpoint->connect_complete();
-    	fprintf(stdout, "<-- connect_complete\n");
-
-    	// TODO: process events until we've exhausted
-    	// pending messages
-    	fprintf(stdout, "--> yield_blocking\n");
-    	int32_t ret;
-    	while ((ret=prv_endpoint->yield_blocking()) > 0) {
-    		fprintf(stdout, "... waiting\n");
-    	}
-    	fprintf(stdout, "<-- yield_blocking\n");
-
-    	if (ret == -1) {
-    		// TODO: // Prevent
-    	}
-
-    } else {
-    	vpi_api_t *vpi_api = get_vpi_api();
-
-    	// Need to take another spin to be sure
-    	s_cb_data cbd;
-    	s_vpi_time time;
-
-    	prv_registered = false;
-
-
-    	memset(&cbd, 0, sizeof(cbd));
-    	memset(&time, 0, sizeof(time));
-    	time.type = vpiSimTime;
-    	cbd.reason = cbAfterDelay;
-    	cbd.cb_rtn = &end_elab_cb;
-    	cbd.time = &time;
-    	vpi_api->vpi_register_cb(&cbd);
-    }
-
-    return 0;
-}
-
-static PLI_INT32 on_shutdown(p_cb_data cbd) {
-    fprintf(stdout, "on_shutdown\n");
-    fflush(stdout);
-
-    // TODO: check status
-    if (prv_endpoint) {
-    	prv_endpoint->shutdown();
-    }
-
-	return 0;
-}
-
-static PLI_INT32 on_startup(p_cb_data cbd) {
-    vpi_api_t *vpi_api = get_vpi_api();
-
-    fprintf(stdout, "on_startup\n");
-
-
-
-
-    // Set a callback to allow static instances to register
-    {
-    	s_cb_data cbd;
-    	s_vpi_time time;
-
-
-    	memset(&cbd, 0, sizeof(cbd));
-    	memset(&time, 0, sizeof(time));
-    	time.type = vpiSimTime;
-//    	cbd.reason = cbAfterDelay;
-    	cbd.reason = cbStartOfSimulation;
-    	cbd.cb_rtn = &end_elab_cb;
-//    	cbd.time = &time;
-    	vpi_api->vpi_register_cb(&cbd);
-    }
-
-    // Set a callback for end of simulation
-    {
-    	s_cb_data cbd;
-
-    	memset(&cbd, 0, sizeof(cbd));
-    	cbd.reason = cbEndOfSimulation;
-    	cbd.cb_rtn = &on_shutdown;
-    	vpi_api->vpi_register_cb(&cbd);
-    }
-    fprintf(stdout, "prv_endpoint: %p\n", prv_endpoint.get());
-
-	return 0;
-}
-
-static void register_tblink_tf(void) {
-	s_cb_data cbd;
+static void vpi_startup(void) {
     vpi_api_t *vpi_api = get_vpi_api();
 
     FLAGS_log_dir = ".";
@@ -154,7 +52,7 @@ static void register_tblink_tf(void) {
     	return;
     }
 
-    fprintf(stdout, "register_tblink_tf\n");
+    fprintf(stdout, "vpi_startup\n");
 
     // Create services and endpoint here,
     // since we'll need to have them available in order
@@ -176,18 +74,13 @@ static void register_tblink_tf(void) {
 		vpi_api->vpi_control(vpiFinish, 1);
     }
 
-	memset(&cbd, 0, sizeof(cbd));
-	cbd.reason = cbStartOfSimulation;
-	cbd.cb_rtn = &on_startup;
-	vpi_api->vpi_register_cb(&cbd);
-
 	// Add a shutdown callback if the simulator closes down unexpectedly
 	atexit(&tblink_vpi_atexit);
 	signal(SIGPIPE, &tblink_vpi_sigpipe);
 }
 
 void (*vlog_startup_routines[])() = {
-	register_tblink_tf,
+	vpi_startup,
     0
 };
 

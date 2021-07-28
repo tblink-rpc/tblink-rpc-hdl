@@ -11,6 +11,7 @@
 #include "InterfaceInstProxyVpi.h"
 #include "MethodCallVpi.h"
 #include "tblink_rpc/IInterfaceTypeBuilder.h"
+#include "tblink_rpc/IParamValInt.h"
 #include "glog/logging.h"
 
 #undef EN_DEBUG_ENDPOINT_SERVICES_VPI
@@ -46,7 +47,13 @@ EndpointServicesVpi::EndpointServicesVpi(vpi_api_t *vpi) :
 
 	m_callback_id = 1;
 	m_endpoint = 0;
+	m_registered = true;
 	m_cached_time = 0;
+	m_pending_nb_calls = 0;
+	m_pending_bl_calls = 0;
+	m_shutdown = false;
+
+	register_systf();
 }
 
 EndpointServicesVpi::~EndpointServicesVpi() {
@@ -74,6 +81,7 @@ void EndpointServicesVpi::shutdown() {
 	fprintf(stdout, "--> EndpointServicesVpi::shutdown\n");
 	fflush(stdout);
 	m_vpi->vpi_control(vpiFinish, 0);
+	m_shutdown = true;
 	fprintf(stdout, "<-- EndpointServicesVpi::shutdown\n");
 	fflush(stdout);
 }
@@ -100,12 +108,11 @@ void EndpointServicesVpi::notify_time_cb(intptr_t callback_id) {
 
 	m_endpoint->notify_callback(callback_id);
 
-   	DEBUG_ENTER("notify_time_cb::yield");
-   	int32_t ret;
-   	while ((ret=m_endpoint->yield()) > 0) {
-   		DEBUG("... waiting");
-   	}
-   	DEBUG_LEAVE("notify_time_cb::yield");
+	fprintf(stdout, "notify_time_cb --> idle\n");
+	fflush(stdout);
+	idle();
+	fprintf(stdout, "notify_time_cb <-- idle\n");
+	fflush(stdout);
 
 	DEBUG_LEAVE("notify_time_cb: %d", callback_id);
 }
@@ -130,7 +137,7 @@ void EndpointServicesVpi::register_systf() {
     tf_data.calltf = &system_tf<&EndpointServicesVpi::new_iftype_builder>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_iftype_builder_define_builder";
+    tf_data.tfname = "$tblink_iftype_builder_define_method";
     tf_data.calltf = &system_tf<&EndpointServicesVpi::iftype_builder_define_method>;
     m_vpi->vpi_register_systf(&tf_data);
 
@@ -146,10 +153,113 @@ void EndpointServicesVpi::register_systf() {
     tf_data.calltf = &system_tf<&EndpointServicesVpi::ifinst_call_claim>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_ifinst_free_params";
+    tf_data.tfname = "$tblink_ifinst_call_id";
+    tf_data.calltf = &system_tf<&EndpointServicesVpi::ifinst_call_id>;
+    m_vpi->vpi_register_systf(&tf_data);
+
+    tf_data.tfname = "$tblink_ifinst_call_next_ui";
+    tf_data.calltf = &system_tf<&EndpointServicesVpi::ifinst_call_next_ui>;
+    m_vpi->vpi_register_systf(&tf_data);
+
+    tf_data.tfname = "$tblink_ifinst_call_complete";
+    tf_data.type = vpiSysTask;
     tf_data.calltf = &system_tf<&EndpointServicesVpi::ifinst_call_complete>;
     m_vpi->vpi_register_systf(&tf_data);
 
+    fprintf(stdout, "registering on_startup\n");
+    fflush(stdout);
+    s_cb_data cbd;
+    memset(&cbd, 0, sizeof(cbd));
+    cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(this);
+    cbd.cb_rtn = &vpi_cb<&EndpointServicesVpi::on_startup>;
+    cbd.reason = cbStartOfSimulation;
+    m_vpi->vpi_register_cb(&cbd);
+
+
+}
+
+PLI_INT32 EndpointServicesVpi::on_startup() {
+	s_cb_data cbd;
+
+	fprintf(stdout, "on_startup\n");
+	fflush(stdout);
+
+   	s_vpi_time time;
+    memset(&cbd, 0, sizeof(cbd));
+   	memset(&time, 0, sizeof(time));
+    cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(this);
+    cbd.cb_rtn = &vpi_cb<&EndpointServicesVpi::start_of_simulation>;
+    cbd.reason = cbAfterDelay;
+    time.type = vpiSimTime;
+    cbd.time = &time;
+    m_vpi->vpi_register_cb(&cbd);
+
+    memset(&cbd, 0, sizeof(cbd));
+   	memset(&time, 0, sizeof(time));
+    cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(this);
+    cbd.reason = cbEndOfSimulation;
+    cbd.cb_rtn = &vpi_cb<&EndpointServicesVpi::end_of_simulation>;
+    m_vpi->vpi_register_cb(&cbd);
+
+	return 0;
+}
+
+PLI_INT32 EndpointServicesVpi::start_of_simulation() {
+	fprintf(stdout, "start_of_simulation\n");
+	fflush(stdout);
+
+    if (!m_registered) {
+    	// If nothing else has registered, go ahead
+    	// and mark ourselves built and connected
+    	fprintf(stdout, "--> build_complete\n");
+    	m_endpoint->build_complete();
+    	fprintf(stdout, "<-- build_complete\n");
+
+    	fprintf(stdout, "--> connect_complete\n");
+    	m_endpoint->connect_complete();
+    	fprintf(stdout, "<-- connect_complete\n");
+
+    	// Decide what needs to happen next
+    	idle();
+    } else {
+    	// Need to take another spin to be sure
+    	s_cb_data cbd;
+    	s_vpi_time time;
+
+    	m_registered = false;
+
+    	memset(&cbd, 0, sizeof(cbd));
+    	memset(&time, 0, sizeof(time));
+
+    	cbd.reason = cbAfterDelay;
+    	cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(this);
+    	cbd.cb_rtn = &vpi_cb<&EndpointServicesVpi::start_of_simulation>;
+    	time.type = vpiSimTime;
+    	cbd.time = &time;
+    	m_vpi->vpi_register_cb(&cbd);
+    }
+
+	return 0;
+}
+
+PLI_INT32 EndpointServicesVpi::delta() {
+	fprintf(stdout, "--> delta\n");
+	fflush(stdout);
+	idle();
+	fprintf(stdout, "<-- delta\n");
+	fflush(stdout);
+	return 0;
+}
+
+PLI_INT32 EndpointServicesVpi::end_of_simulation() {
+	fprintf(stdout, "end_of_simulation\n");
+	fflush(stdout);
+
+	if (m_endpoint) {
+		m_endpoint->shutdown();
+	}
+
+	return 0;
 }
 
 PLI_INT32 EndpointServicesVpi::find_iftype() {
@@ -170,6 +280,8 @@ PLI_INT32 EndpointServicesVpi::new_iftype_builder() {
 	std::string type_name = args->scan()->val_str();
 
 	systf_h->val_ptr(m_endpoint->newInterfaceTypeBuilder(type_name));
+
+	m_registered = true;
 
 	return 0;
 }
@@ -209,6 +321,8 @@ PLI_INT32 EndpointServicesVpi::define_iftype() {
 
 	systf_h->val_ptr(iftype);
 
+	m_registered = true;
+
 	return 0;
 }
 
@@ -216,14 +330,17 @@ PLI_INT32 EndpointServicesVpi::define_ifinst() {
 	VpiHandleSP systf_h = m_global->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
 
-	IInterfaceType *iftype = args->scan()->val_ptrT<IInterfaceType>();
-	std::string inst_name = args->scan()->val_str();
+	vpiHandle scope_h = m_global->vpi()->vpi_handle(vpiScope, systf_h->hndl());
+	std::string inst_name = m_global->vpi()->vpi_get_str(vpiFullName, scope_h);
 
+	IInterfaceType *iftype = args->scan()->val_ptrT<IInterfaceType>();
 	// Last parameter is the event reference
 	vpiHandle notify_ev = args->scan()->release();
 
 	InterfaceInstProxyVpi *ifinst_p = new InterfaceInstProxyVpi(
-			m_vpi, notify_ev);
+			this,
+			m_vpi,
+			notify_ev);
 
 	IInterfaceInst *ifinst = m_endpoint->defineInterfaceInst(
 			iftype,
@@ -237,6 +354,8 @@ PLI_INT32 EndpointServicesVpi::define_ifinst() {
 					std::placeholders::_4));
 
 	ifinst_p->inst(ifinst);
+
+	m_registered = true;
 
 	// Return the proxy, since this will get passed back to us
 	systf_h->val_ptr(ifinst_p);
@@ -259,27 +378,118 @@ PLI_INT32 EndpointServicesVpi::ifinst_call_claim() {
 	return 0;
 }
 
+PLI_INT32 EndpointServicesVpi::ifinst_call_id() {
+	VpiHandleSP systf_h = m_global->systf_h();
+	VpiHandleSP args = systf_h->tf_args();
+
+	MethodCallVpi *call = args->scan()->val_ptrT<MethodCallVpi>();
+
+	systf_h->val_ui64(call->method_id());
+
+	return 0;
+}
+
+PLI_INT32 EndpointServicesVpi::ifinst_call_next_ui() {
+	VpiHandleSP systf_h = m_global->systf_h();
+	VpiHandleSP args = systf_h->tf_args();
+
+	MethodCallVpi *call = args->scan()->val_ptrT<MethodCallVpi>();
+
+	systf_h->val_ui64(
+			call->nextT<IParamValInt>()->val_u());
+
+	return 0;
+}
+
 PLI_INT32 EndpointServicesVpi::ifinst_call_complete() {
 	VpiHandleSP systf_h = m_global->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
 
 	MethodCallVpi *call = args->scan()->val_ptrT<MethodCallVpi>();
 
-	// Notify that the call is complete
-	call->ifc()->respond(
-			call->call_id(),
-			0);
+	fprintf(stdout, "complete: call=%p call_id=%lld\n", call, call->call_id());
 
+	VpiHandleSP rv_h = args->scan();
+	IParamValIntSP rv;
+
+	if (rv_h) {
+		fprintf(stdout, "have return\n");
+		rv = m_endpoint->mkValIntS(rv_h->val_i64());
+	} else {
+		fprintf(stdout, "no return\n");
+	}
+
+	// Notify that the call is complete
+	call->ifc()->invoke_rsp(
+			call->call_id(),
+			rv);
+
+	// If the call wasn't blocking, then
+	// decrement the pending nb calls
+	fprintf(stdout, "method is_blocking=%d pending_nb_calls=%d\n",
+			call->method()->is_blocking(),
+			m_pending_nb_calls);
+	if (!call->method()->is_blocking()) {
+		dec_pending_nb_calls();
+	}
+
+	// Release the call object now that we're done with it
 	delete call;
 
+	// Now, must decide what next to do
+	idle();
+
 	return 0;
+}
+
+/**
+ *
+ */
+int32_t EndpointServicesVpi::idle() {
+	int32_t ret = 0;
+	fprintf(stdout, "idle: m_pending_nb_calls=%d\n", m_pending_nb_calls);
+	fflush(stdout);
+
+	if (m_shutdown) {
+		// If we're in shutdown mode, don't wait for any more messages
+		return ret;
+	}
+
+	if (m_pending_nb_calls == 0) {
+		// Wait for a request
+		fprintf(stdout, "--> await_run_req\n");
+		ret = m_endpoint->await_req();
+		fprintf(stdout, "<-- await_run_req\n");
+	}
+
+	if (m_pending_nb_calls > 0) {
+		// schedule a delta and wait for completion
+    	s_cb_data cbd;
+    	s_vpi_time time;
+
+    	fprintf(stdout, "Setting delta cb\n");
+    	fflush(stdout);
+
+    	m_registered = false;
+
+    	memset(&cbd, 0, sizeof(cbd));
+    	memset(&time, 0, sizeof(time));
+
+    	time.type = vpiSimTime;
+    	cbd.reason = cbAfterDelay;
+    	cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(this);
+    	cbd.cb_rtn = &vpi_cb<&EndpointServicesVpi::delta>;
+    	cbd.time = &time;
+    	m_vpi->vpi_register_cb(&cbd);
+	}
+
+	return ret;
 }
 
 int32_t EndpointServicesVpi::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
 	DEBUG_ENTER("add_time_callback");
-	vpi_api_t *vpi_api = get_vpi_api();
 
 	// Need to take another spin to be sure
 	s_cb_data cbd;
@@ -298,7 +508,7 @@ int32_t EndpointServicesVpi::add_time_cb(
 	cbd.cb_rtn = &CallbackClosureVpi::callback;
 	cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(closure);
 	cbd.time = &vt;
-	vpiHandle cb_id = vpi_api->vpi_register_cb(&cbd);
+	vpiHandle cb_id = m_vpi->vpi_register_cb(&cbd);
 
 	closure->cb_h(cb_id);
 	m_cb_closure_m.insert({callback_id, closure});
@@ -324,6 +534,18 @@ uint64_t EndpointServicesVpi::time() {
 	ret |= tv.low;
 
 	return ret;
+}
+
+void EndpointServicesVpi::run_until_event() {
+	m_run_until_event = true;
+}
+
+void EndpointServicesVpi::inc_pending_nb_calls() {
+	m_pending_nb_calls++;
+}
+
+void EndpointServicesVpi::dec_pending_nb_calls() {
+	m_pending_nb_calls--;
 }
 
 } /* namespace tblink_rpc_hdl */

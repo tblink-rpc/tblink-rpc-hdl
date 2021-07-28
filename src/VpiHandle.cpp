@@ -32,15 +32,20 @@ VpiHandleSP VpiHandle::systf_h() {
 }
 
 VpiHandleSP VpiHandle::tf_args() {
+	vpiHandle args = m_vpi->vpi_iterate(vpiArgument, m_hndl);
     return VpiHandle::mk(
     		m_vpi,
-    		m_vpi->vpi_iterate(vpiArgument, m_hndl));
+			args);
 }
 
 VpiHandleSP VpiHandle::scan() {
-	return VpiHandleSP(VpiHandle::mk(
+	return VpiHandle::mk(
 			m_vpi,
-			m_vpi->vpi_scan(m_hndl)));
+			m_vpi->vpi_scan(m_hndl));
+}
+
+int32_t VpiHandle::get(int32_t property) {
+	return m_vpi->vpi_get(property, m_hndl);
 }
 
 bool VpiHandle::val_bool() {
@@ -108,8 +113,14 @@ uint64_t VpiHandle::val_ui64() {
 	return val_i64();
 }
 
+void VpiHandle::val_ui64(uint64_t v) {
+	return val_i64(v);
+}
+
 std::string VpiHandle::val_str() {
 	s_vpi_value val;
+	val.format = vpiStringVal;
+    int arg_t = m_vpi->vpi_get(vpiType, m_hndl);
 	m_vpi->vpi_get_value(m_hndl, &val);
 	return val.value.str;
 }

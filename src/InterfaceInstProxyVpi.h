@@ -24,8 +24,9 @@ class EndpointServicesVpi;
 class InterfaceInstProxyVpi {
 public:
 	InterfaceInstProxyVpi(
-			vpi_api_t			*vpi,
-			vpiHandle 			notify_ev);
+			EndpointServicesVpi		*services,
+			vpi_api_t				*vpi,
+			vpiHandle 				notify_ev);
 
 	virtual ~InterfaceInstProxyVpi();
 
@@ -44,10 +45,12 @@ public:
 private:
 
 private:
+	EndpointServicesVpi					*m_services;
 	vpi_api_t							*m_vpi;
 	vpiHandle							m_notify_ev;
 	tblink_rpc_core::IInterfaceInst		*m_inst;
 	std::vector<MethodCallVpiUP>		m_calls;
+	uint32_t							m_ev_val;
 
 };
 
