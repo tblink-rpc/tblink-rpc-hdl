@@ -47,11 +47,32 @@ public:
 	// Release the environment to run
 	virtual void run_until_event() override;
 
+	void idle();
+
 	void invoke_req(
 			tblink_rpc_core::IInterfaceInst			*inst,
 			tblink_rpc_core::IMethodType			*method,
 			intptr_t								call_id,
 			tblink_rpc_core::IParamValVectorSP		params);
+
+	void inc_pending_nb() { m_pending_nb++; }
+
+	void dec_pending_nb() { m_pending_nb--; }
+
+	uint32_t pending_nb() { return m_pending_nb; }
+
+	/**
+	 * Internal-utility version of add-callback
+	 */
+	void _add_time_cb(
+			uint64_t								time,
+			intptr_t								callback_id,
+			const std::function<void(intptr_t)>		&cb);
+
+private:
+
+	void notify_time_cb(intptr_t callback_id);
+
 
 private:
 	dpi_api_t						*m_dpi;
@@ -59,6 +80,8 @@ private:
 	void							*m_pkg_ctx;
 	tblink_rpc_core::IEndpoint		*m_endpoint;
 	bool							m_have_blocking_tasks;
+	uint32_t						m_run_until_event;
+	uint32_t						m_pending_nb;
 
 };
 

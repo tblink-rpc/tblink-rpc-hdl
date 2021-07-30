@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include <functional>
 #include <stdint.h>
 #include "vpi_api.h"
 
@@ -16,8 +17,9 @@ class EndpointServicesDpi;
 class TimeCallbackClosureDpi {
 public:
 	TimeCallbackClosureDpi(
-			EndpointServicesDpi			*services,
-			intptr_t					callback_id
+			EndpointServicesDpi						*services,
+			intptr_t								callback_id,
+			const std::function<void (intptr_t)>	&cb
 			);
 
 	virtual ~TimeCallbackClosureDpi();
@@ -26,11 +28,10 @@ public:
 
 	static PLI_INT32 vpi_time_cb(p_cb_data cbd);
 
-	void vpi_time_cb();
-
 private:
 	EndpointServicesDpi					*m_services;
 	intptr_t							m_callback_id;
+	std::function<void (intptr_t)>		m_cb;
 
 };
 

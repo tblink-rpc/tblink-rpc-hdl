@@ -92,6 +92,9 @@ package tblink_rpc;
 	// members when this code was created. Re-check later
 	IEndpoint		_endpoint;
 
+	typedef class tblink_rpc_thread;
+	typedef class tblink_rpc_timed_cb;
+	
 	/**
 	 * Class: IEndpoint
 	 */
@@ -99,6 +102,11 @@ package tblink_rpc;
 		chandle					m_endpoint_h;
 		int unsigned			m_ifinst_id;
 		IInterfaceImpl			m_ifinst_m[chandle];
+`ifndef VERILATOR
+		// Requests for new threads are queued here
+		mailbox #(tblink_rpc_thread)   	m_thread_q = new();
+		tblink_rpc_timed_cb				m_cb_m[chandle];
+`endif
 		
 		function new();
 			m_endpoint_h = null;
@@ -148,6 +156,25 @@ package tblink_rpc;
 	
 			return ret;
 		endfunction
+	
+`ifndef VERILATOR
+		function void add_time_cb(
+			chandle				cb_data,
+			longint unsigned	delta);
+			tblink_rpc_timed_cb cb = new(cb_data, delta);
+		
+			void'(m_thread_q.try_put(cb));
+			m_cb_m[cb_data] = cb;
+		endfunction
+		
+		task notify_time_cb(tblink_rpc_timed_cb cb);
+			m_cb_m.delete(cb.m_cb_data);
+			if (cb.m_valid) begin
+				$display("TODO:");
+				_tblink_rpc_notify_time_cb(cb.m_cb_data);
+			end
+		endtask
+`endif
 
 		static function IEndpoint inst();
 			if (_endpoint == null) begin
@@ -165,7 +192,14 @@ package tblink_rpc;
 		endfunction
 `else
 		task run();
-			
+			forever begin
+				automatic tblink_rpc_thread t;
+				m_thread_q.get(t);
+					
+				fork
+					t.run();
+				join_none
+			end				
 		endtask
 `endif
 		
@@ -240,61 +274,44 @@ package tblink_rpc;
 	endfunction
 
 	
+	
 `ifndef VERILATOR
-	// Requests for new threads are queued here
-	typedef class timed_cb;
-	mailbox #(timed_cb)   cb_q = new();
+		
+	class tblink_rpc_thread;
+		
+		function new();
+		endfunction
+		
+		virtual task run();
+			$display("Error: base run method invoked");
+			$finish();
+		endtask
+		
+	endclass
 	
 	/****************************************************************
 	 * timed_cb
 	 * Helper class to support timed callbacks
 	 ****************************************************************/
-	class timed_cb;
-		static timed_cb         m_active_cb[$];
-		int unsigned			m_id;
+	class tblink_rpc_timed_cb extends tblink_rpc_thread;
+		chandle					m_cb_data;
 		longint unsigned		m_delta;
 		bit						m_valid = 1;
 		
 		function new(
-			int unsigned		id,
+			chandle				cb_data,
 			longint unsigned 	delta);
-			m_id = id;
+			m_cb_data = cb_data;
 			m_delta = delta;
-			m_active_cb[id] = this;
 		endfunction
 		
-		function void start();
-			fork
-				begin
-					run();
-				end
-			join_none
-		endfunction
-		
-		static function int alloc_id();
-			int ret = -1;
-			for (int i=0; i<m_active_cb.size(); i++) begin
-				if (m_active_cb[i] == null) begin
-					ret = i;
-					break;
-				end
-			end
+		virtual task run();
+			IEndpoint ep;
 			
-			if (ret == -1) begin
-				ret = m_active_cb.size();
-				m_active_cb.push_back(null);
-			end
-			
-			return ret;
-		endfunction
-		
-		task run();
 			#(m_delta*1ns);
-			if (m_valid) begin
-//				_tblink_timed_callback(m_id);
-			end
-			// Remove ourselves from the active callback list
-			m_active_cb[m_id] = null;
+			
+			ep = IEndpoint::inst();
+			ep.notify_time_cb(this);
 		endtask
 	endclass	
 	
@@ -308,17 +325,17 @@ package tblink_rpc;
 	 * used for most simulators except for Verilator, which does 
 	 * not support time-consuming functions.
 	 ****************************************************************/
-	function int _tblink_register_timed_callback(
-		longint unsigned		delta
-		);
-		automatic int unsigned id = timed_cb::alloc_id();
-		automatic timed_cb cb = new(id, delta);
-		
-		void'(cb_q.try_put(cb));
-		
-		return id;
-	endfunction
-	export "DPI-C" function _tblink_register_timed_callback;	
+//	function int _tblink_register_timed_callback(
+//		longint unsigned		delta
+//		);
+//		automatic int unsigned id = timed_cb::alloc_id();
+//		automatic timed_cb cb = new(id, delta);
+//		
+//		void'(cb_q.try_put(cb));
+//		
+//		return id;
+//	endfunction
+//	export "DPI-C" function _tblink_register_timed_callback;	
 	
 	/****************************************************************
 	 * _tblink_timed_callback()
@@ -347,8 +364,9 @@ package tblink_rpc;
 	function void _tblink_rpc_add_time_cb(
 		chandle				cb_data,
 		longint unsigned	delta);
-		$display("Error: tblink_register_timed_callback called from Verilator");
-		$finish;
+		automatic IEndpoint ep = IEndpoint::inst();
+		
+		ep.add_time_cb(cb_data, delta);
 	endfunction
 
 	import "DPI-C" task _tblink_rpc_notify_time_cb(

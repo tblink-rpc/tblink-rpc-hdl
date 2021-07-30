@@ -52,6 +52,22 @@ using namespace tblink_rpc_hdl;
 static EndpointServicesDpiUP	prv_services;
 static IEndpointUP				prv_endpoint;
 static dpi_api_t				prv_dpi;
+static bool						prv_registered = false;
+
+static void elab_cb(intptr_t callback_id) {
+	fprintf(stdout, "elab_cb\n");
+	if (!prv_registered) {
+		fprintf(stdout, "completing registration\n");
+
+		prv_endpoint->build_complete();
+
+		prv_endpoint->connect_complete();
+
+		// Wait for next event
+		prv_services->idle();
+	}
+
+}
 
 EXTERN_C void *_tblink_rpc_pkg_init(int32_t have_blocking_tasks) {
 	vpi_api_t *vpi_api = get_vpi_api();
@@ -92,6 +108,9 @@ EXTERN_C void *_tblink_rpc_pkg_init(int32_t have_blocking_tasks) {
     }
 
     prv_endpoint = IEndpointUP(launcher->launch(prv_services.get()));
+
+    // Add a delta callback to check for more things registering
+    prv_services->_add_time_cb(0, 0, &elab_cb);
 
 	return prv_endpoint.get();
 }
@@ -145,6 +164,8 @@ EXTERN_C void *_tblink_rpc_endpoint_defineInterfaceInst(
 
 EXTERN_C int _tblink_rpc_notify_time_cb(void *cb_data) {
 	TimeCallbackClosureDpi *closure = reinterpret_cast<TimeCallbackClosureDpi *>(cb_data);
+	fprintf(stdout, "_tblink_rpc_notify_time_cb\n");
+	fflush(stdout);
 	closure->notify();
 	delete closure;
 	return 0;

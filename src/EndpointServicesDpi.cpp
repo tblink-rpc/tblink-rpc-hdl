@@ -17,11 +17,14 @@ EndpointServicesDpi::EndpointServicesDpi(
 		bool				have_blocking_tasks) :
 			m_dpi(dpi), m_vpi(VpiHandle::mk(vpi)),
 			m_have_blocking_tasks(have_blocking_tasks) {
+
+	fprintf(stdout, "EndpointServices: have_blocking_tasks=%d\n", have_blocking_tasks);
 	m_endpoint = 0;
 
 	// Grab the package context for later use
 	m_pkg_ctx = m_dpi->svGetScope();
-
+	m_run_until_event = 0;
+	m_pending_nb = 0;
 }
 
 EndpointServicesDpi::~EndpointServicesDpi() {
@@ -49,35 +52,40 @@ std::vector<std::string> EndpointServicesDpi::args() {
 }
 
 void EndpointServicesDpi::shutdown() {
+	// Okay to terminate with VPI?
+	m_vpi->vpi()->vpi_control(vpiFinish, 0);
 
 }
 
 int32_t EndpointServicesDpi::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
-	TimeCallbackClosureDpi *closure = new TimeCallbackClosureDpi(
-			this,
-			callback_id);
-
-	if (m_have_blocking_tasks) {
-		// Use the DPI-based route
-		m_dpi->add_time_cb(closure, time);
-	} else {
-		// Use the VPI-based route
-		s_cb_data cbd;
-		s_vpi_time vt;
-
-		memset(&cbd, 0, sizeof(cbd));
-		memset(&vt, 0, sizeof(vt));
-		vt.type = vpiSimTime;
-		vt.low = time;
-		vt.high = (time >> 32);
-		cbd.reason = cbAfterDelay;
-		cbd.cb_rtn = &TimeCallbackClosureDpi::vpi_time_cb;
-		cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(closure);
-		cbd.time = &vt;
-		m_vpi->vpi()->vpi_register_cb(&cbd);
-	}
+	_add_time_cb(time, callback_id,
+			std::bind(&EndpointServicesDpi::notify_time_cb, this, std::placeholders::_1));
+//	TimeCallbackClosureDpi *closure = new TimeCallbackClosureDpi(
+//			this,
+//			callback_id,
+//			std::bind(&EndpointServicesDpi::notify_time_cb, this, std::placeholders::_1));
+//
+//	if (m_have_blocking_tasks) {
+//		// Use the DPI-based route
+//		m_dpi->add_time_cb(closure, time);
+//	} else {
+//		// Use the VPI-based route
+//		s_cb_data cbd;
+//		s_vpi_time vt;
+//
+//		memset(&cbd, 0, sizeof(cbd));
+//		memset(&vt, 0, sizeof(vt));
+//		vt.type = vpiSimTime;
+//		vt.low = time;
+//		vt.high = (time >> 32);
+//		cbd.reason = cbAfterDelay;
+//		cbd.cb_rtn = &TimeCallbackClosureDpi::vpi_time_cb;
+//		cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(closure);
+//		cbd.time = &vt;
+//		m_vpi->vpi()->vpi_register_cb(&cbd);
+//	}
 
 	return 0;
 }
@@ -101,7 +109,13 @@ uint64_t EndpointServicesDpi::time() {
 
 // Release the environment to run
 void EndpointServicesDpi::run_until_event() {
+	m_run_until_event++;
+}
 
+void EndpointServicesDpi::idle() {
+//	if (m_pending_nb > 0 || m_run_until_event) {
+//		// Wait for next command
+//	}
 }
 
 void EndpointServicesDpi::invoke_req(
@@ -117,5 +131,35 @@ void EndpointServicesDpi::invoke_req(
 	}
 }
 
+void EndpointServicesDpi::_add_time_cb(
+			uint64_t							time,
+			intptr_t							callback_id,
+			const std::function<void(intptr_t)>	&cb) {
+
+	TimeCallbackClosureDpi *closure = new TimeCallbackClosureDpi(
+			this,
+			callback_id,
+			cb);
+
+	if (m_have_blocking_tasks) {
+		// Use the DPI-based route
+		m_dpi->add_time_cb(closure, time);
+	} else {
+		// Use the VPI-based route
+		s_cb_data cbd;
+		s_vpi_time vt;
+
+		memset(&cbd, 0, sizeof(cbd));
+		memset(&vt, 0, sizeof(vt));
+		vt.type = vpiSimTime;
+		vt.low = time;
+		vt.high = (time >> 32);
+		cbd.reason = cbAfterDelay;
+		cbd.cb_rtn = &TimeCallbackClosureDpi::vpi_time_cb;
+		cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(closure);
+		cbd.time = &vt;
+		m_vpi->vpi()->vpi_register_cb(&cbd);
+	}
+}
 
 } /* namespace tblink_rpc_hdl */
