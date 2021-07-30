@@ -11,9 +11,12 @@
 
 namespace tblink_rpc_hdl {
 
+class EndpointServicesVpi;
+
 class CallbackClosureVpi {
 public:
 	CallbackClosureVpi(
+			EndpointServicesVpi						*services,
 			const std::function<void(intptr_t)>		&closure,
 			intptr_t								callback_id
 			);
@@ -30,6 +33,7 @@ public:
 	static PLI_INT32 callback(t_cb_data *cbd);
 
 private:
+	EndpointServicesVpi				*m_services;
 	std::function<void(intptr_t)>	m_closure;
 	intptr_t						m_callback_id;
 	vpiHandle						m_cb_h;

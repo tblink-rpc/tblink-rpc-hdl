@@ -107,8 +107,8 @@ module smoke(input clock);
 		$display("posedge");
 	end
 	
-	target #(.INC(1))		t0(clock);
-	target #(.INC(2))		t1(clock);
+	target #(.INC_AMT(1))		t0(clock);
+	target #(.INC_AMT(2))		t1(clock);
 
 
 endmodule

@@ -49,6 +49,7 @@ EndpointServicesVpi::EndpointServicesVpi(vpi_api_t *vpi) :
 	m_endpoint = 0;
 	m_registered = true;
 	m_cached_time = 0;
+	m_run_until_event = 0;
 	m_pending_nb_calls = 0;
 	m_pending_bl_calls = 0;
 	m_shutdown = false;
@@ -78,12 +79,8 @@ std::vector<std::string> EndpointServicesVpi::args() {
 }
 
 void EndpointServicesVpi::shutdown() {
-	fprintf(stdout, "--> EndpointServicesVpi::shutdown\n");
-	fflush(stdout);
 	m_vpi->vpi_control(vpiFinish, 0);
 	m_shutdown = true;
-	fprintf(stdout, "<-- EndpointServicesVpi::shutdown\n");
-	fflush(stdout);
 }
 
 PLI_INT32 EndpointServicesVpi::time_cb(p_cb_data cbd) {
@@ -108,11 +105,7 @@ void EndpointServicesVpi::notify_time_cb(intptr_t callback_id) {
 
 	m_endpoint->notify_callback(callback_id);
 
-	fprintf(stdout, "notify_time_cb --> idle\n");
-	fflush(stdout);
-	idle();
-	fprintf(stdout, "notify_time_cb <-- idle\n");
-	fflush(stdout);
+	post_ev();
 
 	DEBUG_LEAVE("notify_time_cb: %d", callback_id);
 }
@@ -166,8 +159,6 @@ void EndpointServicesVpi::register_systf() {
     tf_data.calltf = &system_tf<&EndpointServicesVpi::ifinst_call_complete>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    fprintf(stdout, "registering on_startup\n");
-    fflush(stdout);
     s_cb_data cbd;
     memset(&cbd, 0, sizeof(cbd));
     cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(this);
@@ -180,9 +171,6 @@ void EndpointServicesVpi::register_systf() {
 
 PLI_INT32 EndpointServicesVpi::on_startup() {
 	s_cb_data cbd;
-
-	fprintf(stdout, "on_startup\n");
-	fflush(stdout);
 
    	s_vpi_time time;
     memset(&cbd, 0, sizeof(cbd));
@@ -205,19 +193,13 @@ PLI_INT32 EndpointServicesVpi::on_startup() {
 }
 
 PLI_INT32 EndpointServicesVpi::start_of_simulation() {
-	fprintf(stdout, "start_of_simulation\n");
-	fflush(stdout);
 
     if (!m_registered) {
     	// If nothing else has registered, go ahead
     	// and mark ourselves built and connected
-    	fprintf(stdout, "--> build_complete\n");
     	m_endpoint->build_complete();
-    	fprintf(stdout, "<-- build_complete\n");
 
-    	fprintf(stdout, "--> connect_complete\n");
     	m_endpoint->connect_complete();
-    	fprintf(stdout, "<-- connect_complete\n");
 
     	// Decide what needs to happen next
     	idle();
@@ -243,17 +225,12 @@ PLI_INT32 EndpointServicesVpi::start_of_simulation() {
 }
 
 PLI_INT32 EndpointServicesVpi::delta() {
-	fprintf(stdout, "--> delta\n");
-	fflush(stdout);
 	idle();
-	fprintf(stdout, "<-- delta\n");
-	fflush(stdout);
+
 	return 0;
 }
 
 PLI_INT32 EndpointServicesVpi::end_of_simulation() {
-	fprintf(stdout, "end_of_simulation\n");
-	fflush(stdout);
 
 	if (m_endpoint) {
 		m_endpoint->shutdown();
@@ -407,8 +384,6 @@ PLI_INT32 EndpointServicesVpi::ifinst_call_complete() {
 
 	MethodCallVpi *call = args->scan()->val_ptrT<MethodCallVpi>();
 
-	fprintf(stdout, "complete: call=%p call_id=%lld\n", call, call->call_id());
-
 	VpiHandleSP rv_h = args->scan();
 	IParamValIntSP rv;
 
@@ -426,9 +401,6 @@ PLI_INT32 EndpointServicesVpi::ifinst_call_complete() {
 
 	// If the call wasn't blocking, then
 	// decrement the pending nb calls
-	fprintf(stdout, "method is_blocking=%d pending_nb_calls=%d\n",
-			call->method()->is_blocking(),
-			m_pending_nb_calls);
 	if (!call->method()->is_blocking()) {
 		dec_pending_nb_calls();
 	}
@@ -442,33 +414,39 @@ PLI_INT32 EndpointServicesVpi::ifinst_call_complete() {
 	return 0;
 }
 
+void EndpointServicesVpi::post_ev() {
+	// We're no longer waiting for an event. It just happened
+	m_run_until_event--;
+
+	// Go wait for the next command
+	idle();
+}
+
 /**
  *
  */
 int32_t EndpointServicesVpi::idle() {
 	int32_t ret = 0;
-	fprintf(stdout, "idle: m_pending_nb_calls=%d\n", m_pending_nb_calls);
-	fflush(stdout);
 
 	if (m_shutdown) {
 		// If we're in shutdown mode, don't wait for any more messages
 		return ret;
 	}
 
-	if (m_pending_nb_calls == 0) {
+//	fprintf(stdout, "idle: nb_calls=%d run_until=%d\n", m_pending_nb_calls, m_run_until_event);
+//	fflush(stdout);
+
+	// Only check for new messages if we haven't already
+	// been told to run until the next event
+	while (m_pending_nb_calls == 0 && m_run_until_event==0 && !m_shutdown) {
 		// Wait for a request
-		fprintf(stdout, "--> await_run_req\n");
 		ret = m_endpoint->await_req();
-		fprintf(stdout, "<-- await_run_req\n");
 	}
 
-	if (m_pending_nb_calls > 0) {
+	if (m_pending_nb_calls > 0 && !m_shutdown) {
 		// schedule a delta and wait for completion
     	s_cb_data cbd;
     	s_vpi_time time;
-
-    	fprintf(stdout, "Setting delta cb\n");
-    	fflush(stdout);
 
     	m_registered = false;
 
@@ -496,6 +474,7 @@ int32_t EndpointServicesVpi::add_time_cb(
 	s_vpi_time vt;
 
 	CallbackClosureVpi *closure = new CallbackClosureVpi(
+			this,
 			std::bind(&EndpointServicesVpi::notify_time_cb, this, std::placeholders::_1),
 			callback_id);
 
@@ -537,7 +516,7 @@ uint64_t EndpointServicesVpi::time() {
 }
 
 void EndpointServicesVpi::run_until_event() {
-	m_run_until_event = true;
+	m_run_until_event++;
 }
 
 void EndpointServicesVpi::inc_pending_nb_calls() {

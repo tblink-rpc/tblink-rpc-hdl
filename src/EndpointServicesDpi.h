@@ -5,17 +5,62 @@
  *      Author: mballance
  */
 
-#ifndef PACKAGES_TBLINK_RPC_HDL_SRC_HVL_ENDPOINTSERVICESDPI_H_
-#define PACKAGES_TBLINK_RPC_HDL_SRC_HVL_ENDPOINTSERVICESDPI_H_
+#pragma once
+#include <memory>
+#include "dpi_api.h"
+#include "tblink_rpc/IEndpointServices.h"
+#include "tblink_rpc/IInterfaceInst.h"
+#include "vpi_api.h"
+#include "VpiHandle.h"
 
 namespace tblink_rpc_hdl {
 
-class EndpointServicesDpi {
+class EndpointServicesDpi;
+typedef std::unique_ptr<EndpointServicesDpi> EndpointServicesDpiUP;
+class EndpointServicesDpi : public tblink_rpc_core::IEndpointServices {
 public:
-	EndpointServicesDpi();
+	EndpointServicesDpi(
+			dpi_api_t		*dpi,
+			vpi_api_t		*vpi,
+			bool			have_blocking_tasks
+			);
+
 	virtual ~EndpointServicesDpi();
+
+	virtual void init(tblink_rpc_core::IEndpoint *endpoint) override;
+
+	/**
+	 * Return command-line arguments.
+	 */
+	virtual std::vector<std::string> args() override;
+
+	virtual void shutdown() override;
+
+	virtual int32_t add_time_cb(
+			uint64_t 		time,
+			intptr_t		callback_id) override;
+
+	virtual void cancel_callback(intptr_t id) override;
+
+	virtual uint64_t time() override;
+
+	// Release the environment to run
+	virtual void run_until_event() override;
+
+	void invoke_req(
+			tblink_rpc_core::IInterfaceInst			*inst,
+			tblink_rpc_core::IMethodType			*method,
+			intptr_t								call_id,
+			tblink_rpc_core::IParamValVectorSP		params);
+
+private:
+	dpi_api_t						*m_dpi;
+	VpiHandleSP						m_vpi;
+	void							*m_pkg_ctx;
+	tblink_rpc_core::IEndpoint		*m_endpoint;
+	bool							m_have_blocking_tasks;
+
 };
 
 } /* namespace tblink_rpc_hdl */
 
-#endif /* PACKAGES_TBLINK_RPC_HDL_SRC_HVL_ENDPOINTSERVICESDPI_H_ */

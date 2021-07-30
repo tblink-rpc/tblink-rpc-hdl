@@ -211,3 +211,60 @@ TEST_F(TblinkRpcHdlTestBase, smoke) {
 	}
 
 }
+
+TEST_F(TblinkRpcHdlTestBase, single_time_cb) {
+	m_endpoint->build_complete();
+	m_endpoint->connect_complete();
+
+	for (uint32_t i=0; i<100; i++) {
+		volatile bool hit = false;
+		intptr_t callback_id = m_endpoint->add_time_callback(
+				10, [&]() { hit = true;});
+
+		// Poll until the callback is hit
+		int ret = 0;
+		ret=m_endpoint->run_until_event();
+
+		fprintf(stdout, "[%lld] Done: hit=%d\n",
+				m_endpoint->time(), hit);
+		ASSERT_NE(ret, -1);
+		ASSERT_EQ(hit, true);
+		ASSERT_EQ(m_endpoint->time(), (i+1)*10);
+	}
+}
+
+TEST_F(TblinkRpcHdlTestBase, dual_layer_time_cb) {
+	m_endpoint->build_complete();
+	m_endpoint->connect_complete();
+
+	volatile bool cb1_hit = false;
+	intptr_t callback1_id = m_endpoint->add_time_callback(
+			10*100, [&]() { cb1_hit = true;});
+
+	for (uint32_t i=0; i<100; i++) {
+		volatile bool hit = false;
+		intptr_t callback_id = m_endpoint->add_time_callback(
+				10, [&]() { hit = true;});
+
+		// Poll until the callback is hit
+		int ret = 0;
+
+		// cb1 might be triggered first
+		while (!hit) {
+			ret=m_endpoint->run_until_event();
+		}
+
+		fprintf(stdout, "[%lld] Done: hit=%d\n",
+				m_endpoint->time(), hit);
+		ASSERT_NE(ret, -1);
+		ASSERT_EQ(hit, true);
+		ASSERT_EQ(m_endpoint->time(), (i+1)*10);
+	}
+
+	if (!cb1_hit) {
+		int ret=m_endpoint->run_until_event();
+		ASSERT_NE(ret, -1);
+	}
+	ASSERT_EQ(cb1_hit, true);
+	ASSERT_EQ(m_endpoint->time(), 100*10);
+}

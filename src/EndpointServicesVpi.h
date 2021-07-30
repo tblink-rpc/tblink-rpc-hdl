@@ -21,6 +21,8 @@ class EndpointServicesVpi;
 typedef std::unique_ptr<EndpointServicesVpi> EndpointServicesVpiUP;
 class EndpointServicesVpi : public tblink_rpc_core::IEndpointServices {
 public:
+	friend class CallbackClosureVpi;
+
 	EndpointServicesVpi(vpi_api_t *vpi);
 
 	virtual ~EndpointServicesVpi();
@@ -92,6 +94,8 @@ private:
 
 	PLI_INT32 ifinst_call_complete();
 
+	void post_ev();
+
 	int32_t idle();
 
 private:
@@ -103,7 +107,7 @@ private:
 	bool										m_registered;
 	int64_t										m_cached_time;
 	int32_t										m_depth;
-	bool										m_run_until_event;
+	int32_t										m_run_until_event;
 	int32_t										m_pending_time_cbs;
 	int32_t										m_pending_nb_calls;
 	bool										m_shutdown;
