@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include "tblink_rpc/IEndpoint.h"
 #include "EndpointServicesDpi.h"
 #include "TimeCallbackClosureDpi.h"
 
@@ -25,6 +26,8 @@ EndpointServicesDpi::EndpointServicesDpi(
 	m_pkg_ctx = m_dpi->svGetScope();
 	m_run_until_event = 0;
 	m_pending_nb = 0;
+	m_shutdown = false;
+	m_registered = false;
 }
 
 EndpointServicesDpi::~EndpointServicesDpi() {
@@ -54,12 +57,14 @@ std::vector<std::string> EndpointServicesDpi::args() {
 void EndpointServicesDpi::shutdown() {
 	// Okay to terminate with VPI?
 	m_vpi->vpi()->vpi_control(vpiFinish, 0);
+	m_shutdown = true;
 
 }
 
 int32_t EndpointServicesDpi::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
+	fprintf(stdout, "add_time_cb: %lld\n", time);
 	_add_time_cb(time, callback_id,
 			std::bind(&EndpointServicesDpi::notify_time_cb, this, std::placeholders::_1));
 //	TimeCallbackClosureDpi *closure = new TimeCallbackClosureDpi(
@@ -107,12 +112,28 @@ uint64_t EndpointServicesDpi::time() {
 	return ret;
 }
 
+int32_t EndpointServicesDpi::time_precision() {
+	int32_t ret =  m_vpi->vpi()->vpi_get(vpiTimePrecision, 0);
+	fprintf(stdout, "precision: %d\n", ret);
+	return ret;
+}
+
 // Release the environment to run
 void EndpointServicesDpi::run_until_event() {
-	m_run_until_event++;
+	m_run_until_event = true;
 }
 
 void EndpointServicesDpi::idle() {
+
+	if (m_shutdown) {
+		return;
+	}
+
+	int32_t ret = 0;
+	while (!m_run_until_event && !m_shutdown && ret != -1) {
+		ret = m_endpoint->await_req();
+	}
+
 //	if (m_pending_nb > 0 || m_run_until_event) {
 //		// Wait for next command
 //	}
@@ -151,6 +172,7 @@ void EndpointServicesDpi::_add_time_cb(
 
 		memset(&cbd, 0, sizeof(cbd));
 		memset(&vt, 0, sizeof(vt));
+
 		vt.type = vpiSimTime;
 		vt.low = time;
 		vt.high = (time >> 32);
@@ -160,6 +182,22 @@ void EndpointServicesDpi::_add_time_cb(
 		cbd.time = &vt;
 		m_vpi->vpi()->vpi_register_cb(&cbd);
 	}
+}
+
+void EndpointServicesDpi::notify_time_cb(intptr_t callback_id) {
+	fprintf(stdout, "notify_time_cb\n");
+	fflush(stdout);
+
+	// Clear the flag, since we just got an event
+	m_run_until_event = false;
+
+	m_endpoint->notify_callback(callback_id);
+
+	idle();
+}
+
+void EndpointServicesDpi::elab_cb(intptr_t callback_id) {
+	;
 }
 
 } /* namespace tblink_rpc_hdl */

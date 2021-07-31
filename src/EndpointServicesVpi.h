@@ -44,6 +44,8 @@ public:
 
 	virtual uint64_t time() override;
 
+	virtual int32_t time_precision() override;
+
 	virtual void run_until_event() override;
 
 	void inc_pending_nb_calls();

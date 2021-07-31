@@ -216,10 +216,21 @@ TEST_F(TblinkRpcHdlTestBase, single_time_cb) {
 	m_endpoint->build_complete();
 	m_endpoint->connect_complete();
 
+	int32_t time_precision = m_endpoint->time_precision();
+
+	uint32_t scale = 1;
+	while (time_precision < -9) {
+		scale *= 1000;
+		time_precision += 3;
+	}
+
+	fprintf(stdout, "scale: %d\n", scale);
+	fflush(stdout);
+
 	for (uint32_t i=0; i<100; i++) {
 		volatile bool hit = false;
 		intptr_t callback_id = m_endpoint->add_time_callback(
-				10, [&]() { hit = true;});
+				scale*10, [&]() { hit = true;});
 
 		// Poll until the callback is hit
 		int ret = 0;
@@ -229,7 +240,7 @@ TEST_F(TblinkRpcHdlTestBase, single_time_cb) {
 				m_endpoint->time(), hit);
 		ASSERT_NE(ret, -1);
 		ASSERT_EQ(hit, true);
-		ASSERT_EQ(m_endpoint->time(), (i+1)*10);
+		ASSERT_EQ(m_endpoint->time(), (i+1)*10*scale);
 	}
 }
 

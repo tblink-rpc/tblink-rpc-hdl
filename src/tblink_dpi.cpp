@@ -69,7 +69,9 @@ static void elab_cb(intptr_t callback_id) {
 
 }
 
-EXTERN_C void *_tblink_rpc_pkg_init(int32_t have_blocking_tasks) {
+EXTERN_C void *_tblink_rpc_pkg_init(
+		int32_t have_blocking_tasks,
+		int32_t	*time_precision) {
 	vpi_api_t *vpi_api = get_vpi_api();
 
 	fprintf(stdout, "_tblink_rpc_pkg_init\n");
@@ -106,6 +108,8 @@ EXTERN_C void *_tblink_rpc_pkg_init(int32_t have_blocking_tasks) {
     	fprintf(stdout, "Error: failed to obtain launcher\n");
     	return 0;
     }
+
+    *time_precision = prv_services->time_precision();
 
     prv_endpoint = IEndpointUP(launcher->launch(prv_services.get()));
 

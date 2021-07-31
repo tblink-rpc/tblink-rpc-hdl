@@ -515,6 +515,12 @@ uint64_t EndpointServicesVpi::time() {
 	return ret;
 }
 
+int32_t EndpointServicesVpi::time_precision() {
+	int32_t ret =  m_vpi->vpi_get(vpiTimePrecision, 0);
+	fprintf(stdout, "precision: %d\n", ret);
+	return ret;
+}
+
 void EndpointServicesVpi::run_until_event() {
 	m_run_until_event++;
 }

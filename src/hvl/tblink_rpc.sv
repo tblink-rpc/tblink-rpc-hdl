@@ -14,17 +14,20 @@ package tblink_rpc;
 	
 	// Initialize DPI context for package
 	import "DPI-C" context function chandle _tblink_rpc_pkg_init(
-			int have_blocking_tasks);
+			input int have_blocking_tasks,
+			output int time_precision);
 
 	chandle _endpoint_h = null;
+	int _time_precision = 0;
 	function int _tblink_rpc_init();
 		if (_endpoint_h == null) begin
 			_endpoint_h = _tblink_rpc_pkg_init(
 `ifdef VERILATOR
-				0
+				0,
 `else
-				1
+				1,
 `endif
+				_time_precision
 			);
 		
 			if (_endpoint_h == null) begin
@@ -36,6 +39,7 @@ package tblink_rpc;
 		return 1;
 	endfunction
 	int _init = _tblink_rpc_init();
+	
 	
 	typedef class IInterfaceTypeBuilder;
 	typedef class IInterfaceType;
@@ -170,7 +174,6 @@ package tblink_rpc;
 		task notify_time_cb(tblink_rpc_timed_cb cb);
 			m_cb_m.delete(cb.m_cb_data);
 			if (cb.m_valid) begin
-				$display("TODO:");
 				_tblink_rpc_notify_time_cb(cb.m_cb_data);
 			end
 		endtask
@@ -186,12 +189,10 @@ package tblink_rpc;
 
 		// For environments with support for blocking tasks,
 		// we need to run the main loop from within a task
-`ifdef VERILATOR
-		function void run();
-			
-		endfunction
-`else
 		task run();
+`ifdef VERILATOR
+			// TODO: anything needed here?
+`else
 			forever begin
 				automatic tblink_rpc_thread t;
 				m_thread_q.get(t);
@@ -200,8 +201,8 @@ package tblink_rpc;
 					t.run();
 				join_none
 			end				
-		endtask
 `endif
+		endtask
 		
 		function void _invoke_nb(chandle call_h);
 			$display("TODO: _invoke_nb");
@@ -211,36 +212,18 @@ package tblink_rpc;
 	/**
 	 * tblink_rpc_run()
 	 * 
-	 * The run task must be called from a module in the testbench
+	 * The run task must be called from a thread (eg initial) in the testbench
 	 */
-`ifdef VERILATOR
-		function automatic void tblink_rpc_run();
-`else
-		task automatic tblink_rpc_run();
-`endif
-			IEndpoint ep;
-			
-			// Call init just in case it hasn't already been called
-			$display("--> run()");
-			void'(_tblink_rpc_init());
-			$display("<-- run()");
+	task automatic tblink_rpc_run();
+		IEndpoint ep;
 		
-			ep = IEndpoint::inst();
-			ep.run();
-`ifdef VERILATOR
-		endfunction
-`else
-		endtask
-`endif
-//			forever begin
-//				automatic timed_cb cb;
-//				cb_q.get(cb);
-//			
-//				fork
-//					cb.run();
-//				join_none
-//			end	
-//	
+		// Call init just in case it hasn't already been called
+		void'(_tblink_rpc_init());
+		
+		ep = IEndpoint::inst();
+		ep.run();
+	endtask
+		
 	// IEndpoint functions
 	import "DPI-C" context function int _tblink_rpc_endpoint_build_complete(chandle endpoint_h);
 	import "DPI-C" context function int _tblink_rpc_endpoint_connect_complete(chandle endpoint_h);
@@ -265,20 +248,15 @@ package tblink_rpc;
 	endfunction
 	export "DPI-C" function _tblink_rpc_invoke_nb;
 	
-	function IInterfaceType find_iftype(string name);
-		return null;
-	endfunction
-	
-	function IInterfaceTypeBuilder new_iftype_builder();
-		return null;
-	endfunction
-
-	
 	
 `ifndef VERILATOR
-		
+	
+	/**
+	 * tblink_rpc_thread
+	 * 
+	 * Base class for dynamically-created tblink-rpc threads
+	 */
 	class tblink_rpc_thread;
-		
 		function new();
 		endfunction
 		
@@ -289,10 +267,11 @@ package tblink_rpc;
 		
 	endclass
 	
-	/****************************************************************
-	 * timed_cb
+	/**
+	 * tblink_rpc_timed_cb
+	 * 
 	 * Helper class to support timed callbacks
-	 ****************************************************************/
+	 */
 	class tblink_rpc_timed_cb extends tblink_rpc_thread;
 		chandle					m_cb_data;
 		longint unsigned		m_delta;
@@ -307,43 +286,21 @@ package tblink_rpc;
 		
 		virtual task run();
 			IEndpoint ep;
-			
-			#(m_delta*1ns);
+
+			case (_time_precision)
+				-15: #(m_delta*1fs);
+				-12: #(m_delta*1ps);
+				-9: #(m_delta*1ns);
+				-6: #(m_delta*1us);
+				-3: #(m_delta*1ms);
+				0: #(m_delta*1s);
+			endcase
 			
 			ep = IEndpoint::inst();
 			ep.notify_time_cb(this);
 		endtask
 	endclass	
 	
-
-
-	
-	/****************************************************************
-	 * _tblink_register_timed_callback()
-	 * 
-	 * Export function used to register a timed callback. This is 
-	 * used for most simulators except for Verilator, which does 
-	 * not support time-consuming functions.
-	 ****************************************************************/
-//	function int _tblink_register_timed_callback(
-//		longint unsigned		delta
-//		);
-//		automatic int unsigned id = timed_cb::alloc_id();
-//		automatic timed_cb cb = new(id, delta);
-//		
-//		void'(cb_q.try_put(cb));
-//		
-//		return id;
-//	endfunction
-//	export "DPI-C" function _tblink_register_timed_callback;	
-	
-	/****************************************************************
-	 * _tblink_timed_callback()
-	 * 
-	 * Notify the backend of a DPI callback. 
-	 ****************************************************************/
-//	import "DPI-C" context function void _tblink_timed_callback(int id);
-		
 `endif
 	
 `ifdef VERILATOR
@@ -355,6 +312,7 @@ package tblink_rpc;
 		$display("Error: tblink_register_timed_callback called from Verilator");
 		$finish;
 	endfunction
+	export "DPI-C" function _tblink_rpc_add_time_cb;	
 		
 	task _tblink_rpc_notify_time_cb(chandle	cb_data);
 		$display("Error: tblink_rpc_notify_time_callback called");
@@ -368,55 +326,11 @@ package tblink_rpc;
 		
 		ep.add_time_cb(cb_data, delta);
 	endfunction
-
-	import "DPI-C" task _tblink_rpc_notify_time_cb(
-		chandle				cb_data);
-`endif /* !VERILATOR */
 	export "DPI-C" function _tblink_rpc_add_time_cb;	
 
-endpackage
-
-`ifndef VERILATOR
-
-/**
- * Module: tblink
- * 
- * Hosts thread-creation site for tblink
- */
-//module tblink();
-//
-//	// For simulators with support for time-consuming
-//	// DPI tasks, register the tblink interface here
-//	import "DPI-C" context function int _tblink_dpi_init(
-//			int have_blocking_tasks
-//	);
-//	
-//	function int _init_tblink();
-//		if (_tblink_dpi_init(1) != 1) begin;
-//			$display("Error: Failed to initialize PyTblink backend");
-//			$finish();
-//		end
-//		
-//		return 1;
-//	endfunction
-//	
-//	int _init = _init_tblink();
-//
-//	/**
-//	 * SV threads must be started by the simulator. 
-//	 * This process accepts requests from tblink and
-//	 * forks new threads in response
-//	 */
-//	initial begin
-//		forever begin
-//			automatic timed_cb cb;
-//			cb_q.get(cb);
-//			
-//			fork
-//				cb.run();
-//			join_none
-//		end
-//	end
-//endmodule
+	import "DPI-C" context task _tblink_rpc_notify_time_cb(
+		chandle				cb_data);
 `endif /* !VERILATOR */
+
+endpackage
 

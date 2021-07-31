@@ -44,6 +44,8 @@ public:
 
 	virtual uint64_t time() override;
 
+	virtual int32_t time_precision() override;
+
 	// Release the environment to run
 	virtual void run_until_event() override;
 
@@ -73,6 +75,8 @@ private:
 
 	void notify_time_cb(intptr_t callback_id);
 
+	void elab_cb(intptr_t callback_id);
+
 
 private:
 	dpi_api_t						*m_dpi;
@@ -80,8 +84,10 @@ private:
 	void							*m_pkg_ctx;
 	tblink_rpc_core::IEndpoint		*m_endpoint;
 	bool							m_have_blocking_tasks;
-	uint32_t						m_run_until_event;
+	bool							m_run_until_event;
 	uint32_t						m_pending_nb;
+	bool							m_shutdown;
+	uint32_t						m_registered;
 
 };
 
