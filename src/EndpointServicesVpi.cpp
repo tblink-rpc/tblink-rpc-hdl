@@ -385,7 +385,7 @@ PLI_INT32 EndpointServicesVpi::ifinst_call_complete() {
 	MethodCallVpi *call = args->scan()->val_ptrT<MethodCallVpi>();
 
 	VpiHandleSP rv_h = args->scan();
-	IParamValIntSP rv;
+	IParamValInt *rv;
 
 	if (rv_h) {
 		fprintf(stdout, "have return\n");
@@ -425,12 +425,12 @@ void EndpointServicesVpi::post_ev() {
 /**
  *
  */
-int32_t EndpointServicesVpi::idle() {
+void EndpointServicesVpi::idle() {
 	int32_t ret = 0;
 
 	if (m_shutdown) {
 		// If we're in shutdown mode, don't wait for any more messages
-		return ret;
+		return;
 	}
 
 //	fprintf(stdout, "idle: nb_calls=%d run_until=%d\n", m_pending_nb_calls, m_run_until_event);
@@ -460,8 +460,6 @@ int32_t EndpointServicesVpi::idle() {
     	cbd.time = &time;
     	m_vpi->vpi_register_cb(&cbd);
 	}
-
-	return ret;
 }
 
 int32_t EndpointServicesVpi::add_time_cb(
@@ -523,6 +521,11 @@ int32_t EndpointServicesVpi::time_precision() {
 
 void EndpointServicesVpi::run_until_event() {
 	m_run_until_event++;
+}
+
+// Notify that we've hit an event
+void EndpointServicesVpi::hit_event() {
+	m_run_until_event--;
 }
 
 void EndpointServicesVpi::inc_pending_nb_calls() {

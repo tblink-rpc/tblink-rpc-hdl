@@ -48,6 +48,11 @@ public:
 
 	virtual void run_until_event() override;
 
+	// Notify that we've hit an event
+	virtual void hit_event() override;
+
+	void idle() override;
+
 	void inc_pending_nb_calls();
 
 	void dec_pending_nb_calls();
@@ -98,7 +103,6 @@ private:
 
 	void post_ev();
 
-	int32_t idle();
 
 private:
 	vpi_api_t									*m_vpi;

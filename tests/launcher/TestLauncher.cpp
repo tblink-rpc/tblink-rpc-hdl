@@ -7,6 +7,7 @@
 
 #include "TestLauncher.h"
 #include "tblink_rpc/tblink_rpc.h"
+#include "JsonRpcEndpoint.h"
 
 #ifndef _WIN32
 #include <pthread.h>
@@ -38,8 +39,15 @@ TestLauncher::~TestLauncher() {
 	// TODO Auto-generated destructor stub
 }
 
-IEndpoint *TestLauncher::launch(
-			IEndpointServices		*services) {
+IEndpoint *TestLauncher::create_ep(
+		IEndpointServices			*services) {
+	IFactory *factory = tblink_rpc_get_factory();
+	IEndpoint *endpoint = factory->mkJsonRpcEndpoint(services);
+
+	return endpoint;
+}
+
+bool TestLauncher::launch(IEndpoint	*endpoint) {
 	bool ret = true;
 	std::string runner;
 	IFactory *factory = tblink_rpc_get_factory();
@@ -188,13 +196,12 @@ IEndpoint *TestLauncher::launch(
    }
 
    ITransport *transport = factory->mkSocketTransport(pid, conn_socket);
-   IEndpoint *endpoint = factory->mkJsonRpcEndpoint(
-		   transport,
-		   	  services);
 
-    fprintf(stdout, "connected\n");
+   dynamic_cast<JsonRpcEndpoint *>(endpoint)->init(transport);
 
-    return endpoint;
+   fprintf(stdout, "connected\n");
+
+    return true;
 }
 
 static TestLauncher prvLauncher;

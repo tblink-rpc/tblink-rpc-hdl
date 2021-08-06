@@ -23,9 +23,11 @@ public:
 
 	virtual ~ILaunch() { }
 
-	virtual IEndpoint *launch(
-			IEndpointServices		*services
-			) = 0;
+	virtual IEndpoint *create_ep(
+			IEndpointServices		*services) = 0;
+
+	virtual bool launch(
+			IEndpoint				*ep) = 0;
 
 	virtual std::string last_error() = 0;
 

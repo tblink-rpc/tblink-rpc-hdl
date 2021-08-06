@@ -49,13 +49,16 @@ public:
 	// Release the environment to run
 	virtual void run_until_event() override;
 
+	// Notify that we've hit an event
+	virtual void hit_event() override;
+
 	void idle();
 
 	void invoke_req(
 			tblink_rpc_core::IInterfaceInst			*inst,
 			tblink_rpc_core::IMethodType			*method,
 			intptr_t								call_id,
-			tblink_rpc_core::IParamValVectorSP		params);
+			tblink_rpc_core::IParamValVector		*params);
 
 	void inc_pending_nb() { m_pending_nb++; }
 
@@ -75,19 +78,19 @@ private:
 
 	void notify_time_cb(intptr_t callback_id);
 
-	void elab_cb(intptr_t callback_id);
+	void build_connect_catcher();
 
 
 private:
 	dpi_api_t						*m_dpi;
 	VpiHandleSP						m_vpi;
-	void							*m_pkg_ctx;
 	tblink_rpc_core::IEndpoint		*m_endpoint;
 	bool							m_have_blocking_tasks;
 	bool							m_run_until_event;
 	uint32_t						m_pending_nb;
 	bool							m_shutdown;
 	uint32_t						m_registered;
+	uint32_t						m_build_connect_catcher_count;
 
 };
 

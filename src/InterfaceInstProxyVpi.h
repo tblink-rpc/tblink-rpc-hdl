@@ -38,7 +38,7 @@ public:
 			tblink_rpc_core::IInterfaceInst				*inst,
 			tblink_rpc_core::IMethodType				*method,
 			intptr_t									call_id,
-			tblink_rpc_core::IParamValVectorSP			params);
+			tblink_rpc_core::IParamValVector			*params);
 
 	MethodCallVpi *claim_call();
 

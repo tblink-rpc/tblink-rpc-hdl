@@ -7,6 +7,7 @@
 
 #include "TblinkRpcHdlTestBase.h"
 #include "TestEndpointServices.h"
+#include "JsonRpcEndpoint.h"
 #ifndef _WIN32
 #include <pthread.h>
 #include <sys/socket.h>
@@ -87,7 +88,8 @@ void TblinkRpcHdlTestBase::SetUp() {
 
 	IFactory *factory = tblink_rpc_get_factory();
 	m_transport = factory->mkSocketTransport(0, sockfd);
-	m_endpoint = factory->mkJsonRpcEndpoint(m_transport, this);
+	m_endpoint = factory->mkJsonRpcEndpoint(this);
+	dynamic_cast<JsonRpcEndpoint *>(m_endpoint)->init(m_transport);
 
     for (std::vector<std::string>::const_iterator
     		it=cmdline.begin();
@@ -170,15 +172,55 @@ TEST_F(TblinkRpcHdlTestBase, smoke) {
 	ASSERT_TRUE(t0);
 	ASSERT_TRUE(t1);
 
-	IMethodType *inc = t0->type()->methods().at(0);
+	IMethodType *inc = t0->type()->findMethod("inc");
+	ASSERT_TRUE(inc);
 
 	m_endpoint->connect_complete();
 
-	IParamValVectorSP params = t0->mkVector();
+	IParamValVector *params = t0->mkVector();
 	params->push_back(t0->mkValIntS(1));
-	IParamValSP ret = t0->invoke_nb(
+	IParamValUP ret(t0->invoke_nb(
 			inc,
-			params);
+			params));
+
+#ifdef UNDEFINED
+	IMethodType *inc_b = t0->type()->findMethod("inc_b");
+
+	if (inc_b) {
+		fprintf(stdout, "Have inc_b\n");
+		IParamValVector *params = t0->mkVector();
+		params->push_back(t0->mkValIntS(1));
+		volatile bool done = false;
+		t0->invoke(
+				inc_b,
+				params,
+				[&](IParamVal *retval) { done = true; });
+
+		while (!done) {
+			fprintf(stdout, "--> run_until_event\n");
+			fflush(stdout);
+			int ret = 0;
+			if ((ret=m_endpoint->run_until_event()) == -1) {
+				break;
+			}
+			fprintf(stdout, "<-- run_until_event %d\n", ret);
+			fflush(stdout);
+		}
+
+		ASSERT_EQ(done, true);
+
+	} else {
+		fprintf(stdout, "No inc_b\n");
+	}
+#endif
+
+	int32_t time_precision = m_endpoint->time_precision();
+
+	uint32_t scale = 1;
+	while (time_precision < -9) {
+		scale *= 1000;
+		time_precision += 3;
+	}
 
 	for (uint32_t i=0; i<100; i++) {
 		fprintf(stdout, "--> Iteration %d\n", i);
@@ -186,7 +228,7 @@ TEST_F(TblinkRpcHdlTestBase, smoke) {
 		volatile bool hit = false;
 		fprintf(stdout, "--> add_callback\n");
 		intptr_t callback_id = m_endpoint->add_time_callback(
-				10, [&]() { hit = true;});
+				scale*10, [&]() { hit = true;});
 		fprintf(stdout, "<-- add_callback %lld\n", callback_id);
 		fflush(stdout);
 
@@ -204,7 +246,7 @@ TEST_F(TblinkRpcHdlTestBase, smoke) {
 				m_endpoint->time(), hit);
 		ASSERT_NE(ret, -1);
 		ASSERT_EQ(hit, true);
-		ASSERT_EQ(m_endpoint->time(), (i+1)*10);
+		ASSERT_EQ(m_endpoint->time(), (i+1)*10*scale);
 
 		fprintf(stdout, "<-- Iteration %d\n", i);
 		fflush(stdout);

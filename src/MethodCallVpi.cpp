@@ -14,7 +14,7 @@ MethodCallVpi::MethodCallVpi(
 		IInterfaceInst				*ifc,
 		IMethodType					*method,
 		intptr_t					call_id,
-		IParamValVectorSP			params) :
+		IParamValVector				*params) :
 				m_ifc(ifc), m_method(method),
 				m_call_id(call_id), m_params(params), m_idx(0) {
 
@@ -24,9 +24,9 @@ MethodCallVpi::~MethodCallVpi() {
 	// TODO Auto-generated destructor stub
 }
 
-tblink_rpc_core::IParamValSP MethodCallVpi::next() {
+tblink_rpc_core::IParamVal *MethodCallVpi::next() {
 	if (m_idx < m_params->size()) {
-		IParamValSP ret = m_params->at(m_idx);
+		IParamVal *ret = m_params->at(m_idx);
 		m_idx++;
 		return ret;
 	} else {
@@ -38,7 +38,7 @@ MethodCallVpiUP MethodCallVpi::mk(
 			IInterfaceInst						*ifc,
 			IMethodType							*method,
 			intptr_t							call_id,
-			tblink_rpc_core::IParamValVectorSP	params) {
+			tblink_rpc_core::IParamValVector	*params) {
 	return MethodCallVpiUP(new MethodCallVpi(ifc, method, call_id, params));
 }
 

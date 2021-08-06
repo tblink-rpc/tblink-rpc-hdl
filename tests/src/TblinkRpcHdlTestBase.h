@@ -44,6 +44,11 @@ public:
 
 	virtual void run_until_event() override { }
 
+	// Notify that we've hit an event
+	virtual void hit_event() override { }
+
+	virtual void idle() override { }
+
 	virtual void cancel_callback(intptr_t id) override;
 
 

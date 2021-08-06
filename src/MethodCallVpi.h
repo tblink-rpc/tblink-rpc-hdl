@@ -21,7 +21,7 @@ public:
 			tblink_rpc_core::IInterfaceInst		*ifc,
 			tblink_rpc_core::IMethodType		*method,
 			intptr_t							call_id,
-			tblink_rpc_core::IParamValVectorSP	params);
+			tblink_rpc_core::IParamValVector	*params);
 
 	virtual ~MethodCallVpi();
 
@@ -33,23 +33,23 @@ public:
 
 	intptr_t call_id() const { return m_call_id; }
 
-	tblink_rpc_core::IParamValSP next();
+	tblink_rpc_core::IParamVal *next();
 
-	template <class T> std::shared_ptr<T> nextT() {
-		return std::dynamic_pointer_cast<T>(next());
+	template <class T> T *nextT() {
+		return dynamic_cast<T *>(next());
 	}
 
 	static MethodCallVpiUP mk(
 			tblink_rpc_core::IInterfaceInst		*ifc,
 			tblink_rpc_core::IMethodType		*method,
 			intptr_t							call_id,
-			tblink_rpc_core::IParamValVectorSP	params);
+			tblink_rpc_core::IParamValVector	*params);
 
 private:
 	tblink_rpc_core::IInterfaceInst				*m_ifc;
 	tblink_rpc_core::IMethodType				*m_method;
 	intptr_t									m_call_id;
-	tblink_rpc_core::IParamValVectorSP			m_params;
+	tblink_rpc_core::IParamValVectorUP			m_params;
 	uint32_t									m_idx;
 };
 

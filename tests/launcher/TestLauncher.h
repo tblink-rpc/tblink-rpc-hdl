@@ -15,8 +15,11 @@ public:
 
 	virtual ~TestLauncher();
 
-	virtual IEndpoint *launch(
+	virtual IEndpoint *create_ep(
 			IEndpointServices		*services) override;
+
+	virtual bool launch(
+			IEndpoint				*ep) override;
 
 	virtual std::string last_error() override {
 		return m_last_error;

@@ -8,6 +8,7 @@
 #include <string.h>
 #include "tblink_rpc/IEndpoint.h"
 #include "EndpointServicesDpi.h"
+#include "InvokeInfoDpi.h"
 #include "TimeCallbackClosureDpi.h"
 
 namespace tblink_rpc_hdl {
@@ -23,11 +24,11 @@ EndpointServicesDpi::EndpointServicesDpi(
 	m_endpoint = 0;
 
 	// Grab the package context for later use
-	m_pkg_ctx = m_dpi->svGetScope();
 	m_run_until_event = 0;
 	m_pending_nb = 0;
 	m_shutdown = false;
 	m_registered = false;
+	m_build_connect_catcher_count = 0;
 }
 
 EndpointServicesDpi::~EndpointServicesDpi() {
@@ -36,6 +37,10 @@ EndpointServicesDpi::~EndpointServicesDpi() {
 
 void EndpointServicesDpi::init(tblink_rpc_core::IEndpoint *endpoint) {
 	m_endpoint = endpoint;
+
+	// Add a callback to ensure we run build/connect
+	// if the testbench environment does not
+	_add_time_cb(0, 0, std::bind(&EndpointServicesDpi::build_connect_catcher, this));
 }
 
 /**
@@ -64,7 +69,6 @@ void EndpointServicesDpi::shutdown() {
 int32_t EndpointServicesDpi::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
-	fprintf(stdout, "add_time_cb: %lld\n", time);
 	_add_time_cb(time, callback_id,
 			std::bind(&EndpointServicesDpi::notify_time_cb, this, std::placeholders::_1));
 //	TimeCallbackClosureDpi *closure = new TimeCallbackClosureDpi(
@@ -114,7 +118,6 @@ uint64_t EndpointServicesDpi::time() {
 
 int32_t EndpointServicesDpi::time_precision() {
 	int32_t ret =  m_vpi->vpi()->vpi_get(vpiTimePrecision, 0);
-	fprintf(stdout, "precision: %d\n", ret);
 	return ret;
 }
 
@@ -123,8 +126,12 @@ void EndpointServicesDpi::run_until_event() {
 	m_run_until_event = true;
 }
 
-void EndpointServicesDpi::idle() {
+// Notify that we've hit an event
+void EndpointServicesDpi::hit_event() {
+	m_run_until_event = false;
+}
 
+void EndpointServicesDpi::idle() {
 	if (m_shutdown) {
 		return;
 	}
@@ -133,22 +140,27 @@ void EndpointServicesDpi::idle() {
 	while (!m_run_until_event && !m_shutdown && ret != -1) {
 		ret = m_endpoint->await_req();
 	}
-
-//	if (m_pending_nb > 0 || m_run_until_event) {
-//		// Wait for next command
-//	}
 }
 
 void EndpointServicesDpi::invoke_req(
 		tblink_rpc_core::IInterfaceInst			*inst,
 		tblink_rpc_core::IMethodType			*method,
 		intptr_t								call_id,
-		tblink_rpc_core::IParamValVectorSP		params) {
-	m_dpi->svSetScope(m_pkg_ctx);
+		tblink_rpc_core::IParamValVector		*params) {
+	InvokeInfoDpi *ii = new InvokeInfoDpi(
+			inst,
+			method,
+			call_id,
+			params);
+	m_dpi->svSetScope(m_dpi->get_pkg_scope());
 	if (method->is_blocking()) {
-		// TODO: start a thread to service the request
+		m_dpi->invoke_b(reinterpret_cast<void *>(ii));
 	} else {
-		m_dpi->invoke_nb(0);
+		m_dpi->invoke_nb(reinterpret_cast<void *>(ii));
+		tblink_rpc_core::IParamVal *ret = ii->ret();
+		inst->invoke_rsp(call_id, ret);
+
+		delete ii;
 	}
 }
 
@@ -185,9 +197,6 @@ void EndpointServicesDpi::_add_time_cb(
 }
 
 void EndpointServicesDpi::notify_time_cb(intptr_t callback_id) {
-	fprintf(stdout, "notify_time_cb\n");
-	fflush(stdout);
-
 	// Clear the flag, since we just got an event
 	m_run_until_event = false;
 
@@ -196,8 +205,27 @@ void EndpointServicesDpi::notify_time_cb(intptr_t callback_id) {
 	idle();
 }
 
-void EndpointServicesDpi::elab_cb(intptr_t callback_id) {
-	;
+void EndpointServicesDpi::build_connect_catcher() {
+	m_build_connect_catcher_count++;
+
+	if (m_endpoint->state() == tblink_rpc_core::IEndpoint::Init) {
+		if (m_build_connect_catcher_count < 10) {
+			// Reset the callback
+			_add_time_cb(0, 0, std::bind(&EndpointServicesDpi::build_connect_catcher, this));
+		} else if (m_endpoint->state() == tblink_rpc_core::IEndpoint::Init) {
+			fprintf(stdout, "Note: TBLink auto-running build/connect sequence\n");
+			if (!m_endpoint->build_complete()) {
+				fprintf(stdout, "Error: TBLink build-complete failed\n");
+				shutdown();
+			} else if (!m_endpoint->connect_complete()) {
+				fprintf(stdout, "Error: TBLink connect-complete failed\n");
+				shutdown();
+			} else {
+				fprintf(stdout, "Note: waiting for first command\n");
+				idle();
+			}
+		}
+	}
 }
 
 } /* namespace tblink_rpc_hdl */

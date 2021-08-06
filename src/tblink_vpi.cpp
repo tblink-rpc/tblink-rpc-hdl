@@ -67,7 +67,7 @@ static void vpi_startup(void) {
 		vpi_api->vpi_control(vpiFinish, 1);
     }
 
-    prv_endpoint = IEndpointUP(launcher->launch(prv_services.get()));
+    prv_endpoint = IEndpointUP(launcher->create_ep(prv_services.get()));
 
     if (!prv_endpoint) {
     	fprintf(stdout, "Error: failed to launch peer\n");
@@ -77,6 +77,8 @@ static void vpi_startup(void) {
 	// Add a shutdown callback if the simulator closes down unexpectedly
 	atexit(&tblink_vpi_atexit);
 	signal(SIGPIPE, &tblink_vpi_sigpipe);
+
+	launcher->launch(prv_endpoint.get());
 }
 
 void (*vlog_startup_routines[])() = {

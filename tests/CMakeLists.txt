@@ -32,6 +32,7 @@ target_include_directories(
 	PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../src
 	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+	${PACKAGES_DIR}/tblink-rpc-core/cpp
 	${CMAKE_BINARY_DIR}/glog/include
 	)
 
@@ -68,6 +69,7 @@ target_include_directories(
 	PRIVATE
 	${PACKAGES_DIR}/googletest/googletest/include
 	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+	${PACKAGES_DIR}/tblink-rpc-core/cpp
 	${CMAKE_BINARY_DIR}/glog/include
 	)
 
