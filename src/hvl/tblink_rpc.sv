@@ -29,6 +29,10 @@ package tblink_rpc;
 	class IInterfaceType;
 		chandle			m_hndl;
 	endclass
+
+	import "DPI-C" context function chandle tblink_rpc_iftype_find_method(
+			chandle		iftype_h,
+			string		name);
 	
 	class IInvokeCall;
 	endclass
@@ -119,6 +123,10 @@ package tblink_rpc;
 		
 	endclass
 	
+	class IParamValInt extends IParamVal;
+		
+	endclass
+	
 	class IParamValVector extends IParamVal;
 		
 		function int unsigned size();
@@ -145,6 +153,9 @@ package tblink_rpc;
 	
 	class IParamValMap extends IParamVal;
 	endclass
+	
+	import "DPI-C" context function longint _tblink_rpc_iparam_val_int_val_u(
+			chandle			hndl);
 
 	import "DPI-C" context function chandle _tblink_rpc_iparam_val_clone(
 			chandle			hndl);
@@ -153,6 +164,9 @@ package tblink_rpc;
 	
 	import "DPI-C" context function int unsigned _tblink_rpc_iparam_val_bool_val(
 			chandle			hndl);
+	
+	import "DPI-C" context function chandle _tblink_rpc_iparam_val_vector_new();
+
 	import "DPI-C" context function int unsigned _tblink_rpc_iparam_val_vector_size(
 			chandle			hndl);
 	import "DPI-C" context function chandle _tblink_rpc_iparam_val_vector_at(
@@ -166,6 +180,11 @@ package tblink_rpc;
 		chandle			m_hndl;
 		
 	endclass
+	
+	import "DPI-C" context function chandle _tblink_rpc_ifinst_invoke_nb(
+			chandle			ifinst_h,
+			chandle			method_h,
+			chandle			params_h);
 
 	class InvokeInfo;
 		chandle					m_hndl;
@@ -185,6 +204,12 @@ package tblink_rpc;
 			ret.m_hndl = _tblink_rpc_endpoint_invoke_info_method(m_hndl);
 			return ret;
 		endfunction
+		
+		function IParamValVector params();
+			IParamValVector ret = new();
+			ret.m_hndl = _tblink_rpc_endpoint_invoke_info_params(m_hndl);
+			return ret;
+		endfunction
 
 		function void invoke_rsp();
 			_tblink_rpc_endpoint_invoke_info_invoke_rsp(m_hndl);
@@ -194,6 +219,7 @@ package tblink_rpc;
 	
 	import "DPI-C" context function chandle _tblink_rpc_endpoint_invoke_info_inst(chandle hndl);
 	import "DPI-C" context function chandle _tblink_rpc_endpoint_invoke_info_method(chandle hndl);
+	import "DPI-C" context function chandle _tblink_rpc_endpoint_invoke_info_params(chandle ii_h);
 	import "DPI-C" context function void _tblink_rpc_endpoint_invoke_info_invoke_rsp(chandle ii_h);
 		
 	
@@ -622,7 +648,7 @@ package tblink_rpc;
 			
 			// TODO: dispose params
 
-			_tblink_rpc_interface_inst_invoke_rsp(m_ii.m_hndl);
+			_tblink_rpc_endpoint_invoke_info_invoke_rsp(m_ii.m_hndl);
 		endtask
 			
 	endclass

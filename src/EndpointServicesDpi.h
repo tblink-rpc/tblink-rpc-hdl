@@ -86,6 +86,7 @@ private:
 	VpiHandleSP						m_vpi;
 	tblink_rpc_core::IEndpoint		*m_endpoint;
 	bool							m_have_blocking_tasks;
+	bool							m_hit_event;
 	bool							m_run_until_event;
 	uint32_t						m_pending_nb;
 	bool							m_shutdown;

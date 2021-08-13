@@ -25,6 +25,7 @@ EndpointServicesDpi::EndpointServicesDpi(
 
 	// Grab the package context for later use
 	m_run_until_event = 0;
+	m_hit_event = false;
 	m_pending_nb = 0;
 	m_shutdown = false;
 	m_registered = false;
@@ -129,16 +130,29 @@ void EndpointServicesDpi::run_until_event() {
 // Notify that we've hit an event
 void EndpointServicesDpi::hit_event() {
 	m_run_until_event = false;
+	m_hit_event = true;
 }
 
 void EndpointServicesDpi::idle() {
+	fprintf(stdout, "idle\n");
+	fflush(stdout);
 	if (m_shutdown) {
 		return;
 	}
 
-	int32_t ret = 0;
-	while (!m_run_until_event && !m_shutdown && ret != -1) {
-		ret = m_endpoint->await_req();
+	if (m_hit_event) {
+		// reschedule this for a delta away
+		m_hit_event = false;
+		_add_time_cb(0, 0, std::bind(&EndpointServicesDpi::idle, this));
+		fprintf(stdout, "schedule delta\n");
+		fflush(stdout);
+	} else {
+		fprintf(stdout, "wait req\n");
+		fflush(stdout);
+		int32_t ret = 0;
+		while (!m_run_until_event && !m_shutdown && ret != -1) {
+			ret = m_endpoint->await_req();
+		}
 	}
 }
 
@@ -152,6 +166,8 @@ void EndpointServicesDpi::invoke_req(
 			method,
 			call_id,
 			params);
+	fprintf(stdout, "params=%p ii->params()=%p\n", params, ii->params());
+	fflush(stdout);
 	m_dpi->svSetScope(m_dpi->get_pkg_scope());
 	if (method->is_blocking()) {
 		m_dpi->invoke_b(reinterpret_cast<void *>(ii));
@@ -201,8 +217,6 @@ void EndpointServicesDpi::notify_time_cb(intptr_t callback_id) {
 	m_run_until_event = false;
 
 	m_endpoint->notify_callback(callback_id);
-
-	idle();
 }
 
 void EndpointServicesDpi::build_connect_catcher() {

@@ -25,6 +25,8 @@ public:
 	// Tears down the test fixture.
 	virtual void TearDown() override;
 
+	virtual bool init();
+
 	virtual void init(IEndpoint *endpoint) override;
 
 	/**
@@ -52,9 +54,12 @@ public:
 	virtual void cancel_callback(intptr_t id) override;
 
 
+
 protected:
 	bool					m_waiting_shutdown;
 	bool					m_have_shutdown;
+	std::function<void()>	m_post_build_hook;
+	std::function<void()>	m_post_connect_hook;
 
 	ITransport				*m_transport;
 	IEndpoint				*m_endpoint;

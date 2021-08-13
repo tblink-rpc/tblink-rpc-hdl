@@ -142,6 +142,12 @@ EXTERN_C chandle _tblink_rpc_endpoint_invoke_info_method(chandle ii) {
 			reinterpret_cast<InvokeInfoDpi *>(ii)->method());
 }
 
+EXTERN_C chandle _tblink_rpc_endpoint_invoke_info_params(chandle ii_h) {
+	return reinterpret_cast<void *>(
+			static_cast<IParamVal *>(
+					reinterpret_cast<InvokeInfoDpi *>(ii_h)->params()));
+}
+
 EXTERN_C void _tblink_rpc_endpoint_invoke_info_invoke_rsp(chandle ii_h) {
 	InvokeInfoDpi *ii = reinterpret_cast<InvokeInfoDpi *>(ii_h);
 	ii->inst()->invoke_rsp(
@@ -273,12 +279,26 @@ EXTERN_C int _tblink_rpc_notify_time_cb(void *cb_data) {
 	return 0;
 }
 
+EXTERN_C chandle tblink_rpc_iftype_find_method(
+		chandle			iftype_h,
+		const char 		*name) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceType *>(iftype_h)->findMethod(name));
+}
+
 EXTERN_C const char *_tblink_rpc_method_type_name(void *hndl) {
 	return reinterpret_cast<IMethodType *>(hndl)->name().c_str();
 }
 
 EXTERN_C int64_t _tblink_rpc_method_type_id(void *hndl) {
 	return reinterpret_cast<IMethodType *>(hndl)->id();
+}
+
+EXTERN_C uint64_t _tblink_rpc_iparam_val_int_val_u(chandle hndl_h) {
+	fprintf(stdout, "val_int: hndl=%p\n", hndl_h);
+	fflush(stdout);
+	return dynamic_cast<IParamValInt *>(
+			reinterpret_cast<IParamVal *>(hndl_h))->val_u();
 }
 
 EXTERN_C void *_tblink_rpc_iparam_val_clone(void *hndl) {
@@ -294,12 +314,22 @@ EXTERN_C uint32_t _tblink_rpc_iparam_val_bool_val(void *hndl) {
 			reinterpret_cast<IParamVal *>(hndl))->val();
 }
 
+EXTERN_C chandle _tblink_rpc_iparam_val_vector_new() {
+	return reinterpret_cast<void *>(
+			static_cast<IParamVal *>(
+					prv_endpoint->mkVector()));
+}
+
 EXTERN_C uint32_t _tblink_rpc_iparam_val_vector_size(void *hndl) {
 	return dynamic_cast<IParamValVector *>(
 			reinterpret_cast<IParamVal *>(hndl))->size();
 }
 
 EXTERN_C void *_tblink_rpc_iparam_val_vector_at(void *hndl, uint32_t idx) {
+	fprintf(stdout, "vector_at: hndl=%p\n", hndl);
+	fprintf(stdout, "  vv=%p\n",
+			dynamic_cast<IParamValVector *>(reinterpret_cast<IParamVal *>(hndl)));
+	fflush(stdout);
 	return reinterpret_cast<void *>(
 			dynamic_cast<IParamValVector *>(reinterpret_cast<IParamVal *>(hndl))->at(idx));
 }
@@ -307,4 +337,15 @@ EXTERN_C void *_tblink_rpc_iparam_val_vector_at(void *hndl, uint32_t idx) {
 EXTERN_C void _tblink_rpc_iparam_val_vector_push_back(void *hndl, void *val_h) {
 	dynamic_cast<IParamValVector *>(reinterpret_cast<IParamVal *>(hndl))->push_back(
 			reinterpret_cast<IParamVal *>(val_h));
+}
+
+EXTERN_C chandle _tblink_rpc_ifinst_invoke_nb(
+		chandle			ifinst_h,
+		chandle			method_h,
+		chandle			params_h) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceInst *>(ifinst_h)->invoke_nb(
+					reinterpret_cast<IMethodType *>(method_h),
+					dynamic_cast<IParamValVector *>(
+							reinterpret_cast<IParamVal *>(params_h))));
 }

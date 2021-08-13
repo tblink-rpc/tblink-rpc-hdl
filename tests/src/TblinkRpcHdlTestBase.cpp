@@ -97,6 +97,8 @@ void TblinkRpcHdlTestBase::SetUp() {
 
     	fprintf(stdout, "arg: %s\n", it->c_str());
     }
+
+
 }
 
 // Tears down the test fixture.
@@ -116,6 +118,26 @@ void TblinkRpcHdlTestBase::TearDown() {
 
 	fprintf(stdout, "<-- TearDown\n");
 	fflush(stdout);
+}
+
+bool TblinkRpcHdlTestBase::init() {
+    if (!m_endpoint->build_complete()) {
+    	return false;
+    }
+
+    if (m_post_build_hook) {
+    	m_post_build_hook();
+    }
+
+    if (!m_endpoint->connect_complete()) {
+    	return false;
+    }
+
+    if (m_post_connect_hook) {
+    	m_post_connect_hook();
+    }
+
+    return true;
 }
 
 void TblinkRpcHdlTestBase::init(IEndpoint *endpoint) {
@@ -253,6 +275,7 @@ TEST_F(TblinkRpcHdlTestBase, smoke) {
 	}
 
 }
+
 
 TEST_F(TblinkRpcHdlTestBase, single_time_cb) {
 	m_endpoint->build_complete();
