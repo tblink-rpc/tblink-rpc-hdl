@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 11)
 if (NOT PACKAGES_DIR)
   set(PACKAGES_DIR ${CMAKE_SOURCE_DIR}/packages)
  
-  ExternalProject_Add(GLOG
+  ExternalProject_Add(glog
     PREFIX glog
     SOURCE_DIR "${PACKAGES_DIR}/glog"
     CMAKE_CACHE_ARGS
@@ -27,7 +27,9 @@ if (NOT PACKAGES_DIR)
       -DBUILD_SHARED_LIBS:BOOL=OFF
       -DCMAKE_DEBUG_POSTFIX:STRING=""
   )  
+ 
   add_subdirectory(tests)
+  add_subdirectory(${PACKAGES_DIR}/tblink-rpc-core)
 endif()
 
 foreach(CompilerFlag ${CompilerFlags})
@@ -42,7 +44,7 @@ file(GLOB tblink_rpc_hdl_SRC
 add_library(tblink_rpc_hdl ${tblink_rpc_hdl_SRC})
 
 add_dependencies(tblink_rpc_hdl 
-	GLOG
+	glog
 	)
 
 target_include_directories(tblink_rpc_hdl PRIVATE
@@ -55,7 +57,6 @@ install(TARGETS tblink_rpc_hdl
     DESTINATION lib
     EXPORT tblink_rpc_hdl-targets)
 
-add_subdirectory(${PACKAGES_DIR}/tblink-rpc-core)
 
 
 

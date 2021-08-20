@@ -79,8 +79,13 @@ std::vector<std::string> EndpointServicesVpi::args() {
 }
 
 void EndpointServicesVpi::shutdown() {
-	m_vpi->vpi_control(vpiFinish, 0);
-	m_shutdown = true;
+	// Something else will handle this for
+	// passive endpoints. They're just along
+	// for the ride.
+	if (m_endpoint->type() == IEndpoint::Active) {
+		m_vpi->vpi_control(vpiFinish, 0);
+		m_shutdown = true;
+	}
 }
 
 PLI_INT32 EndpointServicesVpi::time_cb(p_cb_data cbd) {
@@ -232,7 +237,7 @@ PLI_INT32 EndpointServicesVpi::delta() {
 
 PLI_INT32 EndpointServicesVpi::end_of_simulation() {
 
-	if (m_endpoint) {
+	if (m_endpoint && m_endpoint->type() == IEndpoint::Active) {
 		m_endpoint->shutdown();
 	}
 
@@ -438,9 +443,14 @@ void EndpointServicesVpi::idle() {
 
 	// Only check for new messages if we haven't already
 	// been told to run until the next event
-	while (m_pending_nb_calls == 0 && m_run_until_event==0 && !m_shutdown) {
-		// Wait for a request
-		ret = m_endpoint->await_req();
+	if (m_endpoint->type() == IEndpoint::Active) {
+		while (
+			m_pending_nb_calls == 0 &&
+			m_run_until_event==0 &&
+			!m_shutdown) {
+			// Wait for a request
+			ret = m_endpoint->await_req();
+		}
 	}
 
 	if (m_pending_nb_calls > 0 && !m_shutdown) {
