@@ -14,7 +14,7 @@ MethodCallVpi::MethodCallVpi(
 		IInterfaceInst				*ifc,
 		IMethodType					*method,
 		intptr_t					call_id,
-		IParamValVector				*params) :
+		IParamValVec				*params) :
 				m_ifc(ifc), m_method(method),
 				m_call_id(call_id), m_params(params), m_idx(0) {
 
@@ -38,7 +38,7 @@ MethodCallVpiUP MethodCallVpi::mk(
 			IInterfaceInst						*ifc,
 			IMethodType							*method,
 			intptr_t							call_id,
-			tblink_rpc_core::IParamValVector	*params) {
+			tblink_rpc_core::IParamValVec		*params) {
 	return MethodCallVpiUP(new MethodCallVpi(ifc, method, call_id, params));
 }
 

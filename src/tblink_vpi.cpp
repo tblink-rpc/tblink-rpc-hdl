@@ -27,9 +27,9 @@ static IEndpointUP				prv_endpoint;
 
 static void tblink_vpi_atexit() {
 	fprintf(stdout, "tblink_vpi_atexit\n");
-	if (prv_endpoint->type() == IEndpoint::Active) {
+//	if (prv_endpoint->type() == IEndpoint::Active) {
 		prv_endpoint->shutdown();
-	}
+//	}
 }
 
 static void tblink_vpi_sigpipe(int sig) {

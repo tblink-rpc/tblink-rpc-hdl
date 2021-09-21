@@ -7,7 +7,6 @@
 
 #include "TblinkRpcHdlTestBase.h"
 #include "TestEndpointServices.h"
-#include "JsonRpcEndpoint.h"
 #ifndef _WIN32
 #include <pthread.h>
 #include <sys/socket.h>
@@ -86,10 +85,12 @@ void TblinkRpcHdlTestBase::SetUp() {
 	}
 
 
-	IFactory *factory = tblink_rpc_get_factory();
+	ITbLink *factory = tblink();
 	m_transport = factory->mkSocketTransport(0, sockfd);
+	/* TODO:
 	m_endpoint = factory->mkJsonRpcEndpoint(this);
 	dynamic_cast<JsonRpcEndpoint *>(m_endpoint)->init(m_transport);
+	 */
 
     for (std::vector<std::string>::const_iterator
     		it=cmdline.begin();
@@ -199,11 +200,13 @@ TEST_F(TblinkRpcHdlTestBase, smoke) {
 
 	m_endpoint->connect_complete();
 
-	IParamValVector *params = t0->mkVector();
-	params->push_back(t0->mkValIntS(1));
+	IParamValVec *params = t0->mkValVec();
+	params->push_back(t0->mkValIntS(1, 32));
+	/* TODO:
 	IParamValUP ret(t0->invoke_nb(
 			inc,
 			params));
+	 */
 
 #ifdef UNDEFINED
 	IMethodType *inc_b = t0->type()->findMethod("inc_b");

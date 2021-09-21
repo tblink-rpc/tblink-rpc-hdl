@@ -56,7 +56,7 @@ TEST_F(TestBfm1, smoke) {
 			IInterfaceInst		*inst,
 			IMethodType			*method,
 			intptr_t			call_id,
-			IParamValVector		*params
+			IParamValVec		*params
 			) {
 		fprintf(stdout, "invoke %s\n", method->name().c_str());
 		fflush(stdout);
@@ -64,9 +64,10 @@ TEST_F(TestBfm1, smoke) {
 	});
 
 	for (uint32_t i=1; i<16; i++) {
-		IParamValVector *params = m_endpoint->mkVector();
-		params->push_back(m_endpoint->mkValIntU(i));
-		i0->invoke_nb(req, params);
+		IParamValVec *params = m_endpoint->mkValVec();
+		params->push_back(m_endpoint->mkValIntU(i, 32));
+		// TODO:
+//		i0->invoke_nb(req, params);
 
 		fprintf(stdout, "--> run_until_event\n");
 		fflush(stdout);

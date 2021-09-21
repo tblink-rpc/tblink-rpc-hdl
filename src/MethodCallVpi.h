@@ -9,7 +9,7 @@
 #include <memory>
 #include "tblink_rpc/IInterfaceInst.h"
 #include "tblink_rpc/IMethodType.h"
-#include "tblink_rpc/IParamValVector.h"
+#include "tblink_rpc/IParamValVec.h"
 
 namespace tblink_rpc_hdl {
 
@@ -21,7 +21,7 @@ public:
 			tblink_rpc_core::IInterfaceInst		*ifc,
 			tblink_rpc_core::IMethodType		*method,
 			intptr_t							call_id,
-			tblink_rpc_core::IParamValVector	*params);
+			tblink_rpc_core::IParamValVec		*params);
 
 	virtual ~MethodCallVpi();
 
@@ -43,13 +43,13 @@ public:
 			tblink_rpc_core::IInterfaceInst		*ifc,
 			tblink_rpc_core::IMethodType		*method,
 			intptr_t							call_id,
-			tblink_rpc_core::IParamValVector	*params);
+			tblink_rpc_core::IParamValVec		*params);
 
 private:
 	tblink_rpc_core::IInterfaceInst				*m_ifc;
 	tblink_rpc_core::IMethodType				*m_method;
 	intptr_t									m_call_id;
-	tblink_rpc_core::IParamValVectorUP			m_params;
+	tblink_rpc_core::IParamValVecUP				m_params;
 	uint32_t									m_idx;
 };
 

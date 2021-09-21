@@ -10,7 +10,7 @@
 #include "vpi_api.h"
 #include "tblink_rpc/IInterfaceInst.h"
 #include "tblink_rpc/IEndpoint.h"
-#include "tblink_rpc/IParamValVector.h"
+#include "tblink_rpc/IParamValVec.h"
 #include "MethodCallVpi.h"
 
 namespace tblink_rpc_hdl {
@@ -25,7 +25,7 @@ public:
 			tblink_rpc_core::IInterfaceInst				*inst,
 			tblink_rpc_core::IMethodType				*method,
 			intptr_t									call_id,
-			tblink_rpc_core::IParamValVectorSP			params);
+			tblink_rpc_core::IParamValVec				*params);
 
 private:
 

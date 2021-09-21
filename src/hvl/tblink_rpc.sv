@@ -14,10 +14,18 @@ package tblink_rpc;
 	
 	// Initialize DPI context for package
 	import "DPI-C" context function int _tblink_rpc_pkg_init(
-			output int time_precision);
+			input int unsigned 		have_blocking_tasks,
+			output int 				time_precision);
 	
 	int 			_time_precision = 0;
-	int _init = _tblink_rpc_pkg_init(_time_precision);
+	int _init = _tblink_rpc_pkg_init(
+`ifdef VERILATOR
+			0,
+`else
+			1,
+`endif
+			_time_precision
+			);
 	
 	typedef class IInterfaceTypeBuilder;
 	typedef class IInterfaceType;
@@ -337,14 +345,16 @@ package tblink_rpc;
 		function new();
 			m_hndl = null;
 		endfunction
-		
+
+		/** TODO:
 		function int build_complete();
-			return _tblink_rpc_endpoint_build_complete(m_hndl);
+			return tblink_rpc_IEndpoint_build_complete(m_hndl);
 		endfunction
 		
 		function int connect_complete();
-			return _tblink_rpc_endpoint_connect_complete(m_hndl);
+			return tblink_rpc_IEndpoint_connect_complete(m_hndl);
 		endfunction
+		 */
 		
 		function int shutdown();
 			return _tblink_rpc_endpoint_shutdown(m_hndl);
@@ -352,7 +362,7 @@ package tblink_rpc;
 		
 		function IInterfaceType findInterfaceType(string name);
 			IInterfaceType ret;
-			chandle if_h = _tblink_rpc_endpoint_findInterfaceType(
+			chandle if_h = tblink_rpc_IEndpoint_findInterfaceType(
 					m_hndl,
 					name);
 			if (if_h != null) begin
@@ -365,7 +375,7 @@ package tblink_rpc;
 		function IInterfaceTypeBuilder newInterfaceTypeBuilder(string name);
 			IInterfaceTypeBuilder ret = new();
 			
-			ret.m_hndl = _tblink_rpc_endpoint_newInterfaceTypeBuilder(
+			ret.m_hndl = tblink_rpc_IEndpoint_newInterfaceTypeBuilder(
 						m_hndl,
 						name);
 			return ret;
@@ -373,7 +383,7 @@ package tblink_rpc;
 		
 		function IInterfaceType defineInterfaceType(IInterfaceTypeBuilder builder);
 			IInterfaceType ret = new();
-			ret.m_hndl = _tblink_rpc_endpoint_defineInterfaceType(
+			ret.m_hndl = tblink_rpc_IEndpoint_defineInterfaceType(
 					m_hndl,
 					builder.m_hndl);
 			return ret;
@@ -528,19 +538,51 @@ package tblink_rpc;
 		IEndpoint ep = IEndpoint::inst();
 		ep.run();
 	endtask
+	
+	task automatic tblink_rpc_IEndpoint_start(chandle ep_h);
+`ifndef VERILATOR
+			// TODO: ensure launching thread is running
+`endif
+//		_tblink_rpc_IEndpoint_start(ep_h);
+	endtask
 		
 	// IEndpoint functions
 	import "DPI-C" context function chandle _tblink_rpc_endpoint_new(int have_blocking_tasks);
+	import "DPI-C" context function chandle _tblink_rpc_endpoint_default();
 	import "DPI-C" context function int _tblink_rpc_endpoint_launch(chandle ep_h);
-	import "DPI-C" context function int _tblink_rpc_endpoint_build_complete(chandle endpoint_h);
-	import "DPI-C" context function int _tblink_rpc_endpoint_connect_complete(chandle endpoint_h);
+	import "DPI-C" context function int tblink_rpc_IEndpoint_build_complete(chandle endpoint_h);
+	import "DPI-C" context function int tblink_rpc_IEndpoint_connect_complete(chandle endpoint_h);
 	import "DPI-C" context function int _tblink_rpc_endpoint_shutdown(chandle endpoint_h);
-	import "DPI-C" context function chandle _tblink_rpc_endpoint_findInterfaceType(
+	import "DPI-C" context function string tblink_rpc_IEndpoint_last_error(chandle endpoint_h);
+	import "DPI-C" context function chandle tblink_rpc_IEndpoint_findInterfaceType(
 			chandle		endpoint_h,
 			string		name);
-	import "DPI-C" context function chandle _tblink_rpc_endpoint_newInterfaceTypeBuilder(
+	import "DPI-C" context function chandle tblink_rpc_IEndpoint_newInterfaceTypeBuilder(
 			chandle 	endpoint_h,
 			string 		name);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeBool(
+			chandle			iftype_b);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeInt(
+			chandle			iftype_b,
+			int unsigned	is_signed,
+			int unsigned	width);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeMap(
+			chandle			iftype_b,
+			chandle			key_t,
+			chandle			elem_t);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeStr(
+			chandle			iftype_b);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeVec(
+			chandle			iftype_b,
+			chandle			elem_t);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceTypeBuilder_newMethodTypeBuilder(
+			chandle			iftype_b,
+			string			name,
+			longint			id,
+			chandle			rtype,
+			int unsigned	is_export,
+			int unsigned	is_blocking);
+	
 	import "DPI-C" context function chandle _tblink_rpc_iftype_builder_define_method(
 			chandle			iftype_b,
 			string			name,
@@ -549,7 +591,7 @@ package tblink_rpc;
 			int unsigned	is_export,
 			int unsigned	is_blocking);
 	
-	import "DPI-C" context function chandle _tblink_rpc_endpoint_defineInterfaceType(
+	import "DPI-C" context function chandle tblink_rpc_IEndpoint_defineInterfaceType(
 			chandle		endpoint_h,
 			chandle 	iftype_builder_h);
 	
@@ -684,16 +726,17 @@ package tblink_rpc;
 		chandle				cb_data);
 `endif /* !VERILATOR */
 	
+	
 	function chandle tblink_rpc_bfm_find_iftype(string name);
 		automatic IEndpoint ep = IEndpoint::inst();
-		return _tblink_rpc_endpoint_findInterfaceType(
+		return tblink_rpc_IEndpoint_findInterfaceType(
 			ep.m_hndl,
 			name);
 	endfunction
 		
 	function chandle tblink_rpc_bfm_new_iftype_builder(string name);
 		automatic IEndpoint ep = IEndpoint::inst();
-		return _tblink_rpc_endpoint_newInterfaceTypeBuilder(
+		return tblink_rpc_IEndpoint_newInterfaceTypeBuilder(
 			ep.m_hndl,
 			name);
 	endfunction
@@ -717,7 +760,7 @@ package tblink_rpc;
 	function chandle tblink_rpc_bfm_define_interface_type(
 		chandle		iftype_builder);
 		automatic IEndpoint ep = IEndpoint::inst();
-		return _tblink_rpc_endpoint_defineInterfaceType(
+		return tblink_rpc_IEndpoint_defineInterfaceType(
 				ep.m_hndl,
 				iftype_builder);
 	endfunction
@@ -738,6 +781,24 @@ package tblink_rpc;
 		
 		return ifinst_h;		
 	endfunction
+
+	import "DPI-C" context function chandle tblink_rpc_findLaunchType(string id);
+	
+	import "DPI-C" context function chandle tblink_rpc_newLaunchParams();
+	
+	import "DPI-C" context function void tblink_rpc_ILaunchParams_add_arg(
+			input chandle	params,
+			input string	arg);
+	
+	import "DPI-C" context function void tblink_rpc_ILaunchParams_add_param(
+			input chandle	params,
+			input string	key,
+			input string	val);
+
+	import "DPI-C" context function chandle tblink_rpc_ILaunchType_launch(
+			input chandle	launch,
+			input chandle 	params,
+			output string	error);
 
 endpackage
 

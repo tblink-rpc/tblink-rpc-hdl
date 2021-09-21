@@ -58,7 +58,7 @@ public:
 			tblink_rpc_core::IInterfaceInst			*inst,
 			tblink_rpc_core::IMethodType			*method,
 			intptr_t								call_id,
-			tblink_rpc_core::IParamValVector		*params);
+			tblink_rpc_core::IParamValVec			*params);
 
 	void inc_pending_nb() { m_pending_nb++; }
 

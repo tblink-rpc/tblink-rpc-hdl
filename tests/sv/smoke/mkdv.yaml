@@ -1,0 +1,13 @@
+
+jobs:
+  - smoke:
+    variables:
+    - GTEST_FILTER: TblinkRpcHdlTestBase.smoke
+  - single_time_cb:
+    variables:
+    - GTEST_FILTER: TblinkRpcHdlTestBase.single_time_cb
+  - dual_layer_time_cb:
+    variables:
+    - GTEST_FILTER: TblinkRpcHdlTestBase.dual_layer_time_cb
+
+

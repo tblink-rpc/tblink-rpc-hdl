@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 11)
 if (NOT PACKAGES_DIR)
   set(PACKAGES_DIR ${CMAKE_SOURCE_DIR}/packages)
  
-  ExternalProject_Add(glog
+  ExternalProject_Add(GLOG
     PREFIX glog
     SOURCE_DIR "${PACKAGES_DIR}/glog"
     CMAKE_CACHE_ARGS
@@ -44,7 +44,7 @@ file(GLOB tblink_rpc_hdl_SRC
 add_library(tblink_rpc_hdl ${tblink_rpc_hdl_SRC})
 
 add_dependencies(tblink_rpc_hdl 
-	glog
+	GLOG
 	)
 
 target_include_directories(tblink_rpc_hdl PRIVATE

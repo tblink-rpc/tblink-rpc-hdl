@@ -1,5 +1,6 @@
 TBLINK_RPC_HDL_TESTS_COMMON_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-PACKAGES_DIR := $(abspath $(TBLINK_RPC_HDL_TESTS_COMMON_DIR)/../../packages)
+TBLINK_RPC_HDL_DIR := $(abspath $(TBLINK_RPC_HDL_TESTS_COMMON_DIR)/../..)
+PACKAGES_DIR := $(TBLINK_RPC_HDL_DIR)/packages
 DV_MK := $(shell PATH=$(PACKAGES_DIR)/python/bin:$(PATH) python3 -m mkdv mkfile)
 
 BUILD_DIR ?=  $(abspath $(TBLINK_RPC_HDL_TESTS_COMMON_DIR)/../../build)
@@ -14,6 +15,8 @@ export TBLINK_TEST_RUNNER
 
 LD_LIBRARY_PATH:=$(BUILD_DIR)/tests:$(LD_LIBRARY_PATH)
 export LD_LIBRARY_PATH
+
+MKDV_PYTHONPATH += $(PACKAGES_DIR)/tblink-rpc-core/python
 
 include $(DV_MK)
 else # Rules

@@ -8,7 +8,7 @@
 #pragma once
 #include "tblink_rpc/IInterfaceInst.h"
 #include "tblink_rpc/IMethodType.h"
-#include "tblink_rpc/IParamValVector.h"
+#include "tblink_rpc/IParamValVec.h"
 
 namespace tblink_rpc_hdl {
 
@@ -18,7 +18,7 @@ public:
 			tblink_rpc_core::IInterfaceInst		*inst,
 			tblink_rpc_core::IMethodType		*method,
 			intptr_t							call_id,
-			tblink_rpc_core::IParamValVector	*params
+			tblink_rpc_core::IParamValVec		*params
 			);
 
 	virtual ~InvokeInfoDpi();
@@ -29,7 +29,7 @@ public:
 
 	intptr_t call_id() const { return m_call_id; }
 
-	tblink_rpc_core::IParamValVector *params() const { return m_params; }
+	tblink_rpc_core::IParamValVec *params() const { return m_params; }
 
 	tblink_rpc_core::IParamVal *ret() const { return m_ret; }
 
@@ -39,7 +39,7 @@ private:
 	tblink_rpc_core::IInterfaceInst				*m_inst;
 	tblink_rpc_core::IMethodType				*m_method;
 	intptr_t									m_call_id;
-	tblink_rpc_core::IParamValVector			*m_params;
+	tblink_rpc_core::IParamValVec				*m_params;
 	tblink_rpc_core::IParamVal					*m_ret;
 
 };

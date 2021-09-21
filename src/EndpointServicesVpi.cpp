@@ -82,10 +82,10 @@ void EndpointServicesVpi::shutdown() {
 	// Something else will handle this for
 	// passive endpoints. They're just along
 	// for the ride.
-	if (m_endpoint->type() == IEndpoint::Active) {
+//	if (m_endpoint->type() == IEndpoint::Active) {
 		m_vpi->vpi_control(vpiFinish, 0);
 		m_shutdown = true;
-	}
+//	}
 }
 
 PLI_INT32 EndpointServicesVpi::time_cb(p_cb_data cbd) {
@@ -237,9 +237,9 @@ PLI_INT32 EndpointServicesVpi::delta() {
 
 PLI_INT32 EndpointServicesVpi::end_of_simulation() {
 
-	if (m_endpoint && m_endpoint->type() == IEndpoint::Active) {
+//	if (m_endpoint && m_endpoint->type() == IEndpoint::Active) {
 		m_endpoint->shutdown();
-	}
+//	}
 
 	return 0;
 }
@@ -280,6 +280,7 @@ PLI_INT32 EndpointServicesVpi::iftype_builder_define_method() {
 	bool is_export = args->scan()->val_bool();
 	bool is_blocking = args->scan()->val_bool();
 
+	/* TODO:
 	IMethodType *method_t = iftype_builder->define_method(
 			name,
 			id,
@@ -288,6 +289,7 @@ PLI_INT32 EndpointServicesVpi::iftype_builder_define_method() {
 			is_blocking);
 
 	systf_h->val_ptr(reinterpret_cast<void *>(method_t));
+     */
 
 	return 0;
 }
@@ -315,6 +317,8 @@ PLI_INT32 EndpointServicesVpi::define_ifinst() {
 	vpiHandle scope_h = m_global->vpi()->vpi_handle(vpiScope, systf_h->hndl());
 	std::string inst_name = m_global->vpi()->vpi_get_str(vpiFullName, scope_h);
 
+	bool is_mirror = args->scan()->val_bool();
+
 	IInterfaceType *iftype = args->scan()->val_ptrT<IInterfaceType>();
 	// Last parameter is the event reference
 	vpiHandle notify_ev = args->scan()->release();
@@ -327,6 +331,7 @@ PLI_INT32 EndpointServicesVpi::define_ifinst() {
 	IInterfaceInst *ifinst = m_endpoint->defineInterfaceInst(
 			iftype,
 			inst_name,
+			is_mirror,
 			std::bind(
 					&InterfaceInstProxyVpi::invoke_req,
 					ifinst_p,
@@ -352,7 +357,7 @@ PLI_INT32 EndpointServicesVpi::ifinst_call_claim() {
 	InterfaceInstProxyVpi *ifinst_p = args->scan()->val_ptrT<InterfaceInstProxyVpi>();
 	VpiHandleSP params_arg = args->scan();
 
-	IParamValVectorSP params;
+	IParamValVec *params;
 	MethodCallVpi *call = ifinst_p->claim_call();
 
 	systf_h->val_ptr(call);
@@ -394,7 +399,7 @@ PLI_INT32 EndpointServicesVpi::ifinst_call_complete() {
 
 	if (rv_h) {
 		fprintf(stdout, "have return\n");
-		rv = m_endpoint->mkValIntS(rv_h->val_i64());
+		rv = m_endpoint->mkValIntS(rv_h->val_i64(), 64);
 	} else {
 		fprintf(stdout, "no return\n");
 	}
@@ -443,7 +448,7 @@ void EndpointServicesVpi::idle() {
 
 	// Only check for new messages if we haven't already
 	// been told to run until the next event
-	if (m_endpoint->type() == IEndpoint::Active) {
+//	if (m_endpoint->type() == IEndpoint::Active) {
 		while (
 			m_pending_nb_calls == 0 &&
 			m_run_until_event==0 &&
@@ -451,7 +456,7 @@ void EndpointServicesVpi::idle() {
 			// Wait for a request
 			ret = m_endpoint->await_req();
 		}
-	}
+//	}
 
 	if (m_pending_nb_calls > 0 && !m_shutdown) {
 		// schedule a delta and wait for completion

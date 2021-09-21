@@ -41,7 +41,9 @@ void EndpointServicesDpi::init(tblink_rpc_core::IEndpoint *endpoint) {
 
 	// Add a callback to ensure we run build/connect
 	// if the testbench environment does not
-	_add_time_cb(0, 0, std::bind(&EndpointServicesDpi::build_connect_catcher, this));
+
+	// TODO: more appropriate for an auto-started endpoint
+//	_add_time_cb(0, 0, std::bind(&EndpointServicesDpi::build_connect_catcher, this));
 }
 
 /**
@@ -160,7 +162,7 @@ void EndpointServicesDpi::invoke_req(
 		tblink_rpc_core::IInterfaceInst			*inst,
 		tblink_rpc_core::IMethodType			*method,
 		intptr_t								call_id,
-		tblink_rpc_core::IParamValVector		*params) {
+		tblink_rpc_core::IParamValVec			*params) {
 	InvokeInfoDpi *ii = new InvokeInfoDpi(
 			inst,
 			method,

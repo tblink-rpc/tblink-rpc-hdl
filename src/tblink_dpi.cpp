@@ -20,8 +20,10 @@
 #include "ILaunch.h"
 #include "EndpointServicesDpi.h"
 #include "InvokeInfoDpi.h"
+#include "TblinkPluginDpi.h"
 #include "TimeCallbackClosureDpi.h"
 #include "glog/logging.h"
+#include "tblink_rpc/tblink_rpc.h"
 
 typedef void *chandle;
 
@@ -56,11 +58,11 @@ void _tblink_rpc_invoke_b(void *ii_h) {
 using namespace tblink_rpc_core;
 using namespace tblink_rpc_hdl;
 
-static EndpointServicesDpiUP	prv_services;
-static IEndpointUP				prv_endpoint;
 static dpi_api_t				prv_dpi;
 static bool						prv_registered = false;
 static void						*prv_pkg_scope = 0;
+static TblinkPluginDpi			*prv_plugin = 0;
+static char						prv_msgbuf[128];
 
 static void *get_pkg_scope() {
 	return prv_pkg_scope;
@@ -68,21 +70,26 @@ static void *get_pkg_scope() {
 
 static void tblink_dpi_atexit() {
 	fprintf(stdout, "tblink_dpi_atexit\n");
+	/*
 	if (prv_endpoint) {
 		prv_endpoint->shutdown();
 	}
+	 */
 }
 
 static void tblink_dpi_sigpipe(int sig) {
 	fprintf(stdout, "tblink_vpi_sigpipe\n");
 	fflush(stdout);
+	/*
 	if (prv_endpoint) {
 		prv_endpoint->shutdown();
 	}
+	 */
 }
 
 static void elab_cb(intptr_t callback_id) {
 	fprintf(stdout, "elab_cb\n");
+	/*
 	if (!prv_registered) {
 		fprintf(stdout, "completing registration\n");
 
@@ -93,11 +100,12 @@ static void elab_cb(intptr_t callback_id) {
 		// Wait for next event
 		prv_services->idle();
 	}
-
+	 */
 }
 
 EXTERN_C int _tblink_rpc_pkg_init(
-		int32_t	*time_precision) {
+		unsigned int		have_blocking_tasks,
+		int32_t				*time_precision) {
 	vpi_api_t *vpi_api = get_vpi_api();
 
 	if (!vpi_api) {
@@ -106,16 +114,29 @@ EXTERN_C int _tblink_rpc_pkg_init(
 		return 0;
 	}
 
-	*time_precision = vpi_api->vpi_get(vpiTimePrecision, 0);
+	// Capture the package scope handle
 	prv_pkg_scope = svGetScope();
 
-    // Add a delta callback to check for more things registering
-//    prv_services->_add_time_cb(0, 0, &elab_cb);
+	memset(&prv_dpi, 0, sizeof(prv_dpi));
+	prv_dpi.svGetScope = &svGetScope;
+	prv_dpi.svSetScope = &svSetScope;
+	prv_dpi.get_pkg_scope = &get_pkg_scope;
+	prv_dpi.invoke_nb = &_tblink_rpc_invoke_nb;
+	prv_dpi.invoke_b = &_tblink_rpc_invoke_b;
+	prv_dpi.add_time_cb = &_tblink_rpc_add_time_cb;
 
-	return 1;
+	*time_precision = vpi_api->vpi_get(vpiTimePrecision, 0);
+
+	prv_plugin = new TblinkPluginDpi(
+			vpi_api,
+			&prv_dpi,
+			have_blocking_tasks);
+
+	return prv_plugin->init();
 }
 
 EXTERN_C int _tblink_rpc_endpoint_launch(chandle ep_h) {
+	/*
     // Create the endpoint
     ILaunch *launcher = tblink_rpc_hdl_launcher();
 
@@ -129,6 +150,8 @@ EXTERN_C int _tblink_rpc_endpoint_launch(chandle ep_h) {
     } else {
     	return 0;
     }
+     */
+	return 1;
 }
 
 
@@ -157,6 +180,9 @@ EXTERN_C void _tblink_rpc_endpoint_invoke_info_invoke_rsp(chandle ii_h) {
 }
 
 EXTERN_C void *_tblink_rpc_endpoint_new(int have_blocking_tasks) {
+#ifdef UNDEFINED
+	// TODO: need to
+
 	if (!prv_endpoint) {
 		vpi_api_t *vpi_api = get_vpi_api();
 
@@ -201,20 +227,62 @@ EXTERN_C void *_tblink_rpc_endpoint_new(int have_blocking_tasks) {
 	}
 
 	return reinterpret_cast<void *>(prv_endpoint.get());
-}
-EXTERN_C int _tblink_rpc_endpoint_build_complete(void *endpoint_h) {
-	return reinterpret_cast<IEndpoint *>(endpoint_h)->build_complete();
+#endif
 }
 
-EXTERN_C int _tblink_rpc_endpoint_connect_complete(void *endpoint_h) {
-	return reinterpret_cast<IEndpoint *>(endpoint_h)->connect_complete();
+EXTERN_C chandle _tblink_rpc_endpoint_default() {
+	return reinterpret_cast<chandle>(prv_plugin->endpoint());
+}
+
+EXTERN_C int tblink_rpc_IEndpoint_build_complete(
+		chandle				endpoint_h) {
+	int32_t ret = 0;
+	IEndpoint *ep = reinterpret_cast<IEndpoint *>(endpoint_h);
+	if (ep->build_complete() != 0) {
+		return -1;
+	}
+
+	while ((ret=ep->is_build_complete()) == 0) {
+		if (ep->process_one_message() == -1) {
+			ret = -1;
+			break;
+		}
+	}
+
+	return ret;
+}
+
+EXTERN_C int tblink_rpc_IEndpoint_connect_complete(
+		chandle			endpoint_h) {
+	IEndpoint *ep = reinterpret_cast<IEndpoint *>(endpoint_h);
+	int ret = ep->connect_complete();
+
+	if (ret == -1) {
+		return ret;
+	}
+
+	while ((ret=ep->is_connect_complete()) == 0) {
+		if (ep->process_one_message() == -1) {
+			ret = -1;
+			break;
+		}
+	}
+
+	return ret;
+}
+
+EXTERN_C char *tblink_rpc_IEndpoint_last_error(chandle endpoint_h) {
+	strncpy(prv_msgbuf,
+			reinterpret_cast<IEndpoint *>(endpoint_h)->last_error().c_str(),
+			sizeof(prv_msgbuf));
+	return prv_msgbuf;
 }
 
 EXTERN_C int _tblink_rpc_endpoint_shutdown(void *endpoint_h) {
 	return reinterpret_cast<IEndpoint *>(endpoint_h)->shutdown();
 }
 
-EXTERN_C void *_tblink_rpc_endpoint_findInterfaceType(
+EXTERN_C void *tblink_rpc_IEndpoint_findInterfaceType(
 		void			*endpoint_h,
 		const char		*name) {
 	fprintf(stdout, "findInterfaceType: %p %s\n", endpoint_h, name);
@@ -223,11 +291,67 @@ EXTERN_C void *_tblink_rpc_endpoint_findInterfaceType(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->findInterfaceType(name));
 }
 
-EXTERN_C void *_tblink_rpc_endpoint_newInterfaceTypeBuilder(
+EXTERN_C chandle tblink_rpc_IEndpoint_newInterfaceTypeBuilder(
 		void 			*endpoint_h,
 		const char		*name) {
-	return reinterpret_cast<void *>(
+	return reinterpret_cast<chandle>(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->newInterfaceTypeBuilder(name));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeBool(
+		chandle				iftype_b) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->mkTypeBool());
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeInt(
+		chandle				iftype_b,
+		uint32_t			is_signed,
+		uint32_t			width) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->mkTypeInt(
+					is_signed,
+					width));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeMap(
+		chandle				iftype_b,
+		chandle				key_t,
+		chandle				elem_t) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->mkTypeMap(
+					reinterpret_cast<IType *>(key_t),
+					reinterpret_cast<IType *>(elem_t)));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeStr(
+		chandle				iftype_b) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->mkTypeStr());
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeVec(
+		chandle				iftype_b,
+		chandle				elem_t) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->mkTypeVec(
+					reinterpret_cast<IType *>(elem_t)));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_newMethodTypeBuilder(
+		chandle				iftype_b,
+		const char			*name,
+		intptr_t			id,
+		chandle				rtype,
+		uint32_t			is_export,
+		uint32_t			is_blocking) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->newMethodTypeBuilder(
+					name,
+					id,
+					reinterpret_cast<IType *>(rtype),
+					is_export,
+					is_blocking));
 }
 
 EXTERN_C void *_tblink_rpc_iftype_builder_define_method(
@@ -237,6 +361,7 @@ EXTERN_C void *_tblink_rpc_iftype_builder_define_method(
 			const char		*signature,
 			uint32_t		is_export,
 			uint32_t		is_blocking) {
+	/* TODO:
 	return reinterpret_cast<void *>(
 			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->define_method(
 					name,
@@ -244,10 +369,12 @@ EXTERN_C void *_tblink_rpc_iftype_builder_define_method(
 					signature,
 					is_export,
 					is_blocking));
+     */
+	return 0;
 }
 
 
-EXTERN_C void *_tblink_rpc_endpoint_defineInterfaceType(
+EXTERN_C void *tblink_rpc_IEndpoint_defineInterfaceType(
 		void 			*endpoint_h,
 		void			*iftype_builder_h) {
 	return reinterpret_cast<void *>(
@@ -258,16 +385,20 @@ EXTERN_C void *_tblink_rpc_endpoint_defineInterfaceType(
 EXTERN_C void *_tblink_rpc_endpoint_defineInterfaceInst(
 		void 			*endpoint_h,
 		void			*iftype_h,
-		const char		*inst_name) {
+		const char		*inst_name,
+		unsigned int	is_mirror) {
+#ifdef UNDEFINED
 	return reinterpret_cast<void *>(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->defineInterfaceInst(
 					reinterpret_cast<IInterfaceType *>(iftype_h),
 					inst_name,
+					is_mirror,
 					std::bind(&EndpointServicesDpi::invoke_req, prv_services.get(),
 							std::placeholders::_1,
 							std::placeholders::_2,
 							std::placeholders::_3,
 							std::placeholders::_4)));
+#endif
 }
 
 EXTERN_C int _tblink_rpc_notify_time_cb(void *cb_data) {
@@ -315,27 +446,29 @@ EXTERN_C uint32_t _tblink_rpc_iparam_val_bool_val(void *hndl) {
 }
 
 EXTERN_C chandle _tblink_rpc_iparam_val_vector_new() {
+#ifdef UNDEFINED
 	return reinterpret_cast<void *>(
 			static_cast<IParamVal *>(
-					prv_endpoint->mkVector()));
+					prv_endpoint->mkValVec()));
+#endif
 }
 
 EXTERN_C uint32_t _tblink_rpc_iparam_val_vector_size(void *hndl) {
-	return dynamic_cast<IParamValVector *>(
+	return dynamic_cast<IParamValVec *>(
 			reinterpret_cast<IParamVal *>(hndl))->size();
 }
 
 EXTERN_C void *_tblink_rpc_iparam_val_vector_at(void *hndl, uint32_t idx) {
 	fprintf(stdout, "vector_at: hndl=%p\n", hndl);
 	fprintf(stdout, "  vv=%p\n",
-			dynamic_cast<IParamValVector *>(reinterpret_cast<IParamVal *>(hndl)));
+			dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl)));
 	fflush(stdout);
 	return reinterpret_cast<void *>(
-			dynamic_cast<IParamValVector *>(reinterpret_cast<IParamVal *>(hndl))->at(idx));
+			dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl))->at(idx));
 }
 
 EXTERN_C void _tblink_rpc_iparam_val_vector_push_back(void *hndl, void *val_h) {
-	dynamic_cast<IParamValVector *>(reinterpret_cast<IParamVal *>(hndl))->push_back(
+	dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl))->push_back(
 			reinterpret_cast<IParamVal *>(val_h));
 }
 
@@ -343,9 +476,76 @@ EXTERN_C chandle _tblink_rpc_ifinst_invoke_nb(
 		chandle			ifinst_h,
 		chandle			method_h,
 		chandle			params_h) {
+	// TODO:
+	/* TODO:
 	return reinterpret_cast<chandle>(
 			reinterpret_cast<IInterfaceInst *>(ifinst_h)->invoke_nb(
 					reinterpret_cast<IMethodType *>(method_h),
-					dynamic_cast<IParamValVector *>(
+					dynamic_cast<IParamValVec *>(
 							reinterpret_cast<IParamVal *>(params_h))));
+     */
+	return 0;
 }
+
+EXTERN_C chandle tblink_rpc_findLaunchType(const char *id) {
+	return reinterpret_cast<chandle>(tblink()->findLaunchType(id));
+}
+
+EXTERN_C chandle tblink_rpc_newLaunchParams() {
+	return reinterpret_cast<chandle>(tblink()->newLaunchParams());
+}
+
+EXTERN_C void tblink_rpc_ILaunchParams_add_arg(
+		chandle				params,
+		const char			*arg) {
+	reinterpret_cast<ILaunchParams *>(params)->add_arg(arg);
+}
+
+EXTERN_C void tblink_rpc_ILaunchParams_add_param(
+		chandle				params,
+		const char			*key,
+		const char			*val) {
+	reinterpret_cast<ILaunchParams *>(params)->add_param(key, val);
+}
+
+static char				error_s[256];
+EXTERN_C chandle tblink_rpc_ILaunchType_launch(
+		chandle				launch,
+		chandle				params,
+		char				**error) {
+	ILaunchType::result_t res = reinterpret_cast<ILaunchType *>(launch)->launch(
+			reinterpret_cast<ILaunchParams *>(params));
+	if (!res.first) {
+		strncpy(error_s, res.second.c_str(), sizeof(error_s));
+		*error = error_s;
+	} else {
+		*error = (char *)"";
+	}
+
+	// Run the initialization phase
+	if (res.first->init(
+			new EndpointServicesDpi(
+					prv_plugin->dpi_api(),
+					prv_plugin->vpi_api(),
+					prv_plugin->have_blocking_tasks()),
+			0) != 0) {
+		strncpy(error_s, res.first->last_error().c_str(), sizeof(error_s));
+		return 0;
+	}
+
+	int ret;
+	while ((ret = res.first->is_init()) == 0) {
+		if ((ret = res.first->process_one_message()) == -1) {
+			break;
+		}
+	}
+
+	if (ret != 1) {
+		strncpy(error_s, res.first->last_error().c_str(), sizeof(error_s));
+		return 0;
+	}
+
+	return res.first;
+}
+
+

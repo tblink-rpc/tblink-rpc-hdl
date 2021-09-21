@@ -12,7 +12,7 @@ ExternalProject_Add(GOOGLETEST
         -DCMAKE_SYSTEM_NAME:STRING=${CMAKE_SYSTEM_NAME}
         )
        
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(libglog glogd)
 else()
 	set(libglog glog)
