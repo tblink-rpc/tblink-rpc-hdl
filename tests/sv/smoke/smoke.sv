@@ -32,6 +32,27 @@ module smoke(input clock);
 	`include "iverilog_control.svh"
 `endif
 	
+	chandle ifinst;
+	
+	class target extends IInterfaceImpl;
+		
+		virtual function void invoke_nb(input InvokeInfo ii);
+			chandle ifinst = tblink_rpc_InvokeInfo_ifinst(ii.m_hndl);
+			chandle retval = tblink_rpc_IInterfaceInst_mkValIntS(ifinst, 0, 32);
+			
+			$display("target::invoke_nb");
+			tblink_rpc_InvokeInfo_invoke_rsp(
+					ii.m_hndl,
+					retval);
+		endfunction
+		
+		virtual task invoke_b(input InvokeInfo ii);
+			
+		endtask
+	endclass
+	
+	target			target_inst;
+	
 	task init;
 		begin
 			// Register the API supported by this BFM instance
@@ -83,6 +104,7 @@ module smoke(input clock);
 						tblink_rpc_IInterfaceTypeBuilder_mkTypeInt(iftype_b, 1, 32),
 						1,
 						0);
+				void'(tblink_rpc_IInterfaceTypeBuilder_add_method(iftype_b, mtb));
 
 				/*
 			void'(tblink_rpc_bfm_define_method(
@@ -102,6 +124,17 @@ module smoke(input clock);
 				 */
 				target_iftype_h = tblink_rpc_IEndpoint_defineInterfaceType(endpoint, iftype_b);
 			end
+			
+			target_inst = new();
+
+			// TODO: need to handle interface creation
+			// - How do we receive callbacks?
+			ifinst = tblink_rpc_IEndpoint_defineInterfaceInst(
+					endpoint,
+					target_iftype_h,
+					"target_inst",
+					0,
+					target_inst);
 		
 			if (tblink_rpc_IEndpoint_build_complete(endpoint) == -1) begin
 				$display("Error: build phase failed: %0s", 
@@ -117,7 +150,6 @@ module smoke(input clock);
 				return;
 			end
 
-	
 			tblink_rpc_IEndpoint_start(endpoint);
 		
 			//		tblink_rpc_run();			
@@ -129,7 +161,8 @@ module smoke(input clock);
 	end	
 	
 	always @(posedge clock) begin
-		$display("posedge");
+//		$display("posedge");
+		;
 	end
 	
 endmodule

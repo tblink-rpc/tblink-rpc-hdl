@@ -49,16 +49,18 @@ package tblink_rpc;
 		chandle			m_hndl;
 		
 		function string name();
-			return _tblink_rpc_method_type_name(m_hndl);
+			return tblink_rpc_IMethodType_name(m_hndl);
 		endfunction
 		
 		function longint id();
-			return _tblink_rpc_method_type_id(m_hndl);
+			return tblink_rpc_IMethodType_id(m_hndl);
 		endfunction
 	endclass
 	
-	import "DPI-C" context function string _tblink_rpc_method_type_name(chandle hndl);
-	import "DPI-C" context function longint _tblink_rpc_method_type_id(chandle hndl);
+	import "DPI-C" context function string tblink_rpc_IMethodType_name(chandle hndl);
+	import "DPI-C" context function longint tblink_rpc_IMethodType_id(chandle hndl);
+	import "DPI-C" context function int unsigned tblink_rpc_IMethodType_is_export(chandle hndl);
+	import "DPI-C" context function int unsigned tblink_rpc_IMethodType_is_blocking(chandle hndl);
 
 	typedef class IParamValBool;
 	typedef class IParamValVector;
@@ -189,6 +191,31 @@ package tblink_rpc;
 		
 	endclass
 	
+	import "DPI-C" context function string tblink_rpc_IInterfaceInst_name(
+			chandle			ifinst);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_type(
+			chandle			ifinst);
+	import "DPI-C" context function int unsigned tblink_rpc_IInterfaceInst_is_mirror(
+			chandle			ifinst);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValBool(
+			chandle			ifinst,
+			int unsigned	val);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValIntU(
+			chandle				ifinst,
+			longint unsigned	val,
+			int unsigned		width);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValIntS(
+			chandle				ifinst,
+			longint				val,
+			int unsigned		width);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValMap(
+			chandle				ifinst);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValStr(
+			chandle				ifinst,
+			string				val);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValVec(
+			chandle				ifinst);
+	
 	import "DPI-C" context function chandle _tblink_rpc_ifinst_invoke_nb(
 			chandle			ifinst_h,
 			chandle			method_h,
@@ -203,32 +230,34 @@ package tblink_rpc;
 		
 		function IInterfaceInst inst();
 			IInterfaceInst ret = new();
-			ret.m_hndl = _tblink_rpc_endpoint_invoke_info_inst(m_hndl);
+			ret.m_hndl = tblink_rpc_InvokeInfo_ifinst(m_hndl);
 			return ret;
 		endfunction
 		
 		function IMethodType method();
 			IMethodType ret = new();
-			ret.m_hndl = _tblink_rpc_endpoint_invoke_info_method(m_hndl);
+			ret.m_hndl = tblink_rpc_InvokeInfo_method(m_hndl);
 			return ret;
 		endfunction
 		
 		function IParamValVector params();
 			IParamValVector ret = new();
-			ret.m_hndl = _tblink_rpc_endpoint_invoke_info_params(m_hndl);
+			ret.m_hndl = tblink_rpc_InvokeInfo_params(m_hndl);
 			return ret;
 		endfunction
 
 		function void invoke_rsp();
-			_tblink_rpc_endpoint_invoke_info_invoke_rsp(m_hndl);
+			tblink_rpc_InvokeInfo_invoke_rsp(m_hndl, null);
 		endfunction
 		
 	endclass
 	
-	import "DPI-C" context function chandle _tblink_rpc_endpoint_invoke_info_inst(chandle hndl);
-	import "DPI-C" context function chandle _tblink_rpc_endpoint_invoke_info_method(chandle hndl);
-	import "DPI-C" context function chandle _tblink_rpc_endpoint_invoke_info_params(chandle ii_h);
-	import "DPI-C" context function void _tblink_rpc_endpoint_invoke_info_invoke_rsp(chandle ii_h);
+	import "DPI-C" context function chandle tblink_rpc_InvokeInfo_ifinst(chandle hndl);
+	import "DPI-C" context function chandle tblink_rpc_InvokeInfo_method(chandle hndl);
+	import "DPI-C" context function chandle tblink_rpc_InvokeInfo_params(chandle ii_h);
+	import "DPI-C" context function void tblink_rpc_InvokeInfo_invoke_rsp(
+			chandle 	ii_h,
+			chandle		retval_h);
 		
 	
 	class IInterfaceImpl;
@@ -342,8 +371,8 @@ package tblink_rpc;
 `endif
 		InvokeInfo						m_next_ii;
 		
-		function new();
-			m_hndl = null;
+		function new(chandle hndl);
+			m_hndl = hndl;
 		endfunction
 
 		/** TODO:
@@ -389,18 +418,24 @@ package tblink_rpc;
 			return ret;
 		endfunction
 		
+		
 		function IInterfaceInst defineInterfaceInst(
 			IInterfaceType			iftype,
 			string					inst_name,
+			int unsigned			is_mirror,
 			IInterfaceImpl			ifinst_impl);
 			IInterfaceInst ret = new();
-			ret.m_hndl = _tblink_rpc_endpoint_defineInterfaceInst(
+			/*
+			ret.m_hndl = tblink_rpc_IEndpoint_defineInterfaceInst(
 				m_hndl,
 				iftype.m_hndl,
-				inst_name);
+				inst_name,
+				is_mirror,
+				ifinst_impl);
 			
 			m_ifimpl_m[ret.m_hndl] = ifinst_impl;
 			m_ifinst_m[ifinst_impl] = ret.m_hndl;
+			 */
 			return ret;
 		endfunction
 	
@@ -423,6 +458,7 @@ package tblink_rpc;
 `endif
 
 		static function IEndpoint inst();
+			/*
 			if (_endpoint == null) begin
 				_endpoint = new();
 				_endpoint.m_hndl = _tblink_rpc_endpoint_new(
@@ -438,6 +474,7 @@ package tblink_rpc;
 					$finish();
 				end
 			end
+			 */
 			
 			return _endpoint;
 		endfunction
@@ -483,7 +520,7 @@ package tblink_rpc;
 		endfunction
 		
 		function void _invoke_nb(InvokeInfo ii);
-			chandle ifinst_h = _tblink_rpc_endpoint_invoke_info_inst(ii.m_hndl);
+			chandle ifinst_h = tblink_rpc_InvokeInfo_ifinst(ii.m_hndl);
 			IInterfaceImpl impl = m_ifimpl_m[ifinst_h];
 			impl.m_ii = ii;
 		
@@ -495,7 +532,7 @@ package tblink_rpc;
 		function void _invoke_b(InvokeInfo ii);
 `ifndef VERILATOR
 			tblink_rpc_invoke_b		closure;
-			chandle ifinst_h = _tblink_rpc_endpoint_invoke_info_inst(ii.m_hndl);
+			chandle ifinst_h = tblink_rpc_InvokeInfo_ifinst(ii.m_hndl);
 			IInterfaceImpl impl = m_ifimpl_m[ifinst_h];
 			/*
 			IInterfaceInst inst = new();
@@ -543,6 +580,11 @@ package tblink_rpc;
 `ifndef VERILATOR
 			// TODO: ensure launching thread is running
 `endif
+		$display("TODO: _start");
+		if (_tblink_rpc_IEndpoint_start(ep_h) == -1) begin
+			$display("TBLink Error: start failed");
+			$finish(1);
+		end
 //		_tblink_rpc_IEndpoint_start(ep_h);
 	endtask
 		
@@ -552,6 +594,7 @@ package tblink_rpc;
 	import "DPI-C" context function int _tblink_rpc_endpoint_launch(chandle ep_h);
 	import "DPI-C" context function int tblink_rpc_IEndpoint_build_complete(chandle endpoint_h);
 	import "DPI-C" context function int tblink_rpc_IEndpoint_connect_complete(chandle endpoint_h);
+	import "DPI-C" context function int _tblink_rpc_IEndpoint_start(chandle endpoint_h);
 	import "DPI-C" context function int _tblink_rpc_endpoint_shutdown(chandle endpoint_h);
 	import "DPI-C" context function string tblink_rpc_IEndpoint_last_error(chandle endpoint_h);
 	import "DPI-C" context function chandle tblink_rpc_IEndpoint_findInterfaceType(
@@ -582,6 +625,9 @@ package tblink_rpc;
 			chandle			rtype,
 			int unsigned	is_export,
 			int unsigned	is_blocking);
+	import "DPI-C" context function chandle tblink_rpc_IInterfaceTypeBuilder_add_method(
+			chandle			iftype_b,
+			chandle			mtb);
 	
 	import "DPI-C" context function chandle _tblink_rpc_iftype_builder_define_method(
 			chandle			iftype_b,
@@ -595,28 +641,58 @@ package tblink_rpc;
 			chandle		endpoint_h,
 			chandle 	iftype_builder_h);
 	
-	import "DPI-C" context function chandle _tblink_rpc_endpoint_defineInterfaceInst(
-			chandle		endpoint_h,
-			chandle		iftype_h,
-			string		inst_name);
-
-	function automatic void _tblink_rpc_invoke_nb(
-		chandle			invoke_info_h);
-		IEndpoint ep = IEndpoint::inst();
-		InvokeInfo ii = new(invoke_info_h);
-		
-		ep._invoke_nb(ii);
-	endfunction
-	export "DPI-C" function _tblink_rpc_invoke_nb;
+	IInterfaceImpl				ifinst2impl_m[chandle];
 	
-	function automatic void _tblink_rpc_invoke_b(
+	function chandle tblink_rpc_IEndpoint_defineInterfaceInst(
+			chandle			endpoint_h,
+			chandle			iftype_h,
+			string			inst_name,
+			int unsigned	is_mirror,
+			IInterfaceImpl	impl);
+		chandle ifinst = _tblink_rpc_IEndpoint_defineInterfaceInst(
+				endpoint_h,
+				iftype_h,
+				inst_name,
+				is_mirror);
+		ifinst2impl_m[ifinst] = impl;
+		return ifinst;
+	endfunction
+	
+	import "DPI-C" context function chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
+			chandle			endpoint_h,
+			chandle			iftype_h,
+			string			inst_name,
+			int unsigned	is_mirror);
+	
+	function automatic void _tblink_rpc_invoke(
+		chandle			invoke_info_h);
+		chandle method_t = tblink_rpc_InvokeInfo_method(invoke_info_h);
+		chandle ifinst = tblink_rpc_InvokeInfo_ifinst(invoke_info_h);
+		
+		$display("_tblink_rpc_invoke");
+		
+		if (tblink_rpc_IMethodType_is_blocking(method_t) != 0) begin
+			// Invoke indirectly
+			$display("Invoking Indirectly");
+		end else begin
+			// Invoke directly
+			IInterfaceImpl ifimpl = ifinst2impl_m[ifinst];
+			InvokeInfo ii = new(invoke_info_h);
+			$display("Invoking Directly");
+			
+			ifimpl.invoke_nb(ii);
+		end
+	endfunction
+	export "DPI-C" function _tblink_rpc_invoke;
+
+	task automatic _tblink_rpc_invoke_b(
 		chandle			invoke_info_h);
 		IEndpoint ep = IEndpoint::inst();
 		InvokeInfo ii = new(invoke_info_h);
 		
 		ep._invoke_b(ii);
-	endfunction
-	export "DPI-C" function _tblink_rpc_invoke_b;
+	endtask
+	export "DPI-C" task _tblink_rpc_invoke_b;
 	
 	
 `ifndef VERILATOR
@@ -690,7 +766,7 @@ package tblink_rpc;
 			
 			// TODO: dispose params
 
-			_tblink_rpc_endpoint_invoke_info_invoke_rsp(m_ii.m_hndl);
+			tblink_rpc_InvokeInfo_invoke_rsp(m_ii.m_hndl);
 		endtask
 			
 	endclass
@@ -772,10 +848,12 @@ package tblink_rpc;
 		automatic IEndpoint ep = IEndpoint::inst();
 		automatic chandle ifinst_h;
 
-		ifinst_h = _tblink_rpc_endpoint_defineInterfaceInst(
+		/*
+		ifinst_h = tblink_rpc_IEndpoint_defineInterfaceInst(
 				ep.m_hndl,
 				iftype,
 				name);
+				 */
 			
 		ep.m_ifimpl_m[ifinst_h] = impl;
 		

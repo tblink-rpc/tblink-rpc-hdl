@@ -56,7 +56,28 @@ def main():
     while not endpoint.is_init_complete():
         endpoint.process_one_message()
     print("<-- wait_init", flush=True)
-        
+    
+    iftype_b = endpoint.newInterfaceTypeBuilder("target")
+    mtb = iftype_b.newMethodTypeBuilder(
+        "inc",
+        0,
+        iftype_b.mkTypeInt(True, 32),
+        True,
+        False)
+    method_t = iftype_b.add_method(mtb)
+    
+    
+    target_iftype = endpoint.defineInterfaceType(iftype_b)
+
+    def req_f(*args):
+        print("req_f")
+            
+    ifinst = endpoint.defineInterfaceInst(
+        target_iftype, 
+        "target_inst", 
+        True,
+        req_f)
+    
     endpoint.build_complete()
     
     print("--> wait_build_complete", flush=True)
@@ -70,6 +91,26 @@ def main():
     while not endpoint.is_connect_complete():
         endpoint.process_one_message()
     print("<-- wait_connect_complete", flush=True)
+
+    
+    done = False
+    def completion_f(*args):
+        nonlocal done
+        done = True
+        
+    params = endpoint.mkValVec()
+
+    print("--> invoke", flush=True)    
+    ifinst.invoke(
+        method_t, 
+        params, 
+        completion_f)
+    print("<-- invoke", flush=True)    
+    
+    print("--> invoke::wait-complete", flush=True)    
+    while not done:
+        endpoint.process_one_message()
+    print("<-- invoke::wait-complete", flush=True)    
     
     time.sleep(5)
 

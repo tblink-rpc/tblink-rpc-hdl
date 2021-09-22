@@ -163,6 +163,7 @@ void EndpointServicesDpi::invoke_req(
 		tblink_rpc_core::IMethodType			*method,
 		intptr_t								call_id,
 		tblink_rpc_core::IParamValVec			*params) {
+	/*
 	InvokeInfoDpi *ii = new InvokeInfoDpi(
 			inst,
 			method,
@@ -180,6 +181,7 @@ void EndpointServicesDpi::invoke_req(
 
 		delete ii;
 	}
+	 */
 }
 
 void EndpointServicesDpi::_add_time_cb(

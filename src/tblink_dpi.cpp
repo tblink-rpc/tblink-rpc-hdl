@@ -19,6 +19,7 @@
 #include "vpi_api.h"
 #include "ILaunch.h"
 #include "EndpointServicesDpi.h"
+#include "InterfaceInstProxyDpi.h"
 #include "InvokeInfoDpi.h"
 #include "TblinkPluginDpi.h"
 #include "TimeCallbackClosureDpi.h"
@@ -32,8 +33,8 @@ extern "C" {
 void *svGetScope() __attribute__((weak));
 void *svSetScope(void *) __attribute__((weak));
 void _tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) __attribute__((weak));
-void _tblink_rpc_invoke_nb(void *ii_h) __attribute__((weak));
-void _tblink_rpc_invoke_b(void *ii_h) __attribute__((weak));
+void _tblink_rpc_invoke(void *ii_h) __attribute__((weak));
+int _tblink_rpc_invoke_b(void *ii_h) __attribute__((weak));
 
 void *svGetScope() {
 	return 0;
@@ -47,10 +48,11 @@ void _tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) {
 	;
 }
 
-void _tblink_rpc_invoke_nb(void *ii_h) {
+void _tblink_rpc_invoke(void *ii_h) {
 }
 
-void _tblink_rpc_invoke_b(void *ii_h) {
+int _tblink_rpc_invoke_b(void *ii_h) {
+	return 0;
 }
 
 }
@@ -121,7 +123,7 @@ EXTERN_C int _tblink_rpc_pkg_init(
 	prv_dpi.svGetScope = &svGetScope;
 	prv_dpi.svSetScope = &svSetScope;
 	prv_dpi.get_pkg_scope = &get_pkg_scope;
-	prv_dpi.invoke_nb = &_tblink_rpc_invoke_nb;
+	prv_dpi.invoke = &_tblink_rpc_invoke;
 	prv_dpi.invoke_b = &_tblink_rpc_invoke_b;
 	prv_dpi.add_time_cb = &_tblink_rpc_add_time_cb;
 
@@ -155,27 +157,27 @@ EXTERN_C int _tblink_rpc_endpoint_launch(chandle ep_h) {
 }
 
 
-EXTERN_C chandle _tblink_rpc_endpoint_invoke_info_inst(chandle ii) {
+EXTERN_C chandle tblink_rpc_InvokeInfo_ifinst(chandle ii) {
 	return reinterpret_cast<void *>(
 			reinterpret_cast<InvokeInfoDpi *>(ii)->inst());
 }
 
-EXTERN_C chandle _tblink_rpc_endpoint_invoke_info_method(chandle ii) {
+EXTERN_C chandle tblink_rpc_InvokeInfo_method(chandle ii) {
 	return reinterpret_cast<void *>(
 			reinterpret_cast<InvokeInfoDpi *>(ii)->method());
 }
 
-EXTERN_C chandle _tblink_rpc_endpoint_invoke_info_params(chandle ii_h) {
+EXTERN_C chandle tblink_rpc_InvokeInfo_params(chandle ii_h) {
 	return reinterpret_cast<void *>(
 			static_cast<IParamVal *>(
 					reinterpret_cast<InvokeInfoDpi *>(ii_h)->params()));
 }
 
-EXTERN_C void _tblink_rpc_endpoint_invoke_info_invoke_rsp(chandle ii_h) {
+EXTERN_C void tblink_rpc_InvokeInfo_invoke_rsp(chandle ii_h, chandle retval_h) {
 	InvokeInfoDpi *ii = reinterpret_cast<InvokeInfoDpi *>(ii_h);
 	ii->inst()->invoke_rsp(
 			ii->call_id(),
-			ii->ret());
+			reinterpret_cast<IParamVal *>(retval_h));
 	delete ii;
 }
 
@@ -271,6 +273,11 @@ EXTERN_C int tblink_rpc_IEndpoint_connect_complete(
 	return ret;
 }
 
+EXTERN_C int _tblink_rpc_IEndpoint_start(
+		chandle			endpoint_h) {
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->start();
+}
+
 EXTERN_C char *tblink_rpc_IEndpoint_last_error(chandle endpoint_h) {
 	strncpy(prv_msgbuf,
 			reinterpret_cast<IEndpoint *>(endpoint_h)->last_error().c_str(),
@@ -354,6 +361,14 @@ EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_newMethodTypeBuilder(
 					is_blocking));
 }
 
+EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_add_method(
+		chandle				iftype_b,
+		chandle				mtb) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->add_method(
+					reinterpret_cast<IMethodTypeBuilder *>(mtb)));
+}
+
 EXTERN_C void *_tblink_rpc_iftype_builder_define_method(
 			void			*iftype_b,
 			const char 		*name,
@@ -382,23 +397,38 @@ EXTERN_C void *tblink_rpc_IEndpoint_defineInterfaceType(
 					reinterpret_cast<IInterfaceTypeBuilder *>(iftype_builder_h)));
 }
 
-EXTERN_C void *_tblink_rpc_endpoint_defineInterfaceInst(
+static void invoke_req(
+		tblink_rpc_core::IInterfaceInst			*inst,
+		tblink_rpc_core::IMethodType			*method,
+		intptr_t								call_id,
+		tblink_rpc_core::IParamValVec			*params) {
+	fprintf(stdout, "--> invoke_req\n");
+	fflush(stdout);
+	dpi_api_t *dpi_api = prv_plugin->dpi_api();
+	dpi_api->svSetScope(dpi_api->get_pkg_scope());
+
+	InvokeInfoDpi *ii = new InvokeInfoDpi(inst, method, call_id, params);
+	dpi_api->invoke(reinterpret_cast<chandle>(ii));
+	fprintf(stdout, "<-- invoke_req\n");
+	fflush(stdout);
+}
+
+EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
 		void 			*endpoint_h,
 		void			*iftype_h,
 		const char		*inst_name,
 		unsigned int	is_mirror) {
-#ifdef UNDEFINED
+	IEndpoint *endpoint = reinterpret_cast<IEndpoint *>(endpoint_h);
 	return reinterpret_cast<void *>(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->defineInterfaceInst(
 					reinterpret_cast<IInterfaceType *>(iftype_h),
 					inst_name,
 					is_mirror,
-					std::bind(&EndpointServicesDpi::invoke_req, prv_services.get(),
+					std::bind(&invoke_req,
 							std::placeholders::_1,
 							std::placeholders::_2,
 							std::placeholders::_3,
 							std::placeholders::_4)));
-#endif
 }
 
 EXTERN_C int _tblink_rpc_notify_time_cb(void *cb_data) {
@@ -417,12 +447,20 @@ EXTERN_C chandle tblink_rpc_iftype_find_method(
 			reinterpret_cast<IInterfaceType *>(iftype_h)->findMethod(name));
 }
 
-EXTERN_C const char *_tblink_rpc_method_type_name(void *hndl) {
+EXTERN_C const char *tblink_rpc_IMethodType_name(void *hndl) {
 	return reinterpret_cast<IMethodType *>(hndl)->name().c_str();
 }
 
-EXTERN_C int64_t _tblink_rpc_method_type_id(void *hndl) {
+EXTERN_C int64_t tblink_rpc_IMethodType_id(void *hndl) {
 	return reinterpret_cast<IMethodType *>(hndl)->id();
+}
+
+EXTERN_C uint32_t tblink_rpc_IMethodType_is_export(chandle hndl) {
+	return reinterpret_cast<IMethodType *>(hndl)->is_export();
+}
+
+EXTERN_C uint32_t tblink_rpc_IMethodType_is_blocking(chandle hndl) {
+	return reinterpret_cast<IMethodType *>(hndl)->is_blocking();
 }
 
 EXTERN_C uint64_t _tblink_rpc_iparam_val_int_val_u(chandle hndl_h) {
@@ -470,6 +508,76 @@ EXTERN_C void *_tblink_rpc_iparam_val_vector_at(void *hndl, uint32_t idx) {
 EXTERN_C void _tblink_rpc_iparam_val_vector_push_back(void *hndl, void *val_h) {
 	dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl))->push_back(
 			reinterpret_cast<IParamVal *>(val_h));
+}
+
+EXTERN_C char *tblink_rpc_IInterfaceInst_name(
+		chandle			ifinst_h) {
+	strncpy(prv_msgbuf,
+			reinterpret_cast<IInterfaceInst *>(ifinst_h)->name().c_str(),
+			sizeof(prv_msgbuf));
+	return prv_msgbuf;
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_type(
+		chandle			ifinst_h) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceInst *>(ifinst_h)->type());
+}
+
+EXTERN_C uint32_t tblink_rpc_IInterfaceInst_is_mirror(
+		chandle			ifinst_h) {
+	return reinterpret_cast<IInterfaceInst *>(ifinst_h)->is_mirror();
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_mkValBool(
+		chandle			ifinst_h,
+		uint32_t		val) {
+	return reinterpret_cast<chandle>(
+			dynamic_cast<IParamVal *>(
+					reinterpret_cast<IInterfaceInst *>(ifinst_h)->mkValBool(val)
+					));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_mkValIntU(
+		chandle			ifinst_h,
+		uint64_t		val,
+		uint32_t		width) {
+	return reinterpret_cast<chandle>(
+			dynamic_cast<IParamVal *>(
+				reinterpret_cast<IInterfaceInst *>(ifinst_h)->mkValIntU(
+						val,
+						width)));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_mkValIntS(
+		chandle			ifinst_h,
+		int64_t			val,
+		uint32_t		width) {
+	return reinterpret_cast<chandle>(
+			dynamic_cast<IParamVal *>(
+					reinterpret_cast<IInterfaceInst *>(ifinst_h)->mkValIntS(
+							val,
+							width)));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_mkValMap(
+		chandle			ifinst_h) {
+	return reinterpret_cast<IInterfaceInst *>(ifinst_h)->mkValMap();
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_mkValStr(
+		chandle			ifinst_h,
+		const char		*val) {
+	return reinterpret_cast<chandle>(
+			dynamic_cast<IParamVal *>(
+					reinterpret_cast<IInterfaceInst *>(ifinst_h)->mkValStr(val)));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_mkValVec(
+		chandle			ifinst_h) {
+	return reinterpret_cast<chandle>(
+			dynamic_cast<IParamVal *>(
+					reinterpret_cast<IInterfaceInst *>(ifinst_h)->mkValVec()));
 }
 
 EXTERN_C chandle _tblink_rpc_ifinst_invoke_nb(
