@@ -39,6 +39,7 @@ static void tblink_vpi_sigpipe(int sig) {
 }
 
 static void vpi_startup(void) {
+#ifdef UNDEFINED
     vpi_api_t *vpi_api = get_vpi_api();
 
     FLAGS_log_dir = ".";
@@ -81,6 +82,7 @@ static void vpi_startup(void) {
 	signal(SIGPIPE, &tblink_vpi_sigpipe);
 
 	launcher->launch(prv_endpoint.get());
+#endif
 }
 
 void (*vlog_startup_routines[])() = {

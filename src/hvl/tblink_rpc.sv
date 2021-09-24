@@ -649,7 +649,7 @@ package tblink_rpc;
 			string			inst_name,
 			int unsigned	is_mirror,
 			IInterfaceImpl	impl);
-		chandle ifinst = _tblink_rpc_IEndpoint_defineInterfaceInst(
+		automatic chandle ifinst = _tblink_rpc_IEndpoint_defineInterfaceInst(
 				endpoint_h,
 				iftype_h,
 				inst_name,
@@ -766,7 +766,7 @@ package tblink_rpc;
 			
 			// TODO: dispose params
 
-			tblink_rpc_InvokeInfo_invoke_rsp(m_ii.m_hndl);
+			tblink_rpc_InvokeInfo_invoke_rsp(m_ii.m_hndl, null);
 		endtask
 			
 	endclass
