@@ -21,6 +21,7 @@
 #include "EndpointServicesDpi.h"
 #include "InterfaceInstProxyDpi.h"
 #include "InvokeInfoDpi.h"
+#include "TbLink.h"
 #include "TblinkPluginDpi.h"
 #include "TimeCallbackClosureDpi.h"
 #include "glog/logging.h"
@@ -596,11 +597,11 @@ EXTERN_C chandle _tblink_rpc_ifinst_invoke_nb(
 }
 
 EXTERN_C chandle tblink_rpc_findLaunchType(const char *id) {
-	return reinterpret_cast<chandle>(tblink()->findLaunchType(id));
+	return reinterpret_cast<chandle>(TbLink::inst()->findLaunchType(id));
 }
 
 EXTERN_C chandle tblink_rpc_newLaunchParams() {
-	return reinterpret_cast<chandle>(tblink()->newLaunchParams());
+	return reinterpret_cast<chandle>(TbLink::inst()->newLaunchParams());
 }
 
 EXTERN_C void tblink_rpc_ILaunchParams_add_arg(
@@ -656,4 +657,8 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 	return res.first;
 }
 
-
+EXTERN_C const char *tblink_rpc_libpath() {
+	ITbLink *tbl = TbLink::inst();
+	strcpy(prv_msgbuf, tbl->getLibPath().c_str());
+	return prv_msgbuf;
+}

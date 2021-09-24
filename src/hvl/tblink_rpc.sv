@@ -877,6 +877,8 @@ package tblink_rpc;
 			input chandle	launch,
 			input chandle 	params,
 			output string	error);
+	
+	import "DPI-C" context function string tblink_rpc_libpath();
 
 endpackage
 

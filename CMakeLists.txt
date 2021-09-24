@@ -61,6 +61,7 @@ add_dependencies(tblink_rpc_hdl_static
 
 target_include_directories(tblink_rpc_hdl_static PRIVATE
 	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+	${PACKAGES_DIR}/tblink-rpc-core/cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/cpp
 	${CMAKE_BINARY_DIR}/glog/include
 	)
@@ -78,6 +79,7 @@ endif()
 add_library(tblink_rpc_hdl SHARED ${tblink_rpc_hdl_SRC})
 target_include_directories(tblink_rpc_hdl PRIVATE
 	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+	${PACKAGES_DIR}/tblink-rpc-core/cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/cpp
 	${CMAKE_BINARY_DIR}/glog/include
 	)
