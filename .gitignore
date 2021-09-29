@@ -133,4 +133,3 @@ rundir/
 cache/
 
 *.so
-ext/*.c
