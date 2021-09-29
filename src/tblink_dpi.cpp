@@ -370,6 +370,15 @@ EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_add_method(
 					reinterpret_cast<IMethodTypeBuilder *>(mtb)));
 }
 
+EXTERN_C void tblink_rpc_IMethodTypeBuilder_add_param(
+		chandle				method_b,
+		const char			*name,
+		chandle				type_h) {
+	reinterpret_cast<IMethodTypeBuilder *>(method_b)->add_param(
+			name,
+			reinterpret_cast<IType *>(type_h));
+}
+
 EXTERN_C void *_tblink_rpc_iftype_builder_define_method(
 			void			*iftype_b,
 			const char 		*name,
@@ -639,6 +648,7 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 					prv_plugin->have_blocking_tasks()),
 			0) != 0) {
 		strncpy(error_s, res.first->last_error().c_str(), sizeof(error_s));
+		*error = error_s;
 		return 0;
 	}
 

@@ -44,6 +44,7 @@ result = subprocess.run(
     ["cmake", 
      tblink_rpc_hdl_dir,
      "-GNinja",
+     "-DCMAKE_BUILD_TYPE=Debug",
      "-DPACKAGES_DIR=%s" % packages_dir,
      "-DGLOG_DIR=%s" % os.path.join(packages_dir, "glog"),
      "-DTBLINK_RPC_CORE_DIR=%s" % os.path.join(packages_dir, "tblink-rpc-core"),
@@ -64,7 +65,7 @@ if result.returncode != 0:
 
 extra_compile_args = sysconfig.get_config_var('CFLAGS').split()
 extra_compile_args = []
-extra_compile_args += ["-std=c++11", "-Wall", "-Wextra"]
+#extra_compile_args += ["-std=c++11", "-Wall", "-Wextra"]
 if _DEBUG:
     extra_compile_args += ["-g", "-O0", "-DDEBUG=%s" % _DEBUG_LEVEL, "-UNDEBUG"]
 else:

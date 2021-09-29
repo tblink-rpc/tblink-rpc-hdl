@@ -324,6 +324,97 @@ package tblink_rpc;
 		
 	endclass
 	
+	IInterfaceImpl				ifinst2impl_m[chandle];
+	
+`ifndef VERILATOR
+	
+	/**
+	 * tblink_rpc_thread
+	 * 
+	 * Base class for dynamically-created tblink-rpc threads
+	 */
+	class tblink_rpc_thread;
+		function new();
+		endfunction
+	
+		virtual task run();
+			$display("Error: base run method invoked");
+			$finish();
+		endtask
+	endclass
+	
+	mailbox #(tblink_rpc_thread)		prv_dispatch_q = new();
+	bit prv_dispatcher_running = 0;
+	
+	task _tblink_dispatcher();
+		tblink_rpc_thread t;
+		
+		forever begin
+			prv_dispatch_q.get(t);
+			t.run();
+		end
+	endtask
+	
+	function void _tblink_start_dispatcher();
+		if (prv_dispatcher_running == 0) begin
+			prv_dispatcher_running = 1;
+			fork
+				_tblink_dispatcher();
+			join_none
+		end
+	endfunction
+	
+	/**
+	 * tblink_rpc_timed_cb
+	 * 
+	 * Helper class to support timed callbacks
+	 */
+	class tblink_rpc_timed_cb extends tblink_rpc_thread;
+		chandle					m_cb_data;
+		longint unsigned		m_delta;
+		bit						m_valid = 1;
+		
+		function new(
+			chandle				cb_data,
+			longint unsigned 	delta);
+			m_cb_data = cb_data;
+			m_delta = delta;
+		endfunction
+		
+		virtual task run();
+
+			case (_time_precision)
+				-15: #(m_delta*1fs);
+				-12: #(m_delta*1ps);
+				-9: #(m_delta*1ns);
+				-6: #(m_delta*1us);
+				-3: #(m_delta*1ms);
+				0: #(m_delta*1s);
+			endcase
+	
+			_tblink_rpc_notify_time_cb(m_cb_data);
+		endtask
+	endclass	
+	
+	class tblink_rpc_invoke_b extends tblink_rpc_thread;
+		InvokeInfo				m_ii;
+	
+		function new(InvokeInfo ii);
+			m_ii = ii;
+		endfunction
+	
+		virtual task run();
+			chandle ifinst = tblink_rpc_InvokeInfo_ifinst(m_ii.m_hndl);
+			IInterfaceImpl ifimpl = ifinst2impl_m[ifinst];
+
+			$display("--> invoke_b");
+			ifimpl.invoke_b(m_ii);
+			$display("<-- invoke_b");
+		endtask
+	endclass
+	
+`endif	
+	
 	class IInterfaceTypeBuilder;
 		chandle 		m_hndl;
 		
@@ -348,11 +439,6 @@ package tblink_rpc;
 	// _Verilator didn't have support for static class 
 	// members when this code was created. Re-check later
 	IEndpoint		_endpoint;
-
-	typedef class tblink_rpc_thread;
-	typedef class tblink_rpc_timed_cb;
-	typedef class tblink_rpc_invoke_b;
-	
 
 	/**
 	 * Class: IEndpoint
@@ -528,7 +614,8 @@ package tblink_rpc;
 		
 			impl.invoke_nb(ii);
 		endfunction
-		
+	
+`ifdef UNDEFINED
 		function void _invoke_b(InvokeInfo ii);
 `ifndef VERILATOR
 			tblink_rpc_invoke_b		closure;
@@ -554,6 +641,7 @@ package tblink_rpc;
 			$finish();
 `endif
 		endfunction
+`endif /* UNDEFINED */
 	endclass
 
 	/*
@@ -565,22 +653,22 @@ package tblink_rpc;
 	endfunction
 	int _init = _tblink_rpc_init();	
 	 */
-	
+
 	/**
 	 * tblink_rpc_run()
 	 * 
 	 * The run task must be called from a thread (eg initial) in the testbench
 	 */
 	task automatic tblink_rpc_run();
-		IEndpoint ep = IEndpoint::inst();
-		ep.run();
+		_tblink_start_dispatcher();
 	endtask
 	
 	task automatic tblink_rpc_IEndpoint_start(chandle ep_h);
-`ifndef VERILATOR
 			// TODO: ensure launching thread is running
-`endif
 		$display("TODO: _start");
+`ifndef VERILATOR
+		_tblink_start_dispatcher();
+`endif
 		if (_tblink_rpc_IEndpoint_start(ep_h) == -1) begin
 			$display("TBLink Error: start failed");
 			$finish(1);
@@ -629,6 +717,11 @@ package tblink_rpc;
 			chandle			iftype_b,
 			chandle			mtb);
 	
+	import "DPI-C" context function void tblink_rpc_IMethodTypeBuilder_add_param(
+			chandle			method_b,
+			string			name,
+			chandle			type_h);
+	
 	import "DPI-C" context function chandle _tblink_rpc_iftype_builder_define_method(
 			chandle			iftype_b,
 			string			name,
@@ -640,8 +733,6 @@ package tblink_rpc;
 	import "DPI-C" context function chandle tblink_rpc_IEndpoint_defineInterfaceType(
 			chandle		endpoint_h,
 			chandle 	iftype_builder_h);
-	
-	IInterfaceImpl				ifinst2impl_m[chandle];
 	
 	function chandle tblink_rpc_IEndpoint_defineInterfaceInst(
 			chandle			endpoint_h,
@@ -673,7 +764,12 @@ package tblink_rpc;
 		
 		if (tblink_rpc_IMethodType_is_blocking(method_t) != 0) begin
 			// Invoke indirectly
+			InvokeInfo ii = new(invoke_info_h);
+			tblink_rpc_invoke_b t = new(ii);
+			
 			$display("Invoking Indirectly");
+			// Know this never blocks
+			void'(prv_dispatch_q.try_put(t));
 		end else begin
 			// Invoke directly
 			IInterfaceImpl ifimpl = ifinst2impl_m[ifinst];
@@ -690,88 +786,11 @@ package tblink_rpc;
 		IEndpoint ep = IEndpoint::inst();
 		InvokeInfo ii = new(invoke_info_h);
 		
-		ep._invoke_b(ii);
+//		ep._invoke_b(ii);
 	endtask
 	export "DPI-C" task _tblink_rpc_invoke_b;
 	
-	
-`ifndef VERILATOR
-	
-	/**
-	 * tblink_rpc_thread
-	 * 
-	 * Base class for dynamically-created tblink-rpc threads
-	 */
-	class tblink_rpc_thread;
-		function new();
-		endfunction
-		
-		virtual task run();
-			$display("Error: base run method invoked");
-			$finish();
-		endtask
-		
-	endclass
-	
-	/**
-	 * tblink_rpc_timed_cb
-	 * 
-	 * Helper class to support timed callbacks
-	 */
-	class tblink_rpc_timed_cb extends tblink_rpc_thread;
-		chandle					m_cb_data;
-		longint unsigned		m_delta;
-		bit						m_valid = 1;
-		
-		function new(
-			chandle				cb_data,
-			longint unsigned 	delta);
-			m_cb_data = cb_data;
-			m_delta = delta;
-		endfunction
-		
-		virtual task run();
-			IEndpoint ep;
 
-			case (_time_precision)
-				-15: #(m_delta*1fs);
-				-12: #(m_delta*1ps);
-				-9: #(m_delta*1ns);
-				-6: #(m_delta*1us);
-				-3: #(m_delta*1ms);
-				0: #(m_delta*1s);
-			endcase
-			
-			ep = IEndpoint::inst();
-			ep.notify_time_cb(this);
-		endtask
-	endclass	
-	
-	class tblink_rpc_invoke_b extends tblink_rpc_thread;
-		InvokeInfo				m_ii;
-		IInterfaceImpl			m_impl;
-		
-		function new(
-			InvokeInfo 			ii,
-			IInterfaceImpl		impl);
-			$display("tblink_rpc_invoke_b::new call_id=%0d", -1);
-			m_ii = ii;
-			m_impl = impl;
-		endfunction
-		
-		virtual task run();
-			IEndpoint ep = IEndpoint::inst();
-			ep.set_invoke_info(m_ii);
-			m_impl.invoke_b(m_ii);
-			
-			// TODO: dispose params
-
-			tblink_rpc_InvokeInfo_invoke_rsp(m_ii.m_hndl, null);
-		endtask
-			
-	endclass
-	
-`endif
 	
 `ifdef VERILATOR
 	// For simplicity, we still provide the export
@@ -789,12 +808,11 @@ package tblink_rpc;
 		$finish;
 	endtask
 `else
-	function void _tblink_rpc_add_time_cb(
+	function automatic void _tblink_rpc_add_time_cb(
 		chandle				cb_data,
 		longint unsigned	delta);
-		automatic IEndpoint ep = IEndpoint::inst();
-		
-		ep.add_time_cb(cb_data, delta);
+		tblink_rpc_timed_cb t = new(cb_data, delta);
+		void'(prv_dispatch_q.try_put(t));
 	endfunction
 	export "DPI-C" function _tblink_rpc_add_time_cb;	
 
