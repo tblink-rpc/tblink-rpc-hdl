@@ -157,6 +157,8 @@ module smoke(input clock);
 	endtask
 	
 	initial begin
+		TbLink tblink = TbLink::inst();
+		IEndpoint ep = tblink.get_default_ep();
 		init();
 	end	
 	

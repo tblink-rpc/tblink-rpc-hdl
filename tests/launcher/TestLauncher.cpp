@@ -40,7 +40,7 @@ TestLauncher::~TestLauncher() {
 
 IEndpoint *TestLauncher::create_ep(
 		IEndpointServices			*services) {
-	ITbLink *factory = tblink();
+	ITbLink *factory = 0; /* TODO: tblink(); */
 	/*
 	IEndpoint *endpoint = factory->mkJsonRpcEndpoint(services);
 
@@ -51,7 +51,7 @@ IEndpoint *TestLauncher::create_ep(
 bool TestLauncher::launch(IEndpoint	*endpoint) {
 	bool ret = true;
 	std::string runner;
-	ITbLink *factory = tblink();
+	ITbLink *factory = 0; // TODO: tblink();
 
 	// First, locate the test runner
 	const char *tblink_runner = getenv("TBLINK_TEST_RUNNER");
