@@ -63,6 +63,7 @@ package tblink_rpc;
 	import "DPI-C" context function int unsigned tblink_rpc_IMethodType_is_blocking(chandle hndl);
 
 	typedef class IParamValBool;
+	typedef class IParamValInt;
 	typedef class IParamValVector;
 	class IParamVal;
 		chandle			m_hndl;
@@ -91,11 +92,11 @@ package tblink_rpc;
 					IParamValBool t = new();
 					ret = t;
 				end
-				/*
 				Int: begin
-					ParamValInt t = new();
+					IParamValInt t = new();
 					ret = t;
 				end
+				/*
 				Map: begin
 					ParamValMap t = new();
 					ret = t;
@@ -135,6 +136,13 @@ package tblink_rpc;
 	
 	class IParamValInt extends IParamVal;
 		
+		function longint unsigned val_u();
+			return _tblink_rpc_iparam_val_int_val_u(m_hndl);
+		endfunction
+		
+		function longint val_s();
+		endfunction
+		
 	endclass
 	
 	class IParamValVector extends IParamVal;
@@ -164,7 +172,7 @@ package tblink_rpc;
 	class IParamValMap extends IParamVal;
 	endclass
 	
-	import "DPI-C" context function longint _tblink_rpc_iparam_val_int_val_u(
+	import "DPI-C" context function longint unsigned _tblink_rpc_iparam_val_int_val_u(
 			chandle			hndl);
 
 	import "DPI-C" context function chandle _tblink_rpc_iparam_val_clone(
