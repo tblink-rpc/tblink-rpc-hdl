@@ -112,7 +112,7 @@ def main():
         endpoint.process_one_message()
     print("<-- invoke::wait-complete", flush=True)    
     
-    time.sleep(5)
+#    time.sleep(5)
 
 
 if __name__ == "__main__":

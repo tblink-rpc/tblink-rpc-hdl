@@ -1,8 +1,9 @@
 MKDV_MK := $(abspath $(lastword $(MAKEFILE_LIST)))
 TEST_DIR := $(dir $(MKDV_MK))
-MKDV_TOOL ?= questa
+MKDV_TOOL ?= vlsim
 
 MKDV_VL_SRCS += $(TEST_DIR)/../../../src/hvl/tblink_rpc.sv
+MKDV_VL_INCDIRS += $(TEST_DIR)/../../../src/hvl
 MKDV_VL_SRCS += $(TEST_DIR)/smoke.sv
 TOP_MODULE = smoke
 VLSIM_CLKSPEC += clock=10ns

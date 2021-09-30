@@ -22,39 +22,39 @@ file(GLOB tblink_rpc_hdl_testlauncher_SRC
 	launcher/*.cpp
 	launcher/*.h)
 
-add_library(
-	tblink_rpc_hdl_testlauncher 
-	SHARED 
-	${tblink_rpc_hdl_testlauncher_SRC})
+#add_library(
+#	tblink_rpc_hdl_testlauncher 
+#	SHARED 
+#	${tblink_rpc_hdl_testlauncher_SRC})
 
-target_include_directories(
-	tblink_rpc_hdl_testlauncher
-	PRIVATE
-	${CMAKE_CURRENT_SOURCE_DIR}/../src
-	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
-	${PACKAGES_DIR}/tblink-rpc-core/cpp
-	${CMAKE_BINARY_DIR}/glog/include
-	)
+#target_include_directories(
+#	tblink_rpc_hdl_testlauncher
+#	PRIVATE
+#	${CMAKE_CURRENT_SOURCE_DIR}/../src
+#	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+#	${PACKAGES_DIR}/tblink-rpc-core/cpp
+#	${CMAKE_BINARY_DIR}/glog/include
+#	)
 
-target_link_libraries(
-	tblink_rpc_hdl_testlauncher
-	-Wl,--whole-archive
-	tblink_rpc_hdl
-	tblink_rpc_core
-	-Wl,--no-whole-archive
-	${libglog}
-	)
+#target_link_libraries(
+#	tblink_rpc_hdl_testlauncher
+#	-Wl,--whole-archive
+#	tblink_rpc_hdl
+#	tblink_rpc_core
+#	-Wl,--no-whole-archive
+#	${libglog}
+#	)
 
-target_link_directories(
-	tblink_rpc_hdl_testlauncher
-	PRIVATE
-	${CMAKE_BINARY_DIR}/glog/lib64
-	)
+#target_link_directories(
+#	tblink_rpc_hdl_testlauncher
+#	PRIVATE
+#	${CMAKE_BINARY_DIR}/glog/lib64
+#	)
 	
-add_dependencies(tblink_rpc_hdl_testlauncher
-	tblink_rpc_core
-	GLOG
-	)
+#add_dependencies(tblink_rpc_hdl_testlauncher
+#	tblink_rpc_core
+#	GLOG
+#	)
 
 file(GLOB tblink_rpc_hdl_testrunner_SRC
 	src/*.cpp
@@ -86,6 +86,7 @@ target_link_libraries(
 	tblink_rpc_core
 	-Wl,--no-whole-archive
 	${libglog}
+	dl
 	gtest
 	gtest_main
 	pthread

@@ -85,7 +85,7 @@ void TblinkRpcHdlTestBase::SetUp() {
 	}
 
 
-	ITbLink *factory = tblink();
+	ITbLink *factory = 0; /* TODO: tblink(); */
 	m_transport = factory->mkSocketTransport(0, sockfd);
 	/* TODO:
 	m_endpoint = factory->mkJsonRpcEndpoint(this);
