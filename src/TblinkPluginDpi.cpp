@@ -8,6 +8,7 @@
 #include <string>
 #include <string.h>
 #include <vector>
+#include "TbLink.h"
 #include "tblink_rpc/tblink_rpc.h"
 #include "TblinkPluginDpi.h"
 #include "tblink_rpc/ILaunchParams.h"
@@ -40,7 +41,7 @@ int TblinkPluginDpi::init() {
 	ILaunchParams *params = 0;
 	ILaunchType *launch_t = 0;
 
-	m_tblink = tblink();
+	m_tblink = TbLink::inst();
 
 	if (!m_tblink) {
 		fprintf(stdout, "TBLink Error: failed to obtain tblink singleton\n");

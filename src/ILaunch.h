@@ -33,7 +33,9 @@ public:
 
 };
 
+/*
 extern "C" {
 // Platform must provide this symbol
 ILaunch *tblink_rpc_hdl_launcher();
 }
+ */

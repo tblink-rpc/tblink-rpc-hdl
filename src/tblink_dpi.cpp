@@ -21,6 +21,7 @@
 #include "EndpointServicesDpi.h"
 #include "InterfaceInstProxyDpi.h"
 #include "InvokeInfoDpi.h"
+#include "TbLink.h"
 #include "TblinkPluginDpi.h"
 #include "TimeCallbackClosureDpi.h"
 #include "glog/logging.h"
@@ -369,6 +370,15 @@ EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_add_method(
 					reinterpret_cast<IMethodTypeBuilder *>(mtb)));
 }
 
+EXTERN_C void tblink_rpc_IMethodTypeBuilder_add_param(
+		chandle				method_b,
+		const char			*name,
+		chandle				type_h) {
+	reinterpret_cast<IMethodTypeBuilder *>(method_b)->add_param(
+			name,
+			reinterpret_cast<IType *>(type_h));
+}
+
 EXTERN_C void *_tblink_rpc_iftype_builder_define_method(
 			void			*iftype_b,
 			const char 		*name,
@@ -596,11 +606,11 @@ EXTERN_C chandle _tblink_rpc_ifinst_invoke_nb(
 }
 
 EXTERN_C chandle tblink_rpc_findLaunchType(const char *id) {
-	return reinterpret_cast<chandle>(tblink()->findLaunchType(id));
+	return reinterpret_cast<chandle>(TbLink::inst()->findLaunchType(id));
 }
 
 EXTERN_C chandle tblink_rpc_newLaunchParams() {
-	return reinterpret_cast<chandle>(tblink()->newLaunchParams());
+	return reinterpret_cast<chandle>(TbLink::inst()->newLaunchParams());
 }
 
 EXTERN_C void tblink_rpc_ILaunchParams_add_arg(
@@ -638,6 +648,7 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 					prv_plugin->have_blocking_tasks()),
 			0) != 0) {
 		strncpy(error_s, res.first->last_error().c_str(), sizeof(error_s));
+		*error = error_s;
 		return 0;
 	}
 
@@ -656,4 +667,8 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 	return res.first;
 }
 
-
+EXTERN_C const char *tblink_rpc_libpath() {
+	ITbLink *tbl = TbLink::inst();
+	strcpy(prv_msgbuf, tbl->getLibPath().c_str());
+	return prv_msgbuf;
+}
