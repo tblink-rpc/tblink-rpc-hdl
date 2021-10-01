@@ -14,6 +14,7 @@ TbLink			_tblink_inst;
  */
 class TbLink;
 	IEndpoint			m_default_ep;
+	ILaunchType			m_sv_launch_type_m[string];
 
 	function new();
 	endfunction
@@ -28,6 +29,24 @@ class TbLink;
 		return m_default_ep;
 	endfunction
 	
+	function ILaunchType findLaunchType(string id);
+		ILaunchType ret;
+		
+		if (m_sv_launch_type_m.exists(id) != 0) begin
+			ret = m_sv_launch_type_m[id];
+		end else begin
+			chandle launch_type_h = tblink_rpc_findLaunchType(id);
+		
+			if (launch_type_h != null) begin
+				DpiLaunchType ret_dpi;
+				ret_dpi = new(launch_type_h);
+				ret = ret_dpi;
+			end
+		end
+		
+		return ret;
+	endfunction
+	
 	static function TbLink inst();
 		if (_tblink_inst == null) begin
 			_tblink_inst = new();
@@ -35,7 +54,7 @@ class TbLink;
 		return _tblink_inst;
 	endfunction
 
-
 endclass
 
+import "DPI-C" context function chandle tblink_rpc_findLaunchType(string id);
 

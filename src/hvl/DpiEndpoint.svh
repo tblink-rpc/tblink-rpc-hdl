@@ -39,44 +39,46 @@ class DpiEndpoint extends IEndpoint;
 	function int shutdown();
 		return _tblink_rpc_endpoint_shutdown(m_hndl);
 	endfunction
+	
+	virtual function string last_error();
+		return tblink_rpc_IEndpoint_last_error(m_hndl);
+	endfunction
 		
 	function IInterfaceType findInterfaceType(string name);
-		IInterfaceType ret;
+		DpiInterfaceType ret;
+		
 		chandle if_h = tblink_rpc_IEndpoint_findInterfaceType(
 				m_hndl,
 				name);
+		
 		if (if_h != null) begin
-			ret = new();
-			ret.m_hndl = if_h;
+			ret = new(if_h);
 		end
+		
 		return ret;
 	endfunction
 		
 	function IInterfaceTypeBuilder newInterfaceTypeBuilder(string name);
-`ifdef UNDEFINED
-		IInterfaceTypeBuilder ret = new();
-			
-		ret.m_hndl = tblink_rpc_IEndpoint_newInterfaceTypeBuilder(
-				m_hndl,
-				name);
+		DpiInterfaceTypeBuilder ret;
+		chandle hndl = tblink_rpc_IEndpoint_newInterfaceTypeBuilder(m_hndl, name);
+		
+		ret = new(hndl);
+		
 		return ret;
-`endif
-		return null;
 	endfunction
 		
-	function IInterfaceType defineInterfaceType(IInterfaceTypeBuilder builder);
-		// Dynamic cast currently has issues with Verilator
-		// Specifically, seems to be an issue with no timeunit
-//		DpiInterfaceTypeBuilder builder_dpi;
-//		$cast(builder_dpi, builder);
-`ifdef UNDEFINED
-		IInterfaceType ret = new();
-		ret.m_hndl = tblink_rpc_IEndpoint_defineInterfaceType(
+	virtual function IInterfaceType defineInterfaceType(IInterfaceTypeBuilder iftype_b);
+		DpiInterfaceTypeBuilder builder_dpi;
+		DpiInterfaceType ret;
+		chandle iftype_h;
+		
+		`DYN_CAST(builder_dpi, iftype_b);
+		iftype_h = tblink_rpc_IEndpoint_defineInterfaceType(
 				m_hndl,
-				builder.m_hndl);
+				builder_dpi.m_hndl);
+		ret = new(iftype_h);
+		
 		return ret;
-`endif
-		return null;
 	endfunction
 		
 		
@@ -85,19 +87,23 @@ class DpiEndpoint extends IEndpoint;
 		string					inst_name,
 		int unsigned			is_mirror,
 		IInterfaceImpl			ifinst_impl);
-		IInterfaceInst ret = new();
-		/*
-			ret.m_hndl = tblink_rpc_IEndpoint_defineInterfaceInst(
+		DpiInterfaceType iftype_dpi;
+		DpiInterfaceInst ifinst;
+		chandle ifinst_h;
+		
+		`DYN_CAST(iftype_dpi, iftype);
+		
+		ifinst_h = tblink_rpc_IEndpoint_defineInterfaceInst(
 				m_hndl,
-				iftype.m_hndl,
+				iftype_dpi.m_hndl,
 				inst_name,
 				is_mirror,
 				ifinst_impl);
-			
-			m_ifimpl_m[ret.m_hndl] = ifinst_impl;
-			m_ifinst_m[ifinst_impl] = ret.m_hndl;
-		 */
-		return ret;
+		
+		ifinst = new(ifinst_h);
+		ifinst.set_impl(ifinst_impl);
+		
+		return ifinst;
 	endfunction
 	
 	`ifndef VERILATOR
@@ -117,28 +123,6 @@ class DpiEndpoint extends IEndpoint;
 			end
 		endtask
 	`endif
-
-	static function IEndpoint inst();
-		/*
-			if (_endpoint == null) begin
-				_endpoint = new();
-				_endpoint.m_hndl = _tblink_rpc_endpoint_new(
-					`ifdef VERILATOR
-						0
-					`else
-						1
-					`endif
-				);
-				
-				if (_endpoint.m_hndl == null) begin
-					$display("Error: failure initializing tblink_rpc");
-					$finish();
-				end
-			end
-		 */
-			
-		return _endpoint;
-	endfunction
 
 	// For environments with support for blocking tasks,
 	// we need to run the main loop from within a task
@@ -181,6 +165,7 @@ class DpiEndpoint extends IEndpoint;
 	endfunction
 		
 	function void _invoke_nb(InvokeInfo ii);
+`ifdef TODO
 		chandle ifinst_h = tblink_rpc_InvokeInfo_ifinst(ii.m_hndl);
 		IInterfaceImpl impl = m_ifimpl_m[ifinst_h];
 		impl.m_ii = ii;
@@ -188,6 +173,7 @@ class DpiEndpoint extends IEndpoint;
 		m_next_ii = ii;
 		
 		impl.invoke_nb(ii);
+`endif
 	endfunction
 	
 	`ifdef UNDEFINED
@@ -235,4 +221,31 @@ import "DPI-C" context function chandle tblink_rpc_IEndpoint_findInterfaceType(
 import "DPI-C" context function chandle tblink_rpc_IEndpoint_newInterfaceTypeBuilder(
 	chandle 	endpoint_h,
 	string 		name);
+	
+import "DPI-C" context function chandle tblink_rpc_IEndpoint_defineInterfaceType(
+	chandle		endpoint_h,
+	chandle 	iftype_builder_h);
+	
+function chandle tblink_rpc_IEndpoint_defineInterfaceInst(
+	chandle			endpoint_h,
+	chandle			iftype_h,
+	string			inst_name,
+	int unsigned	is_mirror,
+	IInterfaceImpl	impl);
+	automatic chandle ifinst = _tblink_rpc_IEndpoint_defineInterfaceInst(
+			endpoint_h,
+			iftype_h,
+			inst_name,
+			is_mirror);
+	ifinst2impl_m[ifinst] = impl;
+	return ifinst;
+endfunction
+	
+import "DPI-C" context function chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
+	chandle			endpoint_h,
+	chandle			iftype_h,
+	string			inst_name,
+	int unsigned	is_mirror);	
+	
+	
 

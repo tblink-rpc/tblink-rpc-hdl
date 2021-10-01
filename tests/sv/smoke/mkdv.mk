@@ -7,6 +7,7 @@ MKDV_VL_INCDIRS += $(TEST_DIR)/../../../src/hvl
 MKDV_VL_SRCS += $(TEST_DIR)/smoke.sv
 TOP_MODULE = smoke
 VLSIM_CLKSPEC += clock=10ns
+VLSIM_OPTIONS += -Wno-fatal --timescale 1ns/1ns
 
 GTEST_FILTER ?= TblinkRpcHdlTestBase.smoke
 export GTEST_FILTER

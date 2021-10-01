@@ -9,7 +9,7 @@
  * 
  * TODO: Add class documentation
  */
-class ITypeInt;
+class ITypeInt extends IType;
 
 	virtual function int unsigned is_signed();
 		return 0;

@@ -26,6 +26,15 @@ package tblink_rpc;
 `endif
 			_time_precision
 			);
+
+`ifdef VERILATOR
+	// Dynamic cast currently has issues with Verilator
+	// Specifically, seems to be an issue with no timeunit
+//	`define DYN_CAST(tgt, src) $display("TBLink Error: Verilator doesn't support dynamic cast")
+	`define DYN_CAST(tgt, src) $cast(tgt, src)
+`else
+	`define DYN_CAST(tgt, src) $cast(tgt, src)
+`endif
 	
 	typedef class IInterfaceTypeBuilder;
 	typedef class IInterfaceType;
@@ -58,21 +67,28 @@ package tblink_rpc;
 	`include "IEndpoint.svh"
 	`include "IEndpointServices.svh"
 	
+	`include "ILaunchParams.svh"
+	`include "ILaunchType.svh"
+	
 	`include "SVEndpoint.svh"
 
 	`include "DpiType.svh"
+	`include "DpiInterfaceInst.svh"
 	`include "DpiInterfaceTypeBuilder.svh"
+	`include "DpiInterfaceType.svh"
+	`include "DpiParamVal.svh"
+	`include "DpiInvokeInfo.svh"
+	`include "DpiLaunchParams.svh"
+	`include "DpiLaunchType.svh"
+	`include "DpiMethodType.svh"
+	`include "DpiParamValBool.svh"
+	
 	
 	`include "TbLink.svh"
 
 	import "DPI-C" context function chandle tblink_rpc_iftype_find_method(
 			chandle		iftype_h,
 			string		name);
-	
-	import "DPI-C" context function string tblink_rpc_IMethodType_name(chandle hndl);
-	import "DPI-C" context function longint tblink_rpc_IMethodType_id(chandle hndl);
-	import "DPI-C" context function int unsigned tblink_rpc_IMethodType_is_export(chandle hndl);
-	import "DPI-C" context function int unsigned tblink_rpc_IMethodType_is_blocking(chandle hndl);
 	
 	import "DPI-C" context function longint _tblink_rpc_iparam_val_int_val_u(
 			chandle			hndl);
@@ -129,12 +145,7 @@ package tblink_rpc;
 
 
 	
-	import "DPI-C" context function chandle tblink_rpc_InvokeInfo_ifinst(chandle hndl);
-	import "DPI-C" context function chandle tblink_rpc_InvokeInfo_method(chandle hndl);
-	import "DPI-C" context function chandle tblink_rpc_InvokeInfo_params(chandle ii_h);
-	import "DPI-C" context function void tblink_rpc_InvokeInfo_invoke_rsp(
-			chandle 	ii_h,
-			chandle		retval_h);
+
 		
 	
 	
@@ -218,8 +229,10 @@ package tblink_rpc;
 		endfunction
 	
 		virtual task run();
-			chandle ifinst = tblink_rpc_InvokeInfo_ifinst(m_ii.m_hndl);
-			IInterfaceImpl ifimpl = ifinst2impl_m[ifinst];
+			IInterfaceInst ifinst = m_ii.inst();
+			IInterfaceImpl ifimpl = ifinst.get_impl();
+//			chandle ifinst = tblink_rpc_InvokeInfo_ifinst(m_ii.m_hndl);
+//			IInterfaceImpl ifimpl = ifinst2impl_m[ifinst];
 
 			$display("--> invoke_b");
 			ifimpl.invoke_b(m_ii);
@@ -267,34 +280,6 @@ package tblink_rpc;
 		
 	// IEndpoint functions
 	
-
-
-	
-	import "DPI-C" context function chandle tblink_rpc_IEndpoint_defineInterfaceType(
-			chandle		endpoint_h,
-			chandle 	iftype_builder_h);
-	
-	function chandle tblink_rpc_IEndpoint_defineInterfaceInst(
-			chandle			endpoint_h,
-			chandle			iftype_h,
-			string			inst_name,
-			int unsigned	is_mirror,
-			IInterfaceImpl	impl);
-		automatic chandle ifinst = _tblink_rpc_IEndpoint_defineInterfaceInst(
-				endpoint_h,
-				iftype_h,
-				inst_name,
-				is_mirror);
-		ifinst2impl_m[ifinst] = impl;
-		return ifinst;
-	endfunction
-	
-	import "DPI-C" context function chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
-			chandle			endpoint_h,
-			chandle			iftype_h,
-			string			inst_name,
-			int unsigned	is_mirror);
-	
 	function automatic void _tblink_rpc_invoke(
 		chandle			invoke_info_h);
 		chandle method_t = tblink_rpc_InvokeInfo_method(invoke_info_h);
@@ -304,7 +289,7 @@ package tblink_rpc;
 		if (tblink_rpc_IMethodType_is_blocking(method_t) != 0) begin
 `ifndef VERILATOR
 			// Invoke indirectly
-			InvokeInfo ii = new(invoke_info_h);
+			DpiInvokeInfo ii = new(invoke_info_h);
 			tblink_rpc_invoke_b t = new(ii);
 			
 			$display("Invoking Indirectly");
@@ -317,7 +302,7 @@ package tblink_rpc;
 		end else begin
 			// Invoke directly
 			IInterfaceImpl ifimpl = ifinst2impl_m[ifinst];
-			InvokeInfo ii = new(invoke_info_h);
+			DpiInvokeInfo ii = new(invoke_info_h);
 			$display("Invoking Directly");
 			
 			ifimpl.invoke_nb(ii);
@@ -431,23 +416,6 @@ package tblink_rpc;
 	 	return null;
 	endfunction
 
-	import "DPI-C" context function chandle tblink_rpc_findLaunchType(string id);
-	
-	import "DPI-C" context function chandle tblink_rpc_newLaunchParams();
-	
-	import "DPI-C" context function void tblink_rpc_ILaunchParams_add_arg(
-			input chandle	params,
-			input string	arg);
-	
-	import "DPI-C" context function void tblink_rpc_ILaunchParams_add_param(
-			input chandle	params,
-			input string	key,
-			input string	val);
-
-	import "DPI-C" context function chandle tblink_rpc_ILaunchType_launch(
-			input chandle	launch,
-			input chandle 	params,
-			output string	error);
 	
 	import "DPI-C" context function string tblink_rpc_libpath();
 

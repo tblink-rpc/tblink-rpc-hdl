@@ -1,28 +1,27 @@
 
 /****************************************************************************
- * IMethodType.svh
+ * ILaunchType.svh
  ****************************************************************************/
 
   
 /**
- * Class: IMethodType
+ * Class: ILaunchType
  * 
  * TODO: Add class documentation
  */
-class IMethodType;
-		
+class ILaunchType;
+	
 	virtual function string name();
 	endfunction
-		
-	virtual function longint id();
+	
+	virtual function IEndpoint launch(
+		input ILaunchParams params,
+		output string		errmsg);
 	endfunction
 	
-	virtual function bit is_export();
+	virtual function ILaunchParams newLaunchParams();
 	endfunction
-	
-	virtual function bit is_blocking();
-	endfunction
-	
+
 endclass
 
 
