@@ -346,6 +346,11 @@ EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeVec(
 					reinterpret_cast<IType *>(elem_t)));
 }
 
+EXTERN_C int tblink_rpc_IType_kind(
+		chandle				itype_h) {
+	return int(reinterpret_cast<IType *>(itype_h)->kind());
+}
+
 EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_newMethodTypeBuilder(
 		chandle				iftype_b,
 		const char			*name,

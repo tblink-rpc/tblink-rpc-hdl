@@ -3,6 +3,8 @@
  * DpiInterfaceTypeBuilder.svh
  ****************************************************************************/
 
+typedef class DpiMethodType;
+typedef class DpiMethodTypeBuilder;
   
 /**
  * Class: DpiInterfaceTypeBuilder
@@ -16,32 +18,105 @@ class DpiInterfaceTypeBuilder extends IInterfaceTypeBuilder;
 		m_hndl = hndl;
 	endfunction
 
+	virtual function IMethodTypeBuilder newMethodTypeBuilder(
+		string					name,
+		longint					id,
+		IType					rtype,
+		int unsigned			is_export,
+		int unsigned			is_blocking);
+		DpiMethodTypeBuilder mtb;
+		chandle rtype_h = DpiType::getHndl(rtype);
+		chandle mtb_h;
+		
+		mtb_h = tblink_rpc_IInterfaceTypeBuilder_newMethodTypeBuilder(
+				m_hndl,
+				name,
+				id,
+				rtype_h,
+				is_export,
+				is_blocking);
+		
+		mtb = new(mtb_h);
+		
+		return mtb;
+	endfunction
+	
+	virtual function IMethodType add_method(
+		IMethodTypeBuilder		mtb);
+		DpiMethodTypeBuilder mtb_dpi;
+		DpiMethodType ret;
+		chandle method_h;
+		
+		`DYN_CAST(mtb_dpi, mtb);
+		
+		method_h = tblink_rpc_IInterfaceTypeBuilder_add_method(
+				m_hndl,
+				mtb_dpi.m_hndl);
+		
+		ret = new(method_h);
+				
+		return ret;
+	endfunction
+	
 	virtual function IType mkTypeBool();
 		DpiType ret;
 		chandle hndl = tblink_rpc_IInterfaceTypeBuilder_mkTypeBool(m_hndl);
+		
 		ret = new(hndl);
+		
 		return ret;
 	endfunction
 		
 	virtual function ITypeInt mkTypeInt(
 		int unsigned			is_signed,
 		int						width);
-		return null;
+		DpiTypeInt ret;
+		chandle type_h = tblink_rpc_IInterfaceTypeBuilder_mkTypeInt(
+				m_hndl,
+				is_signed,
+				width);
+		
+		ret = new(type_h);
+		
+		return ret;
 	endfunction
 	
 	virtual function ITypeMap mkTypeMap(
 		IType					key_t,
 		IType					elem_t);
-		return null;
+		chandle key_t_h = DpiType::getHndl(key_t);
+		chandle elem_t_h = DpiType::getHndl(elem_t);
+		DpiTypeMap ret;
+		chandle type_h = tblink_rpc_IInterfaceTypeBuilder_mkTypeMap(
+				m_hndl,
+				key_t_h,
+				elem_t_h);
+		
+		ret = new(type_h);
+		
+		return ret;
 	endfunction
 	
 	virtual function IType mkTypeStr();
-		return null;
+		DpiType ret;
+		chandle type_h = tblink_rpc_IInterfaceTypeBuilder_mkTypeStr(m_hndl);
+		
+		ret = new(type_h);
+		
+		return ret;
 	endfunction
 	
 	virtual function ITypeVec mkTypeVec(
 		IType					elem_t);
-		return null;
+		chandle elem_t_h = DpiType::getHndl(elem_t);
+		DpiTypeVec ret;
+		chandle type_h = tblink_rpc_IInterfaceTypeBuilder_mkTypeVec(
+				m_hndl,
+				elem_t_h);
+		
+		ret = new(type_h);
+		
+		return ret;
 	endfunction
 
 endclass
@@ -72,16 +147,3 @@ import "DPI-C" context function chandle tblink_rpc_IInterfaceTypeBuilder_add_met
 	chandle			iftype_b,
 	chandle			mtb);
 	
-import "DPI-C" context function void tblink_rpc_IMethodTypeBuilder_add_param(
-	chandle			method_b,
-	string			name,
-	chandle			type_h);
-	
-import "DPI-C" context function chandle _tblink_rpc_iftype_builder_define_method(
-	chandle			iftype_b,
-	string			name,
-	longint			id,
-	string			signature,
-	int unsigned	is_export,
-	int unsigned	is_blocking);
-

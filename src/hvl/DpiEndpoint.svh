@@ -26,15 +26,20 @@ class DpiEndpoint extends IEndpoint;
 		m_hndl = hndl;
 	endfunction
 
-	/** TODO:
-		function int build_complete();
-			return tblink_rpc_IEndpoint_build_complete(m_hndl);
-		endfunction
+	virtual function int build_complete();
+		return tblink_rpc_IEndpoint_build_complete(m_hndl);
+	endfunction
 		
-		function int connect_complete();
-			return tblink_rpc_IEndpoint_connect_complete(m_hndl);
-		endfunction
-	 */
+	virtual function int connect_complete();
+		return tblink_rpc_IEndpoint_connect_complete(m_hndl);
+	endfunction
+	
+	virtual function int start();
+`ifndef VERILATOR
+		_tblink_start_dispatcher();
+`endif
+		return _tblink_rpc_IEndpoint_start(m_hndl);
+	endfunction
 		
 	function int shutdown();
 		return _tblink_rpc_endpoint_shutdown(m_hndl);

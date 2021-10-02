@@ -144,15 +144,19 @@ module smoke(input clock);
 				return;
 			end
 
-//			tblink_rpc_IEndpoint_start(endpoint);
+			if (endpoint.start() == -1) begin
+				$display("Error: start phase failed");
+				$finish(1);
+				return;
+			end
 		
 			//		tblink_rpc_run();			
 		end
 	endtask
 	
 	initial begin
-		automatic TbLink tblink = TbLink::inst();
-		automatic IEndpoint ep = tblink.get_default_ep();
+//		automatic TbLink tblink = TbLink::inst();
+//		automatic IEndpoint ep = tblink.get_default_ep();
 		init();
 	end	
 	

@@ -35,6 +35,9 @@ class IEndpoint;
 	virtual function int is_connect_complete();
 	endfunction
 	
+	virtual function int start();
+	endfunction
+	
 	virtual function int shutdown();
 	endfunction
 	
