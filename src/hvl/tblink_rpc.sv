@@ -46,10 +46,11 @@ package tblink_rpc;
 	typedef class IParamValBool;
 	typedef class IParamValVec;
 	`include "IParamVal.svh"
-	`include "IParamValBool.svh"
 	`include "IParamValInt.svh"
-	`include "IParamValVec.svh"
 	`include "IParamValMap.svh"
+	`include "IParamValStr.svh"
+	`include "IParamValVec.svh"
+	`include "IParamValBool.svh"
 	
 	`include "IType.svh"
 	`include "ITypeInt.svh"
@@ -70,12 +71,11 @@ package tblink_rpc;
 	`include "ILaunchParams.svh"
 	`include "ILaunchType.svh"
 	
-	`include "SVEndpoint.svh"
 
-	`include "DpiType.svh"
 	`include "DpiTypeInt.svh"
 	`include "DpiTypeMap.svh"
 	`include "DpiTypeVec.svh"
+	`include "DpiType.svh"
 	`include "DpiInterfaceInst.svh"
 	`include "DpiMethodTypeBuilder.svh"
 	`include "DpiInterfaceTypeBuilder.svh"
@@ -86,7 +86,13 @@ package tblink_rpc;
 	`include "DpiLaunchType.svh"
 	`include "DpiMethodType.svh"
 	`include "DpiParamValBool.svh"
+	`include "DpiParamValInt.svh"
+	`include "DpiParamValMap.svh"
 	
+	`include "SVEndpoint.svh"
+	`include "SVLaunchTypeRegistration.svh"
+	`include "SVLaunchParams.svh"
+	`include "SVLaunchTypeLoopback.svh"
 	
 	`include "TbLink.svh"
 
@@ -94,8 +100,6 @@ package tblink_rpc;
 			chandle		iftype_h,
 			string		name);
 	
-	import "DPI-C" context function longint _tblink_rpc_iparam_val_int_val_u(
-			chandle			hndl);
 
 	import "DPI-C" context function chandle _tblink_rpc_iparam_val_clone(
 			chandle			hndl);
@@ -123,24 +127,6 @@ package tblink_rpc;
 			chandle			ifinst);
 	import "DPI-C" context function int unsigned tblink_rpc_IInterfaceInst_is_mirror(
 			chandle			ifinst);
-	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValBool(
-			chandle			ifinst,
-			int unsigned	val);
-	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValIntU(
-			chandle				ifinst,
-			longint unsigned	val,
-			int unsigned		width);
-	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValIntS(
-			chandle				ifinst,
-			longint				val,
-			int unsigned		width);
-	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValMap(
-			chandle				ifinst);
-	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValStr(
-			chandle				ifinst,
-			string				val);
-	import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValVec(
-			chandle				ifinst);
 	
 	import "DPI-C" context function chandle _tblink_rpc_ifinst_invoke_nb(
 			chandle			ifinst_h,

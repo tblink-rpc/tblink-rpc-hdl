@@ -47,6 +47,10 @@ class TbLink;
 		return ret;
 	endfunction
 	
+	function void registerLaunchType(ILaunchType lt);
+		m_sv_launch_type_m[lt.name()] = lt;
+	endfunction
+	
 	static function TbLink inst();
 		if (_tblink_inst == null) begin
 			_tblink_inst = new();

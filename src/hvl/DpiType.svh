@@ -2,6 +2,9 @@
  * DpiType.svh
  ****************************************************************************/
 
+typedef class DpiTypeVec;
+typedef class DpiTypeInt;
+typedef class DpiTypeMap;
   
 /**
  * Class: DpiType
@@ -28,6 +31,26 @@ class DpiType extends IType;
 			return null;
 		end else begin
 			case (t.kind())
+				Bool, Str: begin
+					DpiType type_dpi;
+					`DYN_CAST(type_dpi, t);
+					return type_dpi.m_hndl;
+				end
+				Int: begin
+					DpiTypeInt type_dpi;
+					`DYN_CAST(type_dpi, t);
+					return type_dpi.m_hndl;
+				end
+				Map: begin
+					DpiTypeMap type_dpi;
+					`DYN_CAST(type_dpi, t);
+					return type_dpi.m_hndl;
+				end
+				Vec: begin
+					DpiTypeVec type_dpi;
+					`DYN_CAST(type_dpi, t);
+					return type_dpi.m_hndl;
+				end
 			endcase
 		end
 	endfunction
@@ -39,6 +62,14 @@ class DpiType extends IType;
 			type_kind_e kind = _kind(hndl);
 			
 			case (kind)
+				Bool, Str: begin
+				end
+				Int: begin
+				end
+				Map: begin
+				end
+				Vec: begin
+				end
 			endcase
 		end
 	endfunction

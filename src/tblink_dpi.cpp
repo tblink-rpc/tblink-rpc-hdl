@@ -478,9 +478,12 @@ EXTERN_C uint32_t tblink_rpc_IMethodType_is_blocking(chandle hndl) {
 	return reinterpret_cast<IMethodType *>(hndl)->is_blocking();
 }
 
-EXTERN_C uint64_t _tblink_rpc_iparam_val_int_val_u(chandle hndl_h) {
-	fprintf(stdout, "val_int: hndl=%p\n", hndl_h);
-	fflush(stdout);
+EXTERN_C uint64_t tblink_rpc_IParamValInt_val_s(chandle hndl_h) {
+	return dynamic_cast<IParamValInt *>(
+			reinterpret_cast<IParamVal *>(hndl_h))->val_s();
+}
+
+EXTERN_C uint64_t tblink_rpc_IParamValInt_val_u(chandle hndl_h) {
 	return dynamic_cast<IParamValInt *>(
 			reinterpret_cast<IParamVal *>(hndl_h))->val_u();
 }
@@ -496,6 +499,31 @@ EXTERN_C uint32_t _tblink_rpc_iparam_val_type(void *hndl) {
 EXTERN_C uint32_t _tblink_rpc_iparam_val_bool_val(void *hndl) {
 	return dynamic_cast<IParamValBool *>(
 			reinterpret_cast<IParamVal *>(hndl))->val();
+}
+
+EXTERN_C uint32_t tblink_rpc_IParamValMap_hasKey(
+		chandle			map_h,
+		const char		*key) {
+	return dynamic_cast<IParamValMap *>(
+			reinterpret_cast<IParamVal *>(map_h))->hasKey(key);
+}
+
+EXTERN_C chandle tblink_rpc_IParamValMap_getVal(
+		chandle			map_h,
+		const char		*key) {
+	return reinterpret_cast<chandle>(
+			static_cast<IParamVal *>(
+					dynamic_cast<IParamValMap *>(
+							reinterpret_cast<IParamVal *>(map_h))->getVal(key)));
+}
+
+EXTERN_C void tblink_rpc_IParamValMap_setVal(
+		chandle			map_h,
+		const char		*key,
+		chandle			val_h) {
+	dynamic_cast<IParamValMap *>(reinterpret_cast<IParamVal *>(map_h))->setVal(
+			key,
+			reinterpret_cast<IParamVal *>(val_h));
 }
 
 EXTERN_C chandle _tblink_rpc_iparam_val_vector_new() {

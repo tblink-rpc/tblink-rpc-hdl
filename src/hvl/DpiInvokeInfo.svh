@@ -47,11 +47,7 @@ class DpiInvokeInfo extends InvokeInfo;
 	virtual function void invoke_rsp(IParamVal retval);
 		chandle retval_h;
 		
-		if (retval != null) begin
-			DpiParamVal retval_dpi;
-			`DYN_CAST(retval_dpi, retval);
-			retval_h = retval_dpi.m_hndl;
-		end
+		retval_h = DpiParamVal::getHndl(retval);
 		
 		tblink_rpc_InvokeInfo_invoke_rsp(m_hndl, retval_h);
 	endfunction

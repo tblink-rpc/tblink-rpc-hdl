@@ -4,6 +4,7 @@
  ****************************************************************************/
 
 typedef class DpiParamValBool;
+typedef class DpiParamValMap;
   
 /**
  * Class: DpiParamVal
@@ -33,6 +34,44 @@ class DpiParamVal extends IParamVal;
 		chandle hndl_c = _tblink_rpc_iparam_val_clone(hndl);
 		return mk(hndl_c);
 	endfunction
+	
+	static function chandle getHndl(IParamVal v);
+		if (v == null) begin
+			return null;
+		end else begin
+			case (v.kind())
+				Bool: begin
+					DpiParamValBool dpi_v;
+					`DYN_CAST(dpi_v, v);
+					return dpi_v.m_hndl;
+				end
+				Int: begin
+					DpiParamValInt dpi_v;
+					`DYN_CAST(dpi_v, v);
+					return dpi_v.m_hndl;
+				end
+				Map: begin
+					DpiParamValMap dpi_v;
+					`DYN_CAST(dpi_v, v);
+					return dpi_v.m_hndl;
+				end
+				Str: begin
+					/*
+					DpiParamValStr dpi_v;
+					`DYN_CAST(dpi_v, v);
+					return dpi_v.m_hndl;
+					 */
+				end
+				Vec: begin
+					/*
+					DpiParamValVec dpi_v;
+					`DYN_CAST(dpi_v, v);
+					return dpi_v.m_hndl;
+					 */
+				end
+			endcase
+		end
+	endfunction
 
 	static function IParamVal mk(chandle hndl);
 		IParamVal ret;
@@ -41,15 +80,15 @@ class DpiParamVal extends IParamVal;
 				DpiParamValBool t = new(hndl);
 				ret = t;
 			end
-			/*
-				Int: begin
-					ParamValInt t = new();
-					ret = t;
-				end
-				Map: begin
-					ParamValMap t = new();
-					ret = t;
-				end
+			Int: begin
+				DpiParamValInt t = new(hndl);
+				ret = t;
+			end
+			Map: begin
+				DpiParamValMap t = new(hndl);
+				ret = t;
+			end
+				/*
 				Str: begin
 					ParamValStr t = new();
 					ret = t;
