@@ -414,7 +414,11 @@ static void invoke_req(
 	dpi_api_t *dpi_api = prv_plugin->dpi_api();
 	dpi_api->svSetScope(dpi_api->get_pkg_scope());
 
-	InvokeInfoDpi *ii = new InvokeInfoDpi(inst, method, call_id, params);
+	InvokeInfoDpi *ii = new InvokeInfoDpi(
+			inst,
+			method,
+			call_id,
+			params->cloneT<IParamValVec>());
 	dpi_api->invoke(reinterpret_cast<chandle>(ii));
 }
 

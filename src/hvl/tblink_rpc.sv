@@ -29,6 +29,7 @@ package tblink_rpc;
 	typedef class IInterfaceImpl;
 	
 	typedef class IParamVal;
+	typedef class IParamValInt;
 	typedef class IParamValBool;
 	typedef class IParamValVec;
 	`include "IParamVal.svh"
