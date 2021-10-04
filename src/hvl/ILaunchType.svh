@@ -12,6 +12,7 @@
 class ILaunchType;
 	
 	virtual function string name();
+		return "ILaunchType::unknown";
 	endfunction
 	
 	virtual function IEndpoint launch(

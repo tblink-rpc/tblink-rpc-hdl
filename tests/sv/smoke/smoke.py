@@ -34,10 +34,9 @@ class TestEndpointServices(EndpointServices):
     
     def run_until_event(self):
         raise NotImplementedError("run_until_event not implemented by class %s" % str(type(self)))
-            
-    
 
 def main():
+    debug = False
     print("Hello from main")
     port = int(os.environ["TBLINK_PORT"])
     host = os.environ["TBLINK_HOST"]
@@ -45,6 +44,7 @@ def main():
     print("connect: %s:%d" % (host, port))
     
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     sock.connect((host, port))
     
     transport = TransportJsonSocket(sock)
@@ -92,25 +92,30 @@ def main():
         endpoint.process_one_message()
     print("<-- wait_connect_complete", flush=True)
 
-    
-    done = False
-    def completion_f(*args):
-        nonlocal done
-        done = True
-        
-    params = endpoint.mkValVec()
 
-    print("--> invoke", flush=True)    
-    ifinst.invoke(
-        method_t, 
-        params, 
-        completion_f)
-    print("<-- invoke", flush=True)    
+    for i in range(100000):
+        done = False
+        def completion_f(*args):
+            nonlocal done
+            done = True
+        
+        params = endpoint.mkValVec()
+
+        if debug:
+            print("--> invoke", flush=True)    
+        ifinst.invoke(
+            method_t, 
+            params, 
+            completion_f)
+        if debug:
+            print("<-- invoke", flush=True)    
     
-    print("--> invoke::wait-complete", flush=True)    
-    while not done:
-        endpoint.process_one_message()
-    print("<-- invoke::wait-complete", flush=True)    
+        if debug:
+            print("--> invoke::wait-complete", flush=True)    
+        while not done:
+            endpoint.process_one_message()
+        if debug:
+            print("<-- invoke::wait-complete", flush=True)    
     
 #    time.sleep(5)
 

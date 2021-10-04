@@ -40,7 +40,6 @@ module smoke(input clock);
 			IInterfaceInst ifinst = ii.inst();
 			IParamVal retval = ifinst.mkValIntS(0, 32);
 
-			$display("target::invoke_nb");
 			ii.invoke_rsp(retval);
 		endfunction
 		
@@ -74,7 +73,8 @@ module smoke(input clock);
 				$finish();
 				return;
 			end
-		
+
+			// Launch Python, which will connect back		
 			params = launch_t.newLaunchParams();
 			params.add_arg(python3);
 			params.add_arg(string'("-m"));
@@ -103,22 +103,6 @@ module smoke(input clock);
 
 				mt = iftype_b.add_method(mtb);
 
-				/*
-			void'(tblink_rpc_bfm_define_method(
-						iftype_b,
-						string'("inc"),
-						0,
-						string'("u32(i32)"),
-						1,
-						0));
-			void'(tblink_rpc_bfm_define_method(
-						iftype_b,
-						string'("inc_b"),
-						1,
-						string'("u32(i32)"),
-						1,
-						1));
-				 */
 				target_iftype_h = endpoint.defineInterfaceType(iftype_b);
 			end
 			
@@ -155,9 +139,14 @@ module smoke(input clock);
 	endtask
 	
 	initial begin
-//		automatic TbLink tblink = TbLink::inst();
+		automatic TbLink tblink = TbLink::inst();
 //		automatic IEndpoint ep = tblink.get_default_ep();
 		init();
+		tblink.start();
+
+`ifndef VERILATOR
+		# 10ns;
+`endif
 	end	
 	
 	always @(posedge clock) begin

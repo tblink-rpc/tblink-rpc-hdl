@@ -3,6 +3,7 @@
  * SVLaunchTypeLoopback.svh
  ****************************************************************************/
 
+typedef class SVEndpointLoopback;
   
 /**
  * Class: SVLaunchTypeLoopback
@@ -22,6 +23,7 @@ class SVLaunchTypeLoopback extends ILaunchType;
 	virtual function IEndpoint launch(
 		input ILaunchParams params,
 		output string		errmsg);
+		return SVEndpointLoopback::mk();
 	endfunction
 	
 	virtual function ILaunchParams newLaunchParams();
@@ -31,6 +33,13 @@ class SVLaunchTypeLoopback extends ILaunchType;
 
 endclass
 
-static bit prv_SVLaunchTypeLoopback_rgy = SVLaunchTypeRegistration #(SVLaunchTypeLoopback)::register();
+`ifdef UNDEFINED
+function bit register_SVLaunchTypeLoopback();
+	TbLink tblink = TbLink::inst();
+	SVLaunchTypeLoopback launch_t = new();
+	tblink.registerLaunchType(launch_t);
+endfunction
+static bit prv_SVLaunchTypeLoopback_rgy = register_SVLaunchTypeLoopback();
+`endif
 
 

@@ -1,6 +1,11 @@
 /****************************************************************************
  * DpiEndpoint.svh
  ****************************************************************************/
+ 
+`ifndef VERILATOR
+	typedef class TbLinkThread;
+	typedef class TbLinkTimedCb;
+`endif
 
 /**
  * Class: DpiEndpoint
@@ -17,8 +22,8 @@ class DpiEndpoint extends IEndpoint;
 	bit						m_running = 0;
 	`ifndef VERILATOR
 		// Requests for new threads are queued here
-		mailbox #(tblink_rpc_thread)   	m_thread_q = new();
-		tblink_rpc_timed_cb				m_cb_m[chandle];
+		mailbox #(TbLinkThread)   	m_thread_q = new();
+		TbLinkTimedCb				m_cb_m[chandle];
 	`endif
 	InvokeInfo						m_next_ii;
 		
@@ -35,9 +40,6 @@ class DpiEndpoint extends IEndpoint;
 	endfunction
 	
 	virtual function int start();
-`ifndef VERILATOR
-		_tblink_start_dispatcher();
-`endif
 		return _tblink_rpc_IEndpoint_start(m_hndl);
 	endfunction
 		
@@ -98,35 +100,36 @@ class DpiEndpoint extends IEndpoint;
 		
 		`DYN_CAST(iftype_dpi, iftype);
 		
-		ifinst_h = tblink_rpc_IEndpoint_defineInterfaceInst(
+		ifinst_h = _tblink_rpc_IEndpoint_defineInterfaceInst(
 				m_hndl,
 				iftype_dpi.m_hndl,
 				inst_name,
-				is_mirror,
-				ifinst_impl);
+				is_mirror);
 		
 		ifinst = new(ifinst_h);
 		ifinst.set_impl(ifinst_impl);
 		
 		return ifinst;
 	endfunction
-	
+
+	`ifdef UNDEFINED
 	`ifndef VERILATOR
 		function void add_time_cb(
 			chandle				cb_data,
 			longint unsigned	delta);
-			tblink_rpc_timed_cb cb = new(cb_data, delta);
+			TbLinkTimedCb cb = new(cb_data, delta);
 		
 			void'(m_thread_q.try_put(cb));
 			m_cb_m[cb_data] = cb;
 		endfunction
 		
-		task notify_time_cb(tblink_rpc_timed_cb cb);
+		task notify_time_cb(TbLinkTimedCb cb);
 			m_cb_m.delete(cb.m_cb_data);
 			if (cb.m_valid) begin
 				_tblink_rpc_notify_time_cb(cb.m_cb_data);
 			end
 		endtask
+	`endif
 	`endif
 
 	// For environments with support for blocking tasks,
@@ -148,7 +151,7 @@ class DpiEndpoint extends IEndpoint;
 				// TODO: anything needed here?
 			`else
 				forever begin
-					automatic tblink_rpc_thread t;
+					automatic TbLinkThread t;
 					m_thread_q.get(t);
 					
 					fork
@@ -230,13 +233,17 @@ import "DPI-C" context function chandle tblink_rpc_IEndpoint_newInterfaceTypeBui
 import "DPI-C" context function chandle tblink_rpc_IEndpoint_defineInterfaceType(
 	chandle		endpoint_h,
 	chandle 	iftype_builder_h);
-	
+
+`ifdef UNDEFINED
 function chandle tblink_rpc_IEndpoint_defineInterfaceInst(
 	chandle			endpoint_h,
 	chandle			iftype_h,
 	string			inst_name,
 	int unsigned	is_mirror,
 	IInterfaceImpl	impl);
+	automatic DpiInterfaceInst ifinst_dpi;
+	
+	ifinst_dpi = new(ifinst_h);
 	automatic chandle ifinst = _tblink_rpc_IEndpoint_defineInterfaceInst(
 			endpoint_h,
 			iftype_h,
@@ -245,6 +252,7 @@ function chandle tblink_rpc_IEndpoint_defineInterfaceInst(
 	ifinst2impl_m[ifinst] = impl;
 	return ifinst;
 endfunction
+`endif
 	
 import "DPI-C" context function chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
 	chandle			endpoint_h,

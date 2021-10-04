@@ -14,6 +14,7 @@ export GTEST_FILTER
 
 MKDV_PYTHONPATH += $(TEST_DIR)
 MKDV_RUN_ARGS += +python3=$(PACKAGES_DIR)/python/bin/python3
+MKDV_RUN_ARGS += +tblink.launch=sv.loopback
 
 #VLOG_OPTIONS += -sv
 

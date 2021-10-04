@@ -52,6 +52,7 @@ int TblinkPluginDpi::init() {
     m_vpi_api->vpi_get_vlog_info(&info);
 
 	// Read plusargs to determine if we need to launch a default endpoint
+#ifdef UNDEFINED
     const int32_t pref_len = strlen("+tblink.arg=");
     const int32_t launch_len = strlen("+tblink.launch=");
     for (int32_t i=0; i<info.argc; i++) {
@@ -100,6 +101,7 @@ int TblinkPluginDpi::init() {
     		return 0;
     	}
     }
+#endif
 
 
 	return 1;

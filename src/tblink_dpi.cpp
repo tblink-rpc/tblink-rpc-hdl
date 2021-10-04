@@ -33,9 +33,8 @@ typedef void *chandle;
 extern "C" {
 void *svGetScope() __attribute__((weak));
 void *svSetScope(void *) __attribute__((weak));
-void _tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) __attribute__((weak));
+void tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) __attribute__((weak));
 void _tblink_rpc_invoke(void *ii_h) __attribute__((weak));
-int _tblink_rpc_invoke_b(void *ii_h) __attribute__((weak));
 
 void *svGetScope() {
 	return 0;
@@ -45,15 +44,11 @@ void *svSetScope(void *) {
 	return 0;
 }
 
-void _tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) {
+void tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) {
 	;
 }
 
 void _tblink_rpc_invoke(void *ii_h) {
-}
-
-int _tblink_rpc_invoke_b(void *ii_h) {
-	return 0;
 }
 
 }
@@ -125,8 +120,7 @@ EXTERN_C int _tblink_rpc_pkg_init(
 	prv_dpi.svSetScope = &svSetScope;
 	prv_dpi.get_pkg_scope = &get_pkg_scope;
 	prv_dpi.invoke = &_tblink_rpc_invoke;
-	prv_dpi.invoke_b = &_tblink_rpc_invoke_b;
-	prv_dpi.add_time_cb = &_tblink_rpc_add_time_cb;
+	prv_dpi.add_time_cb = &tblink_rpc_add_time_cb;
 
 	*time_precision = vpi_api->vpi_get(vpiTimePrecision, 0);
 
@@ -417,15 +411,11 @@ static void invoke_req(
 		tblink_rpc_core::IMethodType			*method,
 		intptr_t								call_id,
 		tblink_rpc_core::IParamValVec			*params) {
-	fprintf(stdout, "--> invoke_req\n");
-	fflush(stdout);
 	dpi_api_t *dpi_api = prv_plugin->dpi_api();
 	dpi_api->svSetScope(dpi_api->get_pkg_scope());
 
 	InvokeInfoDpi *ii = new InvokeInfoDpi(inst, method, call_id, params);
 	dpi_api->invoke(reinterpret_cast<chandle>(ii));
-	fprintf(stdout, "<-- invoke_req\n");
-	fflush(stdout);
 }
 
 EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
@@ -446,13 +436,12 @@ EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
 							std::placeholders::_4)));
 }
 
-EXTERN_C int _tblink_rpc_notify_time_cb(void *cb_data) {
+EXTERN_C void tblink_rpc_notify_time_cb(void *cb_data) {
 	TimeCallbackClosureDpi *closure = reinterpret_cast<TimeCallbackClosureDpi *>(cb_data);
 	fprintf(stdout, "_tblink_rpc_notify_time_cb\n");
 	fflush(stdout);
 	closure->notify();
 	delete closure;
-	return 0;
 }
 
 EXTERN_C chandle tblink_rpc_iftype_find_method(

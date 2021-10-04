@@ -2,6 +2,10 @@
 /****************************************************************************
  * TbLink.svh
  ****************************************************************************/
+ 
+`ifndef VERILATOR
+	typedef class TbLinkThread;
+`endif
 
 // Static class members are not yet supported in Verilator
 typedef class TbLink;
@@ -13,11 +17,73 @@ TbLink			_tblink_inst;
  * TODO: Add class documentation
  */
 class TbLink;
-	IEndpoint			m_default_ep;
-	ILaunchType			m_sv_launch_type_m[string];
+	IEndpoint					m_default_ep;
+	int							m_time_precision;
+	ILaunchType					m_sv_launch_type_m[string];
+`ifndef VERILATOR
+	mailbox #(TbLinkThread)		m_dispatch_q = new();
+	bit							m_dispatcher_running;
+`endif
 
 	function new();
+		string launch;
+		
+		// Manually register known launch types
+		begin
+			SVLaunchTypeLoopback launch_t = new();
+			m_sv_launch_type_m["sv.loopback"] = launch_t;
+		end
+		
+		if ($value$plusargs("tblink.launch=%s", launch)) begin
+			ILaunchType launch_t;
+			
+			launch_t = findLaunchType(launch);
+			
+			if (launch_t == null) begin
+				$display("Error: launch type %0s doesn't exist", launch);
+				$finish(1);
+			end else begin
+				ILaunchParams params = launch_t.newLaunchParams();
+				string errmsg;
+				m_default_ep = launch_t.launch(params, errmsg);
+				
+				if (m_default_ep == null) begin
+					$display("TBLink Error: failed to launch %0s: %0s",
+							launch, errmsg);
+				end
+			end
+		end else begin
+			$display("TbLink Note: no default endpoint launched");
+		end
 	endfunction
+	
+	function void start();
+`ifndef VERILATOR
+		if (m_dispatcher_running == 0) begin
+			m_dispatcher_running = 1;
+			fork
+				dispatcher();
+			join_none
+		end
+`endif
+	endfunction
+
+`ifndef VERILATOR
+	task dispatcher();
+		TbLinkThread		t;
+		
+		forever begin
+			m_dispatch_q.get(t);
+			fork
+				t.run();
+			join_none
+		end
+	endtask
+	
+	function void queue_thread(TbLinkThread t);
+		void'(m_dispatch_q.try_put(t));
+	endfunction
+`endif
 	
 	function IEndpoint get_default_ep();
 		if (m_default_ep == null) begin
@@ -48,6 +114,7 @@ class TbLink;
 	endfunction
 	
 	function void registerLaunchType(ILaunchType lt);
+		$display("registerLaunchType: %0s", lt.name());
 		m_sv_launch_type_m[lt.name()] = lt;
 	endfunction
 	
@@ -60,5 +127,59 @@ class TbLink;
 
 endclass
 
+`ifdef VERILATOR
+	// For simplicity, we still provide the export
+	// even though Verilator uses a different mechanism
+	function void tblink_rpc_add_time_cb(
+		chandle				cb_data,
+		longint unsigned	delta);
+		$display("Error: tblink_register_timed_callback called from Verilator");
+		$finish;
+	endfunction
+	export "DPI-C" function tblink_rpc_add_time_cb;	
+		
+	function void tblink_rpc_notify_time_cb(chandle	cb_data);
+		$display("Error: tblink_rpc_notify_time_callback called");
+		$finish;
+	endfunction
+`else
+	function automatic void tblink_rpc_add_time_cb(
+		chandle				cb_data,
+		longint unsigned	delta);
+		TbLinkTimedCb t = new(cb_data, delta);
+		TbLink tblink = TbLink::inst();
+		tblink.queue_thread(t);
+	endfunction
+	export "DPI-C" function tblink_rpc_add_time_cb;	
+	
+`endif /* !VERILATOR */
+
+function bit tblink_rpc_init();
+	// Initialize DPI context for package
+	int unsigned time_precision;
+	TbLink tblink;
+	if (_tblink_rpc_pkg_init(
+				`ifdef VERILATOR
+					0,
+				`else
+					1,
+				`endif
+			time_precision) == 0) begin
+		$display("Error: failed to initialize tblink package");
+	end
+	
+	tblink = TbLink::inst();
+	tblink.m_time_precision = time_precision;
+	
+	return 1;
+endfunction
+
+bit prv_tblink_init = tblink_rpc_init();
+
+import "DPI-C" context function int _tblink_rpc_pkg_init(
+		input int unsigned 		have_blocking_tasks,
+		output int 				time_precision);
 import "DPI-C" context function chandle tblink_rpc_findLaunchType(string id);
+import "DPI-C" context function string tblink_rpc_libpath();
+
 
