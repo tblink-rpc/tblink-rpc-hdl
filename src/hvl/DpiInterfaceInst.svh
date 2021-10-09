@@ -35,7 +35,8 @@ class DpiInterfaceInst extends IInterfaceInst;
 		longint				val,
 		int 				width);
 		DpiParamValInt ret;
-		chandle val_h = tblink_rpc_IInterfaceInst_mkValIntS(
+		chandle val_h;
+	        val_h = tblink_rpc_IInterfaceInst_mkValIntS(
 				m_hndl,
 				val,
 				width);
@@ -49,7 +50,8 @@ class DpiInterfaceInst extends IInterfaceInst;
 		longint unsigned	val,
 		int 				width);
 		DpiParamValInt ret;
-		chandle val_h = tblink_rpc_IInterfaceInst_mkValIntU(
+		chandle val_h;
+	        val_h = tblink_rpc_IInterfaceInst_mkValIntU(
 				m_hndl,
 				val,
 				width);

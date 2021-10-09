@@ -60,7 +60,8 @@ class DpiInterfaceTypeBuilder extends IInterfaceTypeBuilder;
 	
 	virtual function IType mkTypeBool();
 		DpiType ret;
-		chandle hndl = tblink_rpc_IInterfaceTypeBuilder_mkTypeBool(m_hndl);
+		chandle hndl;
+	        hndl = tblink_rpc_IInterfaceTypeBuilder_mkTypeBool(m_hndl);
 		
 		ret = new(hndl);
 		

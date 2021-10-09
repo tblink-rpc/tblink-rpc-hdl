@@ -8,7 +8,7 @@ typedef class SVEndpointLoopback;
 /**
  * Class: SVLaunchTypeLoopback
  * 
- * TODO: Add class documentation
+ * Implements the launcher for the loopback-type endpoint
  */
 class SVLaunchTypeLoopback extends ILaunchType;
 

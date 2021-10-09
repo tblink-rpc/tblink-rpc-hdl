@@ -1,19 +1,24 @@
+
 /****************************************************************************
- * SvInterfaceTypeBuilder.svh
+ * SVType.svh
  ****************************************************************************/
 
   
 /**
- * Class: SvInterfaceTypeBuilder
+ * Class: SVType
  * 
  * TODO: Add class documentation
  */
-class SvInterfaceTypeBuilder extends IInterfaceTypeBuilder;
+class SVType extends IType;
+	type_kind_e			m_kind;
 
-	function new();
-
+	function new(type_kind_e kind);
+		m_kind = kind;
 	endfunction
 
+	virtual function type_kind_e kind();
+		return m_kind;
+	endfunction
 
 endclass
 

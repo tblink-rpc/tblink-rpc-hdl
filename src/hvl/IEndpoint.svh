@@ -24,24 +24,31 @@ class IEndpoint;
 	endfunction
 	
 	virtual function int build_complete();
+		return -1;
 	endfunction
 	
 	virtual function int is_build_complete();
+		return -1;
 	endfunction
 	
 	virtual function int connect_complete();
+		return -1;
 	endfunction
 	
 	virtual function int is_connect_complete();
+		return -1;
 	endfunction
 	
 	virtual function int start();
+		return -1;
 	endfunction
 	
 	virtual function int shutdown();
+		return -1;
 	endfunction
 	
 	virtual function string last_error();
+		return "";
 	endfunction
 	
 	virtual function IInterfaceType findInterfaceType(string name);
@@ -49,9 +56,11 @@ class IEndpoint;
 	endfunction
 	
 	virtual function IInterfaceTypeBuilder newInterfaceTypeBuilder(string name);
+		return null;
 	endfunction
 	
 	virtual function IInterfaceType defineInterfaceType(IInterfaceTypeBuilder iftype_b);
+		return null;
 	endfunction
 	
 	virtual function IInterfaceInst defineInterfaceInst(

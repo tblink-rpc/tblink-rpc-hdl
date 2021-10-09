@@ -77,7 +77,16 @@ package tblink_rpc;
 	`include "DpiParamValMap.svh"
 
 	`include "DpiEndpoint.svh"
-	
+
+	`include "SVTypeInt.svh"
+	`include "SVTypeMap.svh"
+	`include "SVTypeVec.svh"
+	`include "SVType.svh"
+
+	`include "SVMethodType.svh"
+	`include "SVMethodTypeBuilder.svh"
+	`include "SVInterfaceType.svh"
+	`include "SVInterfaceTypeBuilder.svh"
 	`include "SVEndpoint.svh"
 	`include "SVEndpointLoopback.svh"
 	`include "SVLaunchTypeRegistration.svh"
