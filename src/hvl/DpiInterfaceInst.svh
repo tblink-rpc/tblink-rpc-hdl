@@ -6,6 +6,9 @@
 typedef class DpiParamValInt;
 
 IInterfaceImpl prv_hndl2impl[chandle];
+
+typedef class DpiParamValMap;
+typedef class DpiParamValStr;
   
 /**
  * Class: DpiInterfaceInst
@@ -62,10 +65,23 @@ class DpiInterfaceInst extends IInterfaceInst;
 	endfunction
 	
 	virtual function IParamValMap mkValMap();
+		chandle val_h;
+		DpiParamValMap ret;
+		val_h = tblink_rpc_IInterfaceInst_mkValMap(m_hndl);
+		ret = new(val_h);
+		return ret;
 	endfunction
 	
 	virtual function IParamValStr mkValStr(
 		string				val);
+		chandle val_h;
+		DpiParamValStr ret;
+		
+		val_h = tblink_rpc_IInterfaceInst_mkValStr(
+				m_hndl,
+				val);
+		ret = new(val_h);
+		return ret;
 	endfunction
 	
 	virtual function IParamValVec mkValVec();

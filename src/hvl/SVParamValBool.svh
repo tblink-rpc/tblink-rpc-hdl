@@ -1,31 +1,27 @@
 
 /****************************************************************************
- * IParamVal.svh
+ * SVParamValBool.svh
  ****************************************************************************/
 
   
 /**
- * Class: IParamVal
+ * Class: SVParamValBool
  * 
  * TODO: Add class documentation
  */
-class IParamVal;
-			
-	typedef enum {
-		Bool=0,
-		Int,
-		Map,
-		Str,
-		Vec
-	} kind_e;
-		
-	virtual function kind_e kind();
-		return Bool;
+class SVParamValBool extends IParamValBool;
+	bit				m_val;
+
+	function new(bit val);
+		m_val = val;
 	endfunction
-		
+
 	virtual function IParamVal clone();
-		return null;
-	endfunction
-		
+		SVParamValBool ret;
+		ret = new(m_val);
+		return ret;
+	endfunction	
+
 endclass
+
 

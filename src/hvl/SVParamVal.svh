@@ -1,23 +1,21 @@
 
 /****************************************************************************
- * IParamValInt.svh
+ * SVParamVal.svh
  ****************************************************************************/
 
   
 /**
- * Class: IParamValInt
+ * Class: SVParamVal
  * 
  * TODO: Add class documentation
  */
-class IParamValInt extends IParamVal;
-	
-	virtual function longint val_s();
-		return -1;
+class SVParamVal extends IParamVal ;
+
+	function new();
+
 	endfunction
-	
-	virtual function longint unsigned val_u();
-		return 0;
-	endfunction
-		
+
+
 endclass
+
 

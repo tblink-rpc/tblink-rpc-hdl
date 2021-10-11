@@ -33,7 +33,8 @@ class IParamValVec extends IParamVal;
 		_tblink_rpc_iparam_val_vector_push_back(m_hndl, v.m_hndl);
 		 */
 	endfunction
-		
+
+`ifdef UNDEFINED
 	virtual function IParamValVec clone();
 		/*
 		IParamValVec ret = new();
@@ -42,6 +43,7 @@ class IParamValVec extends IParamVal;
 		 */
 		return null;
 	endfunction
+`endif
 endclass
 
 

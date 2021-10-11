@@ -16,12 +16,20 @@ class IInterfaceImpl;
 	// and needs to reach into the class hierarchy instead
 	InvokeInfo m_ii;
 		
-	virtual function void invoke_nb(input InvokeInfo ii);
+	virtual function IParamVal invoke_nb(
+		input IInterfaceInst	ifinst,
+		input IMethodType		method,
+		input IParamValVec		params);
 		$display("Error: invoke_nb not overridden");
 		$finish();
+		return null;
 	endfunction
 
-	virtual task invoke_b(input InvokeInfo ii);
+	virtual task invoke_b(
+		output IParamVal		retval,
+		input IInterfaceInst	ifinst,
+		input IMethodType		method,
+		IParamValVec			params);
 		$display("Error: invoke not overridden");
 		$finish();
 	endtask

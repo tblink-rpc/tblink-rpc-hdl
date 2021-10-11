@@ -5,6 +5,9 @@
 `timescale 1ns/1ns
 `endif
 
+interface abc_i();
+endinterface
+
 /**
  * Module: smoke
  * 
@@ -12,6 +15,8 @@
  */
 module smoke(input clock);
 	import tblink_rpc::*;
+
+	virtual abc_i;
 	
 `ifdef HAVE_HDL_CLOCKGEN
 	reg clock_r = 0;

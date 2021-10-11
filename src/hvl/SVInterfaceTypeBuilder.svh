@@ -21,7 +21,8 @@ class SVInterfaceTypeBuilder extends IInterfaceTypeBuilder;
 		IType					rtype,
 		int unsigned			is_export,
 		int unsigned			is_blocking);
-		return null;
+		SVMethodTypeBuilder mtb_sv = new(name, id, rtype, is_export, is_blocking);
+		return mtb_sv;
 	endfunction
 	
 	virtual function IMethodType add_method(

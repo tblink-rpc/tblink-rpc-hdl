@@ -75,6 +75,7 @@ package tblink_rpc;
 	`include "DpiParamValBool.svh"
 	`include "DpiParamValInt.svh"
 	`include "DpiParamValMap.svh"
+	`include "DpiParamValStr.svh"
 
 	`include "DpiEndpoint.svh"
 
@@ -82,9 +83,16 @@ package tblink_rpc;
 	`include "SVTypeMap.svh"
 	`include "SVTypeVec.svh"
 	`include "SVType.svh"
+	
+	`include "SVParamVal.svh"
+	`include "SVParamValInt.svh"
+	`include "SVParamValMap.svh"
+	`include "SVParamValVec.svh"
 
 	`include "SVMethodType.svh"
 	`include "SVMethodTypeBuilder.svh"
+	`include "SVInterfaceImplVif.svh"
+	`include "SVInterfaceInst.svh"
 	`include "SVInterfaceType.svh"
 	`include "SVInterfaceTypeBuilder.svh"
 	`include "SVEndpoint.svh"
@@ -171,7 +179,10 @@ package tblink_rpc;
 		if (method_t.is_blocking() != 0) begin
 `ifndef VERILATOR
 			// Invoke indirectly
-			TbLinkInvokeB t = new(ii);
+			TbLinkInvokeB t = new(
+					ii.inst(),
+					ii.method(),
+					ii.params());
 			TbLink tblink = TbLink::inst();
 			
 			$display("Invoking Indirectly");
@@ -185,7 +196,12 @@ package tblink_rpc;
 			// Invoke directly
 			IInterfaceInst ifinst = ii.inst();
 			IInterfaceImpl ifimpl = ifinst.get_impl();
-			ifimpl.invoke_nb(ii);
+			IParamVal retval;
+			
+			retval = ifimpl.invoke_nb(
+					ii.inst(),
+					ii.method(),
+					ii.params());
 		end
 	endfunction
 	export "DPI-C" function _tblink_rpc_invoke;

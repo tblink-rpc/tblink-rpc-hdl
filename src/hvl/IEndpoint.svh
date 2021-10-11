@@ -16,11 +16,13 @@ class IEndpoint;
 		IEndpointServices		ep_services);
 		$display("TBLink Error: IEndpoint::init unimplemented");
 		$finish(1);
+		return -1;
 	endfunction
 	
 	virtual function int is_init();
 		$display("TBLink Error: IEndpoint::is_init unimplemented");
 		$finish(1);
+		return -1;
 	endfunction
 	
 	virtual function int build_complete();
@@ -68,6 +70,7 @@ class IEndpoint;
 		string					inst_name,
 		int unsigned			is_mirror,
 		IInterfaceImpl			ifinst_impl);
+		return null;
 	endfunction
 		
 

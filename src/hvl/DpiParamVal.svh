@@ -56,11 +56,9 @@ class DpiParamVal extends IParamVal;
 					return dpi_v.m_hndl;
 				end
 				Str: begin
-					/*
 					DpiParamValStr dpi_v;
 					`DYN_CAST(dpi_v, v);
 					return dpi_v.m_hndl;
-					 */
 				end
 				Vec: begin
 					/*

@@ -21,6 +21,7 @@ class IType;
 	virtual function type_kind_e kind();
 		$display("Tblink Error: IType::kind not implemented");
 		$finish(1);
+		return Bool;
 	endfunction
 
 endclass

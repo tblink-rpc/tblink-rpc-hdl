@@ -24,7 +24,7 @@ class DpiParamValMap extends IParamValMap;
 		IParamVal ret = DpiParamVal::mk(val_h);
 	endfunction
 	
-	virtual function setVal(string key, IParamVal val);
+	virtual function void setVal(string key, IParamVal val);
 		chandle val_h = DpiParamVal::getHndl(val);
 		tblink_rpc_IParamValMap_setVal(
 				m_hndl,

@@ -12,12 +12,14 @@
 class IParamValMap extends IParamVal;
 	
 	virtual function bit hasKey(string key);
+		return 0;
 	endfunction
 	
 	virtual function IParamVal getVal(string key);
+		return null;
 	endfunction
 	
-	virtual function setVal(string key, IParamVal val);
+	virtual function void setVal(string key, IParamVal val);
 	endfunction
 
 endclass

@@ -17,6 +17,8 @@ class ILaunchParams;
 	endfunction
 	
 	virtual function string_l args();
+		string_l ret;
+		return ret;
 	endfunction
 	
 	virtual function void add_param(
@@ -25,6 +27,8 @@ class ILaunchParams;
 	endfunction
 	
 	virtual function string_m params();
+		string_m ret;
+		return ret;
 	endfunction
 
 endclass

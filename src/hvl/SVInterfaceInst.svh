@@ -1,46 +1,69 @@
 
 /****************************************************************************
- * IInterfaceInst.svh
+ * SVInterfaceInst.svh
  ****************************************************************************/
 
+typedef class SVEndpointLoopback;
   
 /**
- * Class: IInterfaceInst
+ * Class: SVInterfaceInst
  * 
  * TODO: Add class documentation
  */
-class IInterfaceInst;
-	
+class SVInterfaceInst extends IInterfaceInst;
+	SVEndpointLoopback			m_ep;
+	IInterfaceType				m_iftype;
+	string						m_name;
+	bit							m_is_mirror;
+	IInterfaceImpl				m_impl;
+
+	function new(
+		SVEndpointLoopback	ep,
+		IInterfaceType		iftype,
+		string				name,
+		bit					is_mirror,
+		IInterfaceImpl		impl);
+		m_ep = ep;
+		m_iftype = iftype;
+		m_name = name;
+		m_is_mirror = is_mirror;
+		m_impl = impl;
+	endfunction
+
 	virtual function void set_impl(IInterfaceImpl impl);
+		m_impl = impl;
 	endfunction
 	
 	virtual function IInterfaceImpl get_impl();
-		return null;
+		return m_impl;
 	endfunction
 	
 	virtual function string name();
-		return "";
+		return m_name;
 	endfunction
 	
 	virtual function IInterfaceType iftype();
-		return null;
+		return m_iftype;
 	endfunction
 	
 	virtual function bit is_mirror();
-		return 0;
+		return m_is_mirror;
 	endfunction
 	
 	virtual function IParamVal invoke_nb(
 		IMethodType					method,
 		IParamValVec				params);
-		return null;
+		return m_ep.invoke_nb(
+				m_name,
+				method,
+				params);
 	endfunction
 	
 	virtual task invoke_b(
 		output IParamVal			retval,
 		IMethodType					method,
 		IParamValVec				params);
-	endtask
+	endtask	
 	
 	virtual function IParamValBool mkValBool(
 		int unsigned		val);
@@ -71,7 +94,7 @@ class IInterfaceInst;
 	virtual function IParamValVec mkValVec();
 		return null;
 	endfunction
-		
+
 endclass
 
 
