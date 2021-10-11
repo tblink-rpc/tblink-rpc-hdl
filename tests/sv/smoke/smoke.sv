@@ -16,8 +16,6 @@ endinterface
 module smoke(input clock);
 	import tblink_rpc::*;
 
-	virtual abc_i;
-	
 `ifdef HAVE_HDL_CLOCKGEN
 	reg clock_r = 0;
 	initial begin

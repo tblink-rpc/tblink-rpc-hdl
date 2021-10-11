@@ -83,12 +83,12 @@ package tblink_rpc;
 	`include "SVTypeMap.svh"
 	`include "SVTypeVec.svh"
 	`include "SVType.svh"
-	
+
 	`include "SVParamVal.svh"
 	`include "SVParamValInt.svh"
 	`include "SVParamValMap.svh"
 	`include "SVParamValVec.svh"
-
+	
 	`include "SVMethodType.svh"
 	`include "SVMethodTypeBuilder.svh"
 	`include "SVInterfaceImplVif.svh"

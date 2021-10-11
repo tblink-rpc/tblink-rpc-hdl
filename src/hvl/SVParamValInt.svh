@@ -31,7 +31,8 @@ class SVParamValInt extends IParamValInt;
 		
 	virtual function IParamVal clone();
 		SVParamValInt ret;
-		ret = new(m_val);
+		longint val = m_val;
+		ret = new(val);
 		return ret;
 	endfunction
 

@@ -3,6 +3,7 @@
  * IInterfaceImpl.svh
  ****************************************************************************/
 
+// typedef class IParamVal;
   
 /**
  * Class: IInterfaceImpl
@@ -10,12 +11,7 @@
  * TODO: Add class documentation
  */
 class IInterfaceImpl;
-
-	// This shouldn't be needed. However, there are some cases
-	// where Verilator isn't able to determine the call scope
-	// and needs to reach into the class hierarchy instead
-	InvokeInfo m_ii;
-		
+	
 	virtual function IParamVal invoke_nb(
 		input IInterfaceInst	ifinst,
 		input IMethodType		method,
