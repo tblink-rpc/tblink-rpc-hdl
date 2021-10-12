@@ -5,6 +5,7 @@
 
 typedef class DpiParamValBool;
 typedef class DpiParamValMap;
+typedef class DpiParamValVec;
   
 /**
  * Class: DpiParamVal
@@ -86,14 +87,12 @@ class DpiParamVal extends IParamVal;
 				DpiParamValMap t = new(hndl);
 				ret = t;
 			end
-				/*
-				Str: begin
-					ParamValStr t = new();
-					ret = t;
-				end
-			 */
+			Str: begin
+				DpiParamValStr t = new(hndl);
+				ret = t;
+			end
 			Vec: begin
-				IParamValVec t = new();
+				DpiParamValVec t = new(hndl);
 				ret = t;
 			end
 			default: begin
@@ -105,6 +104,15 @@ class DpiParamVal extends IParamVal;
 		return ret;
 	endfunction
 	
+	static function void do_dispose(chandle hndl);
+		tblink_rpc_IParamVal_dispose(hndl);
+	endfunction
+	
+	virtual function void dispose();
+		do_dispose(m_hndl);
+	endfunction
+	
 endclass
 
+import "DPI-C" context function void tblink_rpc_IParamVal_dispose(chandle hndl);
 

@@ -76,6 +76,8 @@ package tblink_rpc;
 	`include "DpiParamValInt.svh"
 	`include "DpiParamValMap.svh"
 	`include "DpiParamValStr.svh"
+	`include "DpiParamValVec.svh"
+	`include "DpiInterfaceImpl.svh"
 
 	`include "DpiEndpoint.svh"
 
@@ -85,8 +87,10 @@ package tblink_rpc;
 	`include "SVType.svh"
 
 	`include "SVParamVal.svh"
+	`include "SVParamValBool.svh"
 	`include "SVParamValInt.svh"
 	`include "SVParamValMap.svh"
+	`include "SVParamValStr.svh"
 	`include "SVParamValVec.svh"
 	
 	`include "SVMethodType.svh"
@@ -117,18 +121,6 @@ package tblink_rpc;
 	
 	import "DPI-C" context function int unsigned _tblink_rpc_iparam_val_bool_val(
 			chandle			hndl);
-	
-	import "DPI-C" context function chandle _tblink_rpc_iparam_val_vector_new();
-
-	import "DPI-C" context function int unsigned _tblink_rpc_iparam_val_vector_size(
-			chandle			hndl);
-	import "DPI-C" context function chandle _tblink_rpc_iparam_val_vector_at(
-			chandle			hndl,
-			int unsigned	idx);
-	import "DPI-C" context function void _tblink_rpc_iparam_val_vector_push_back(
-			chandle			hndl,
-			chandle			val_h);
-
 	
 	import "DPI-C" context function string tblink_rpc_IInterfaceInst_name(
 			chandle			ifinst);
@@ -205,6 +197,50 @@ package tblink_rpc;
 		end
 	endfunction
 	export "DPI-C" function _tblink_rpc_invoke;
+	
+	function automatic void tblink_rpc_get_plusargs(
+			string prefix, 
+			ref string plusargs[$]);
+		chandle plusarg_v = _tblink_rpc_get_plusargs(prefix);
+		DpiParamValVec plusargs_v = new(plusarg_v);
+		
+		if (plusarg_v == null) begin
+			$display("TbLink Fatal: failed to obtain plusargs");
+			$finish(1);
+			return;
+		end
+		
+		$display("tblink_rpc_get_plusargs: %0s -> %0d", 
+				prefix, plusargs_v.size());
+		for (int i=0; i<plusargs_v.size(); i++) begin
+			DpiParamValStr arg;
+			$cast(arg, plusargs_v.at(i));
+			$display("Arg: %0s", arg.val());
+			plusargs.push_back(arg.val());
+		end
+		plusargs_v.dispose();
+	endfunction
+	import "DPI-C" context function chandle _tblink_rpc_get_plusargs(
+			string 			prefix
+		);
+
+	/**
+	 * Register DPI-accessible functions that can be
+	 * used to invoke methods from the endpoint
+	 */
+	function automatic int tblink_rpc_register_dpi_bfm(
+			string					inst_path,
+			string					invoke_nb_f,
+			string					invoke_b_f);
+		TbLink tblink = TbLink::inst();
+		$display("tblink_rpc_register_dpi_bfm");
+		return _tblink_rpc_register_dpi_bfm(inst_path, invoke_nb_f, invoke_b_f);
+	endfunction
+	
+	import "DPI-C" context function int _tblink_rpc_register_dpi_bfm(
+			string					inst_path,
+			string					invoke_nb_f,
+			string					invoke_b_f);
 	
 endpackage
 

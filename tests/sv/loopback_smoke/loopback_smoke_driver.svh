@@ -21,7 +21,8 @@ class loopback_smoke_driver extends uvm_component;
 	endfunction
 
 	// Dummy in this application
-	function void inc();
+	function int inc(int v);
+		return 0;
 	endfunction
 	
 	function void build_phase(uvm_phase phase);

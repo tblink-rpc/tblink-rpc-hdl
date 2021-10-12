@@ -20,30 +20,40 @@ class loopback_smoke_bfm_impl #(type T=IInterfaceImpl) extends IInterfaceImpl;
 		m_inc = iftype.findMethod("inc");
 	endfunction
 	
-	function void inc();
-		IParamValVec params;
+	function int inc(int v1);
+		IParamVal retval;
+		IParamValInt retval_i;
+		IParamValVec params = m_ifinst.mkValVec();
+		IParamValInt v1_v = m_ifinst.mkValIntS(v1, 32);
+		
+		params.push_back(v1_v);
+		
 		$display("TODO: inc");
 		$display("--> invoke");
-		void'(m_ifinst.invoke_nb(
+		retval = m_ifinst.invoke_nb(
 					m_inc,
-					params));
+					params);
+		$cast(retval_i, retval);
+		
 		$display("<-- invoke");
-				
+		return retval_i.val_s();
 	endfunction
 	
 	virtual function IParamVal invoke_nb(
 		input IInterfaceInst		ifinst,
 		input IMethodType			method,
 		input IParamValVec			params);
+		IParamVal retval;
 		/*
-		IParamVal retval = ifinst.mkValIntS(0, 32);
 		IMethodType method_t = ii.method();
 		 */
 		longint id = method.id();
 		
 		case (id) 
 			0: begin
-				m_impl.inc();
+				IParamValInt p1;
+				$cast(p1, params.at(0));
+				m_impl.inc(p1.val_s());
 			end
 			default: begin
 				$display("TbLink Error: unknown method %0d", id);

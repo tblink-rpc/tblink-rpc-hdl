@@ -18,7 +18,8 @@ class SVParamValBool extends IParamValBool;
 
 	virtual function IParamVal clone();
 		SVParamValBool ret;
-		ret = new(m_val);
+		bit val = m_val;
+		ret = new(val);
 		return ret;
 	endfunction	
 

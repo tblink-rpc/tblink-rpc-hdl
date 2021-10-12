@@ -19,8 +19,9 @@ module loopback_smoke_bfm(
 		return m_inst_name;
 	endfunction
 		
-	function void inc();
-		$display("inc");
+	function int inc(int v);
+		$display("inc %0d", v);
+		return v+1;
 	endfunction
 		
 	`include "loopback_smoke_bfm_impl.svh"
@@ -39,7 +40,6 @@ endmodule
 // Generated BFM core interface
 interface loopback_smoke_bfm_core();
 	import tblink_rpc::*;
-	
 	IInterfaceInst ifinst;
 	
 	typedef virtual loopback_smoke_bfm_core vif_t;
@@ -48,19 +48,28 @@ interface loopback_smoke_bfm_core();
 		input IInterfaceInst		ifinst,
 		input IMethodType			method,
 		input IParamValVec			params);
+		IParamVal retval;
 		longint id = method.id();
 		
 		$display("invoke_nb");
 		case (id)
 			0: begin
-				inc();
+				int rv;
+				IParamValInt v;
+				$cast(v, params.at(0));
+				rv = inc(v.val_s());
+				retval = ifinst.mkValIntS(rv, 32);
 			end
 			default:
 				$display("Error: unknown method id %0d", id);
 		endcase
 		
-		return null;
+		return retval;
 	endfunction
+		
+	function automatic void invoke_nb_dpi(chandle ii_h);
+	endfunction
+	export "DPI-C" function invoke_nb_dpi;
 	
 	task automatic invoke_b(
 		output IParamVal			retval,
@@ -71,6 +80,9 @@ interface loopback_smoke_bfm_core();
 		retval = null;
 		
 	endtask
+	task automatic invoke_b_dpi(chandle ii_h);
+	endtask
+	export "DPI-C" task invoke_b_dpi;
 		
 	function automatic void init(
 			string		inst_name,
@@ -90,13 +102,11 @@ interface loopback_smoke_bfm_core();
 		iftype = loopback_smoke_bfm_define_type(ep);
 		
 		ifimpl = new(vif);
-		$display("--> BFM: defineInterfaceInst");
 		ifinst = ep.defineInterfaceInst(
 				iftype,
 				inst_name,
 				0,
 				ifimpl);
-		$display("<-- BFM: defineInterfaceInst");
 	endfunction
 	
 	initial begin

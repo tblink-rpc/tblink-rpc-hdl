@@ -10,8 +10,11 @@
 #include "dpi_api.h"
 #include "vpi_api.h"
 #include "tblink_rpc/ITbLink.h"
+#include "ParamValVec.h"
 
 namespace tblink_rpc_hdl {
+
+using namespace tblink_rpc_core;
 
 class TblinkPluginDpi;
 typedef std::unique_ptr<TblinkPluginDpi> TblinkPluginDpiUP;
@@ -41,6 +44,14 @@ public:
 	bool have_blocking_tasks() const {
 		return m_have_blocking_tasks;
 	}
+
+	int32_t register_dpi_bfm(
+			const std::string	&inst_path,
+			const std::string	&invoke_nb_f,
+			const std::string	&invoke_b_f);
+
+	ParamValVec *get_plusargs(
+			const std::string	&prefix);
 
 private:
 	vpi_api_t					*m_vpi_api;

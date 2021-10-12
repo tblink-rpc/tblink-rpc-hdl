@@ -67,32 +67,32 @@ class SVInterfaceInst extends IInterfaceInst;
 	
 	virtual function IParamValBool mkValBool(
 		int unsigned		val);
-		return null;
+		return m_ep.mkValBool(val);
 	endfunction
 	
 	virtual function IParamValInt mkValIntS(
 		longint				val,
 		int 				width);
-		return null;
+		return m_ep.mkValIntS(val, width);
 	endfunction
 	
 	virtual function IParamValInt mkValIntU(
 		longint unsigned	val,
 		int 				width);
-		return null;
+		return m_ep.mkValIntU(val, width);
 	endfunction
 	
 	virtual function IParamValMap mkValMap();
-		return null;
+		return m_ep.mkValMap();
 	endfunction
 	
 	virtual function IParamValStr mkValStr(
 		string				val);
-		return null;
+		return m_ep.mkValStr(val);
 	endfunction
 	
 	virtual function IParamValVec mkValVec();
-		return null;
+		return m_ep.mkValVec();
 	endfunction
 
 endclass

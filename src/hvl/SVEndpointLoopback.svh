@@ -89,6 +89,42 @@ class SVEndpointLoopback extends IEndpoint;
 		return ifinst;
 	endfunction
 	
+	virtual function IParamValBool mkValBool(
+		int unsigned		val);
+		SVParamValBool rv = new(val);
+		return rv;
+	endfunction
+	
+	virtual function IParamValInt mkValIntS(
+		longint				val,
+		int 				width);
+		SVParamValInt rv = new(val);
+		return rv;
+	endfunction
+	
+	virtual function IParamValInt mkValIntU(
+		longint unsigned	val,
+		int 				width);
+		SVParamValInt rv = new(val);
+		return rv;
+	endfunction
+	
+	virtual function IParamValMap mkValMap();
+		SVParamValMap rv = new();
+		return rv;
+	endfunction
+	
+	virtual function IParamValStr mkValStr(
+		string				val);
+		SVParamValStr rv = new(val);
+		return rv;
+	endfunction
+	
+	virtual function IParamValVec mkValVec();
+		SVParamValVec rv = new();
+		return rv;
+	endfunction
+	
 	function SVInterfaceInst find_ifinst(string name);
 		if (m_ifinst_m.exists(name) != 0) begin
 			return m_ifinst_m[name];

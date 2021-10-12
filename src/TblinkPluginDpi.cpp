@@ -13,6 +13,7 @@
 #include "TblinkPluginDpi.h"
 #include "tblink_rpc/ILaunchParams.h"
 #include "EndpointServicesDpi.h"
+#include "ParamValStr.h"
 
 using namespace tblink_rpc_core;
 
@@ -107,4 +108,47 @@ int TblinkPluginDpi::init() {
 	return 1;
 }
 
+int32_t TblinkPluginDpi::register_dpi_bfm(
+			const std::string	&inst_path,
+			const std::string	&invoke_nb_f,
+			const std::string	&invoke_b_f) {
+	fprintf(stdout, "TblinkPluginDpi::register_dpi_bfm\n");
+	return 0;
+}
+
+ParamValVec *TblinkPluginDpi::get_plusargs(const std::string &prefix) {
+	ParamValVec *ret = new ParamValVec();
+	uint32_t prefix_len = prefix.size();
+    s_vpi_vlog_info info;
+
+    fprintf(stdout, "--> get_plusargs\n");
+    fflush(stdout);
+
+    m_vpi_api->vpi_get_vlog_info(&info);
+
+    fprintf(stdout, "-- post-get-args\n");
+    fflush(stdout);
+
+    for (int32_t i=0; i<info.argc; i++) {
+    	int32_t arg_len = strlen(info.argv[i]);
+
+		fprintf(stdout, "arg: %s\n", info.argv[i]);
+    	// Ensure arg is longer than +<prefix>=
+    	if (arg_len > prefix.size()+2) {
+    		if (!strncmp(&info.argv[i][1], prefix.c_str(), prefix.size()) &&
+    				info.argv[i][prefix.size()+1] == '=') {
+    			ret->push_back(new ParamValStr(&info.argv[i][prefix.size()+2]));
+    		}
+    	}
+    }
+
+    fprintf(stdout, "<-- get_plusargs %p\n", ret);
+    fflush(stdout);
+
+	return ret;
+}
+
 } /* namespace tblink_rpc_hdl */
+
+
+

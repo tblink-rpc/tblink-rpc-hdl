@@ -13,7 +13,6 @@ class SVParamValMap extends IParamValMap;
 	IParamVal m_val_m[string];
 
 	function new();
-
 	endfunction
 	
 	virtual function bit hasKey(string key);

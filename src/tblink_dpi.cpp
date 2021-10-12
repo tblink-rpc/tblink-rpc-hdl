@@ -21,6 +21,8 @@
 #include "EndpointServicesDpi.h"
 #include "InterfaceInstProxyDpi.h"
 #include "InvokeInfoDpi.h"
+#include "ParamValVec.h"
+#include "ParamValStr.h"
 #include "TbLink.h"
 #include "TblinkPluginDpi.h"
 #include "TimeCallbackClosureDpi.h"
@@ -471,6 +473,10 @@ EXTERN_C uint32_t tblink_rpc_IMethodType_is_blocking(chandle hndl) {
 	return reinterpret_cast<IMethodType *>(hndl)->is_blocking();
 }
 
+EXTERN_C void tblink_rpc_IParamVal_dispose(chandle hndl) {
+	delete reinterpret_cast<IParamVal *>(hndl);
+}
+
 EXTERN_C uint64_t tblink_rpc_IParamValInt_val_s(chandle hndl_h) {
 	return dynamic_cast<IParamValInt *>(
 			reinterpret_cast<IParamVal *>(hndl_h))->val_s();
@@ -519,29 +525,27 @@ EXTERN_C void tblink_rpc_IParamValMap_setVal(
 			reinterpret_cast<IParamVal *>(val_h));
 }
 
-EXTERN_C chandle _tblink_rpc_iparam_val_vector_new() {
-#ifdef UNDEFINED
-	return reinterpret_cast<void *>(
-			static_cast<IParamVal *>(
-					prv_endpoint->mkValVec()));
-#endif
+EXTERN_C const char *tblink_rpc_IParamValStr_val(chandle hndl) {
+	strcpy(prv_msgbuf, dynamic_cast<IParamValStr *>(
+			reinterpret_cast<IParamVal *>(hndl))->val().c_str());
+	return prv_msgbuf;
 }
 
-EXTERN_C uint32_t _tblink_rpc_iparam_val_vector_size(void *hndl) {
+EXTERN_C uint32_t tblink_rpc_IParamValVec_size(void *hndl) {
 	return dynamic_cast<IParamValVec *>(
 			reinterpret_cast<IParamVal *>(hndl))->size();
 }
 
-EXTERN_C void *_tblink_rpc_iparam_val_vector_at(void *hndl, uint32_t idx) {
+EXTERN_C chandle tblink_rpc_IParamValVec_at(chandle hndl, uint32_t idx) {
 	fprintf(stdout, "vector_at: hndl=%p\n", hndl);
 	fprintf(stdout, "  vv=%p\n",
 			dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl)));
 	fflush(stdout);
-	return reinterpret_cast<void *>(
+	return reinterpret_cast<chandle>(
 			dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl))->at(idx));
 }
 
-EXTERN_C void _tblink_rpc_iparam_val_vector_push_back(void *hndl, void *val_h) {
+EXTERN_C void tblink_rpc_IParamValVec_push_back(chandle hndl, chandle val_h) {
 	dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl))->push_back(
 			reinterpret_cast<IParamVal *>(val_h));
 }
@@ -652,7 +656,6 @@ EXTERN_C void tblink_rpc_ILaunchParams_add_param(
 	reinterpret_cast<ILaunchParams *>(params)->add_param(key, val);
 }
 
-static char				error_s[256];
 EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 		chandle				launch,
 		chandle				params,
@@ -660,8 +663,9 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 	ILaunchType::result_t res = reinterpret_cast<ILaunchType *>(launch)->launch(
 			reinterpret_cast<ILaunchParams *>(params));
 	if (!res.first) {
-		strncpy(error_s, res.second.c_str(), sizeof(error_s));
-		*error = error_s;
+		strncpy(prv_msgbuf, res.second.c_str(), sizeof(prv_msgbuf));
+		*error = prv_msgbuf;
+		return 0;
 	} else {
 		*error = (char *)"";
 	}
@@ -673,8 +677,8 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 					prv_plugin->vpi_api(),
 					prv_plugin->have_blocking_tasks()),
 			0) != 0) {
-		strncpy(error_s, res.first->last_error().c_str(), sizeof(error_s));
-		*error = error_s;
+		strncpy(prv_msgbuf, res.first->last_error().c_str(), sizeof(prv_msgbuf));
+		*error = prv_msgbuf;
 		return 0;
 	}
 
@@ -686,7 +690,7 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 	}
 
 	if (ret != 1) {
-		strncpy(error_s, res.first->last_error().c_str(), sizeof(error_s));
+		strncpy(prv_msgbuf, res.first->last_error().c_str(), sizeof(prv_msgbuf));
 		return 0;
 	}
 
@@ -698,3 +702,76 @@ EXTERN_C const char *tblink_rpc_libpath() {
 	strcpy(prv_msgbuf, tbl->getLibPath().c_str());
 	return prv_msgbuf;
 }
+
+EXTERN_C int _tblink_rpc_register_dpi_bfm(
+		const char				*inst_path,
+		const char				*invoke_nb_f,
+		const char				*invoke_b_f) {
+	if (!prv_plugin) {
+		fprintf(stdout, "TbLink Fatal: tblink_rpc_register_dpi_bfm called before package initialization\n");
+		return -1;
+	}
+
+	return prv_plugin->register_dpi_bfm(
+			inst_path, invoke_nb_f, invoke_b_f);
+}
+
+EXTERN_C chandle tblink_rpc_invoke_nb_dpi_bfm(
+		const char				*inst_path,
+		chandle					ifinst,
+		chandle					method,
+		chandle					params) {
+
+	return 0;
+}
+
+EXTERN_C int tblink_rpc_invoke_b_dpi_bfm(
+		const char				*inst_path,
+		chandle					*retval,
+		chandle					ifinst,
+		chandle					method,
+		chandle					params) {
+	*retval = 0;
+	return 0;
+}
+
+EXTERN_C chandle _tblink_rpc_get_plusargs(
+		const char				*prefix) {
+	vpi_api_t *vpi_api = get_vpi_api();
+
+	if (!vpi_api) {
+		fprintf(stdout, "TbLink Fatal: failed to find VPI functions\n");
+		return 0;
+	}
+
+	ParamValVec *ret = new ParamValVec();
+	uint32_t prefix_len = strlen(prefix);
+    s_vpi_vlog_info info;
+
+    fprintf(stdout, "--> get_plusargs\n");
+    fflush(stdout);
+
+    vpi_api->vpi_get_vlog_info(&info);
+
+    fprintf(stdout, "-- post-get-args\n");
+    fflush(stdout);
+
+    for (int32_t i=0; i<info.argc; i++) {
+    	int32_t arg_len = strlen(info.argv[i]);
+
+		fprintf(stdout, "arg: %s\n", info.argv[i]);
+    	// Ensure arg is longer than +<prefix>=
+    	if (arg_len > prefix_len+2) {
+    		if (!strncmp(&info.argv[i][1], prefix, prefix_len) &&
+    				info.argv[i][prefix_len+1] == '=') {
+    			ret->push_back(new ParamValStr(&info.argv[i][prefix_len+2]));
+    		}
+    	}
+    }
+
+    fprintf(stdout, "<-- get_plusargs %p\n", ret);
+    fflush(stdout);
+
+	return reinterpret_cast<chandle>(static_cast<IParamVal *>(ret));
+}
+

@@ -20,10 +20,12 @@ class DpiParamValStr extends IParamValStr;
 	endfunction
 	
 	virtual function string val();
-		$display("TODO: DpiParamValStr::val");
-		return "";
+		return tblink_rpc_IParamValStr_val(m_hndl);
 	endfunction
 
 endclass
+
+import "DPI-C" context function string tblink_rpc_IParamValStr_val(
+	chandle 				hndl);
 
 

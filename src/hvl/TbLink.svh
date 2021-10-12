@@ -45,6 +45,15 @@ class TbLink;
 			end else begin
 				ILaunchParams params = launch_t.newLaunchParams();
 				string errmsg;
+				string args[$];
+				
+				tblink_rpc_get_plusargs("tblink.launcharg", args);
+				
+				foreach (args[i]) begin
+					$display("add arg: %0s", args[i]);
+					params.add_arg(args[i]);
+				end
+
 				m_default_ep = launch_t.launch(params, errmsg);
 				
 				if (m_default_ep == null) begin

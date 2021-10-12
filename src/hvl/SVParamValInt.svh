@@ -13,7 +13,7 @@ class SVParamValInt extends IParamValInt;
 	longint			m_val;
 
 	function new(longint val);
-
+		m_val = val;
 	endfunction
 	
 	virtual function longint val_s();
