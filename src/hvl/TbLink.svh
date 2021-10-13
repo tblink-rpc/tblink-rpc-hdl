@@ -123,6 +123,11 @@ class TbLink;
 				$finish();
 				return;
 			end
+
+			$display("--> process_one_message");
+			while (m_default_ep.process_one_message() != -1) begin
+			end
+			$display("<-- process_one_message");
 		end
 	endfunction
 	

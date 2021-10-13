@@ -412,12 +412,16 @@ static void invoke_req(
 	dpi_api_t *dpi_api = prv_plugin->dpi_api();
 	dpi_api->svSetScope(dpi_api->get_pkg_scope());
 
+	fprintf(stdout, "invoke_req\n");
+	fflush(stdout);
+
 	InvokeInfoDpi *ii = new InvokeInfoDpi(
 			inst,
 			method,
 			call_id,
 			params->cloneT<IParamValVec>());
 	dpi_api->invoke(reinterpret_cast<chandle>(ii));
+	fflush(stdout);
 }
 
 EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
@@ -436,6 +440,11 @@ EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
 							std::placeholders::_2,
 							std::placeholders::_3,
 							std::placeholders::_4)));
+}
+
+EXTERN_C int32_t tblink_rpc_IEndpoint_process_one_message(
+		chandle			endpoint_h) {
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->process_one_message();
 }
 
 EXTERN_C uint32_t tblink_rpc_IEndpoint_getInterfaceInstCount(
@@ -737,6 +746,8 @@ EXTERN_C chandle tblink_rpc_invoke_nb_dpi_bfm(
 		chandle					ifinst,
 		chandle					method,
 		chandle					params) {
+	fprintf(stdout, "tblink_rpc_invoke_nb_dpi_bfm\n");
+	fflush(stdout);
 
 	return 0;
 }

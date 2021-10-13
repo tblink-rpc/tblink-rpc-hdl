@@ -82,7 +82,12 @@ class SVEndpointLoopback extends IEndpoint;
 		SVEndpointLoopback ep;
 		SVInterfaceInst ifinst;
 		ep = m_peer_ep.m_peer_ep;
-		ifinst = new(ep, iftype, inst_name, is_mirror, ifinst_impl);
+		ifinst = new(
+			ep, 
+			iftype, 
+			inst_name, 
+			(is_mirror != 0), 
+			ifinst_impl);
 		$display("defineInterfaceInst: %0s", inst_name);
 		m_ifinst_m[inst_name] = ifinst;
 	
@@ -91,7 +96,7 @@ class SVEndpointLoopback extends IEndpoint;
 	
 	virtual function IParamValBool mkValBool(
 		int unsigned		val);
-		SVParamValBool rv = new(val);
+		SVParamValBool rv = new((val!=0));
 		return rv;
 	endfunction
 	

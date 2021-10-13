@@ -31,6 +31,8 @@ class DpiInterfaceImpl extends IInterfaceImpl;
 		chandle					retval_h;
 		DpiParamVal				retval;
 		
+		$display("DpiInterfaceImpl::invoke_nb");
+		
 		if (!$cast(ifinst_dpi, ifinst)) begin
 			$display("TbLink Error: ifinst is not a DPI instance");
 			return null;

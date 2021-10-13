@@ -168,6 +168,8 @@ package tblink_rpc;
 		DpiInvokeInfo ii = new(invoke_info_h);
 		IMethodType method_t = ii.method();
 		
+		$display("_tblink_rpc_invoke");
+		
 		if (method_t.is_blocking() != 0) begin
 `ifndef VERILATOR
 			// Invoke indirectly
@@ -189,6 +191,8 @@ package tblink_rpc;
 			IInterfaceInst ifinst = ii.inst();
 			IInterfaceImpl ifimpl = ifinst.get_impl();
 			IParamVal retval;
+			
+			$display("Invoke directly");
 			
 			retval = ifimpl.invoke_nb(
 					ii.inst(),

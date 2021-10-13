@@ -73,6 +73,10 @@ class IEndpoint;
 		return null;
 	endfunction
 	
+	virtual function int process_one_message();
+		return -1;
+	endfunction
+	
 	virtual function void getInterfaceInsts(ref IInterfaceInst ifinsts[$]);
 	endfunction
 
