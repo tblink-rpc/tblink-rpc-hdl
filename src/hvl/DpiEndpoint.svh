@@ -111,6 +111,15 @@ class DpiEndpoint extends IEndpoint;
 		
 		return ifinst;
 	endfunction
+	
+	virtual function void getInterfaceInsts(ref IInterfaceInst ifinsts[$]);
+		int unsigned count = tblink_rpc_IEndpoint_getInterfaceInstCount(m_hndl);
+		for (int unsigned i=0; i<count; i++) begin
+			chandle ifinst_h = tblink_rpc_IEndpoint_getInterfaceInstAt(m_hndl, i);
+			DpiInterfaceInst ifinst = new(ifinst_h);
+			ifinsts.push_back(ifinst);
+		end
+	endfunction
 
 	`ifdef UNDEFINED
 	`ifndef VERILATOR
@@ -143,10 +152,6 @@ class DpiEndpoint extends IEndpoint;
 
 			// Launch 
 			m_started = 1;
-			if (_tblink_rpc_endpoint_launch(m_hndl) == 0) begin
-				$display("Failed to launch TBLink frontend");
-				$finish(1);
-			end
 			`ifdef VERILATOR
 				// TODO: anything needed here?
 			`else
@@ -217,7 +222,6 @@ endclass
 
 import "DPI-C" context function chandle _tblink_rpc_endpoint_new(int have_blocking_tasks);
 import "DPI-C" context function chandle _tblink_rpc_endpoint_default();
-import "DPI-C" context function int _tblink_rpc_endpoint_launch(chandle ep_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_build_complete(chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_connect_complete(chandle endpoint_h);
 import "DPI-C" context function int _tblink_rpc_IEndpoint_start(chandle endpoint_h);
@@ -233,6 +237,13 @@ import "DPI-C" context function chandle tblink_rpc_IEndpoint_newInterfaceTypeBui
 import "DPI-C" context function chandle tblink_rpc_IEndpoint_defineInterfaceType(
 	chandle		endpoint_h,
 	chandle 	iftype_builder_h);
+	
+import "DPI-C" context function int unsigned tblink_rpc_IEndpoint_getInterfaceInstCount(
+	chandle		endpoint_h);
+import "DPI-C" context function chandle tblink_rpc_IEndpoint_getInterfaceInstAt(
+	chandle				endpoint_h,
+	int unsigned		idx);
+	
 
 `ifdef UNDEFINED
 function chandle tblink_rpc_IEndpoint_defineInterfaceInst(

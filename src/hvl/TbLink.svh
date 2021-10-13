@@ -24,9 +24,10 @@ class TbLink;
 	mailbox #(TbLinkThread)		m_dispatch_q = new();
 	bit							m_dispatcher_running;
 `endif
+	bit							m_delta_cb_pending;
+	int							m_last_ifinst_count;
 
 	function new();
-		string launch;
 		
 		// Manually register known launch types
 		begin
@@ -34,6 +35,16 @@ class TbLink;
 			m_sv_launch_type_m["sv.loopback"] = launch_t;
 		end
 		
+		auto_launch();
+
+	endfunction
+	
+	function void auto_launch();
+		string launch;
+		
+		/**
+		 * Determine whether an endpoint must be auto-launched
+		 */
 		if ($value$plusargs("tblink.launch=%s", launch)) begin
 			ILaunchType launch_t;
 			
@@ -60,9 +71,58 @@ class TbLink;
 					$display("TBLink Error: failed to launch %0s: %0s",
 							launch, errmsg);
 				end
+			
+				register_delta_cb();
 			end
 		end else begin
 			$display("TbLink Note: no default endpoint launched");
+		end		
+	endfunction
+
+	/**
+	 * These are used for managing start-up for auto-launched
+	 * endpoints.
+	 */
+	function void register_delta_cb();
+		if (!m_delta_cb_pending) begin
+			m_delta_cb_pending = 1;
+			tblink_rpc_register_delta_cb();
+		end
+	endfunction
+	
+	function void delta_cb();
+		IInterfaceInst ifinsts[$];
+		m_delta_cb_pending = 0;
+		
+		m_default_ep.getInterfaceInsts(ifinsts);
+		$display("delta_cb: %0d interfaces", ifinsts.size());
+		if (ifinsts.size() != m_last_ifinst_count) begin
+			$display("waiting another delta...");
+			m_last_ifinst_count = ifinsts.size();
+			register_delta_cb();
+		end else begin
+			/**
+			 * Once we're sure all BFMs have registered,
+			 * cycle through the build/connect process
+			 */
+			$display("done...");
+			/*
+			if (m_default_ep.init() == -1) begin
+				$display("build-complete failed");
+				$finish();
+				return;
+			end
+			 */
+			if (m_default_ep.build_complete() == -1) begin
+				$display("build-complete failed");
+				$finish();
+				return;
+			end
+			if (m_default_ep.connect_complete() == -1) begin
+				$display("connect-complete failed");
+				$finish();
+				return;
+			end
 		end
 	endfunction
 	
@@ -191,4 +251,10 @@ import "DPI-C" context function int _tblink_rpc_pkg_init(
 import "DPI-C" context function chandle tblink_rpc_findLaunchType(string id);
 import "DPI-C" context function string tblink_rpc_libpath();
 
+function automatic void tblink_rpc_delta_cb();
+	TbLink tblink = TbLink::inst();
+	tblink.delta_cb();
+endfunction
+export "DPI-C" function tblink_rpc_delta_cb;
+import "DPI-C" context function void tblink_rpc_register_delta_cb();
 

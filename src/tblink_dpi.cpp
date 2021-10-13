@@ -37,6 +37,7 @@ void *svGetScope() __attribute__((weak));
 void *svSetScope(void *) __attribute__((weak));
 void tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) __attribute__((weak));
 void _tblink_rpc_invoke(void *ii_h) __attribute__((weak));
+void tblink_rpc_delta_cb() __attribute__((weak));
 
 void *svGetScope() {
 	return 0;
@@ -103,56 +104,51 @@ static void elab_cb(intptr_t callback_id) {
 	 */
 }
 
+static TblinkPluginDpi *get_plugin() {
+	if (!prv_plugin) {
+		vpi_api_t *vpi_api = get_vpi_api();
+
+		if (!vpi_api) {
+			fprintf(stdout, "Error: Failed to obtain VPI API\n");
+			fflush(stdout);
+			return 0;
+		}
+
+		memset(&prv_dpi, 0, sizeof(prv_dpi));
+		prv_dpi.svGetScope = &svGetScope;
+		prv_dpi.svSetScope = &svSetScope;
+		prv_dpi.get_pkg_scope = &get_pkg_scope;
+		prv_dpi.invoke = &_tblink_rpc_invoke;
+		prv_dpi.add_time_cb = &tblink_rpc_add_time_cb;
+		prv_dpi.delta_cb = &tblink_rpc_delta_cb;
+
+		prv_plugin = new TblinkPluginDpi(
+				vpi_api,
+				&prv_dpi);
+	}
+
+	return prv_plugin;
+}
+
 EXTERN_C int _tblink_rpc_pkg_init(
 		unsigned int		have_blocking_tasks,
 		int32_t				*time_precision) {
-	vpi_api_t *vpi_api = get_vpi_api();
+	TblinkPluginDpi *plugin = get_plugin();
 
-	if (!vpi_api) {
-		fprintf(stdout, "Error: Failed to obtain VPI API\n");
-		fflush(stdout);
+	if (!plugin) {
+		fprintf(stdout, "Tblink Error: failed to initialize plugin\n");
 		return 0;
 	}
 
-	// Capture the package scope handle
+	// Capture the package scope handle so we can
+	// call back into package methods
 	prv_pkg_scope = svGetScope();
 
-	memset(&prv_dpi, 0, sizeof(prv_dpi));
-	prv_dpi.svGetScope = &svGetScope;
-	prv_dpi.svSetScope = &svSetScope;
-	prv_dpi.get_pkg_scope = &get_pkg_scope;
-	prv_dpi.invoke = &_tblink_rpc_invoke;
-	prv_dpi.add_time_cb = &tblink_rpc_add_time_cb;
+	*time_precision = plugin->vpi_api()->vpi_get(vpiTimePrecision, 0);
+	plugin->have_blocking_tasks(have_blocking_tasks);
 
-	*time_precision = vpi_api->vpi_get(vpiTimePrecision, 0);
-
-	prv_plugin = new TblinkPluginDpi(
-			vpi_api,
-			&prv_dpi,
-			have_blocking_tasks);
-
-	return prv_plugin->init();
-}
-
-EXTERN_C int _tblink_rpc_endpoint_launch(chandle ep_h) {
-	/*
-    // Create the endpoint
-    ILaunch *launcher = tblink_rpc_hdl_launcher();
-
-    if (!launcher) {
-    	fprintf(stdout, "Error: failed to obtain launcher\n");
-    	return 0;
-    }
-
-    if (launcher->launch(prv_endpoint.get())) {
-    	return 1;
-    } else {
-    	return 0;
-    }
-     */
 	return 1;
 }
-
 
 EXTERN_C chandle tblink_rpc_InvokeInfo_ifinst(chandle ii) {
 	return reinterpret_cast<void *>(
@@ -442,6 +438,18 @@ EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
 							std::placeholders::_4)));
 }
 
+EXTERN_C uint32_t tblink_rpc_IEndpoint_getInterfaceInstCount(
+		chandle			endpoint_h) {
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->getInterfaceInsts().size();
+}
+
+EXTERN_C chandle tblink_rpc_IEndpoint_getInterfaceInstAt(
+		chandle			endpoint_h,
+		uint32_t		idx) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IEndpoint *>(endpoint_h)->getInterfaceInsts().at(idx));
+}
+
 EXTERN_C void tblink_rpc_notify_time_cb(void *cb_data) {
 	TimeCallbackClosureDpi *closure = reinterpret_cast<TimeCallbackClosureDpi *>(cb_data);
 	fprintf(stdout, "_tblink_rpc_notify_time_cb\n");
@@ -662,6 +670,14 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 		char				**error) {
 	ILaunchType::result_t res = reinterpret_cast<ILaunchType *>(launch)->launch(
 			reinterpret_cast<ILaunchParams *>(params));
+	TblinkPluginDpi *plugin = get_plugin();
+
+	if (!plugin) {
+		strcpy(prv_msgbuf, "Failed to initialize DPI plug-in");
+		*error = prv_msgbuf;
+		return 0;
+	}
+
 	if (!res.first) {
 		strncpy(prv_msgbuf, res.second.c_str(), sizeof(prv_msgbuf));
 		*error = prv_msgbuf;
@@ -673,9 +689,9 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 	// Run the initialization phase
 	if (res.first->init(
 			new EndpointServicesDpi(
-					prv_plugin->dpi_api(),
-					prv_plugin->vpi_api(),
-					prv_plugin->have_blocking_tasks()),
+					plugin->dpi_api(),
+					plugin->vpi_api(),
+					plugin->have_blocking_tasks()),
 			0) != 0) {
 		strncpy(prv_msgbuf, res.first->last_error().c_str(), sizeof(prv_msgbuf));
 		*error = prv_msgbuf;
@@ -773,5 +789,32 @@ EXTERN_C chandle _tblink_rpc_get_plusargs(
     fflush(stdout);
 
 	return reinterpret_cast<chandle>(static_cast<IParamVal *>(ret));
+}
+
+/********************************************************************
+ * Delta callback support for automatic endpoint bring-up
+ ********************************************************************/
+
+static PLI_INT32 _tblink_rpc_delta_cb(p_cb_data cbd) {
+	TblinkPluginDpi *plugin = get_plugin();
+	fprintf(stdout, "tblink_rpc_delta_cb %p\n", prv_pkg_scope);
+	plugin->dpi_api()->svSetScope(prv_pkg_scope);
+	plugin->dpi_api()->delta_cb();
+	return 0;
+}
+
+EXTERN_C void tblink_rpc_register_delta_cb() {
+	s_cb_data cbd;
+	s_vpi_time vt;
+	TblinkPluginDpi *plugin = get_plugin();
+
+	memset(&cbd, 0, sizeof(cbd));
+	memset(&vt, 0, sizeof(vt));
+
+	vt.type = vpiSimTime;
+	cbd.reason = cbAfterDelay;
+	cbd.cb_rtn = &_tblink_rpc_delta_cb;
+	cbd.time = &vt;
+	plugin->vpi_api()->vpi_register_cb(&cbd);
 }
 

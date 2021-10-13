@@ -69,21 +69,28 @@ def main():
     
     target_iftype = endpoint.defineInterfaceType(iftype_b)
 
-    def req_f(*args):
-        print("req_f")
-            
-    ifinst = endpoint.defineInterfaceInst(
-        target_iftype, 
-        "target_inst", 
-        True,
-        req_f)
     
     endpoint.build_complete()
+
     
     print("--> wait_build_complete", flush=True)
     while not endpoint.is_build_complete():
         endpoint.process_one_message()
     print("<-- wait_build_complete", flush=True)
+
+    ifinsts = endpoint.peerInterfaceInsts()
+    print("peerInterfaceInsts: %d" % len(ifinsts))
+    for i in ifinsts:
+        print("Inst: %s" % i.name, flush=True)
+
+    def req_f(*args):
+        print("req_f")
+            
+    ifinst = endpoint.defineInterfaceInst(
+        target_iftype, 
+        ifinsts[0].name,
+        True,
+        req_f)
 
     endpoint.connect_complete()
     
@@ -122,4 +129,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+
+

@@ -13,6 +13,7 @@ typedef struct dpi_api_s {
 	void *(*svSetScope)(void *);
 	void *(*get_pkg_scope)(void);
 	void (*invoke)(void *ii_h);
+	void (*delta_cb)();
 
 	// Note: invoke_b is only used in environments where tasks
 	// cannot be blocking. In most environments, 'invoke' queues

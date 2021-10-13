@@ -26,7 +26,7 @@ public:
 	TblinkPluginDpi(
 			vpi_api_t		*vpi_api,
 			dpi_api_t		*dpi_api,
-			bool			have_blocking_tasks
+			bool			have_blocking_tasks=true
 			);
 
 	virtual ~TblinkPluginDpi();
@@ -43,6 +43,10 @@ public:
 
 	bool have_blocking_tasks() const {
 		return m_have_blocking_tasks;
+	}
+
+	void have_blocking_tasks(bool h) {
+		m_have_blocking_tasks = h;
 	}
 
 	int32_t register_dpi_bfm(

@@ -233,7 +233,6 @@ package tblink_rpc;
 			string					invoke_nb_f,
 			string					invoke_b_f);
 		TbLink tblink = TbLink::inst();
-		$display("tblink_rpc_register_dpi_bfm");
 		return _tblink_rpc_register_dpi_bfm(inst_path, invoke_nb_f, invoke_b_f);
 	endfunction
 	

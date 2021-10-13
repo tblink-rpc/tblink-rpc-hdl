@@ -72,7 +72,9 @@ class IEndpoint;
 		IInterfaceImpl			ifinst_impl);
 		return null;
 	endfunction
-		
+	
+	virtual function void getInterfaceInsts(ref IInterfaceInst ifinsts[$]);
+	endfunction
 
 endclass
 
