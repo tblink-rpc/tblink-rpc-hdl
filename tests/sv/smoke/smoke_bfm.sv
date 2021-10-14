@@ -126,6 +126,7 @@ module smoke_bfm(
 				m_inst_name,
 				u_core
 				);
+		tblink_rpc_start();
 	end
 `else // Verilator
 	function automatic chandle smoke_bfm_core_invoke_nb(
@@ -172,6 +173,7 @@ module smoke_bfm(
 				"smoke_bfm_core_invoke_b") != 0) begin
 			$finish(1);
 		end
+		tblink_rpc_start();
 	end
 `endif
 

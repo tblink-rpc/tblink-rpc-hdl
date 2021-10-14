@@ -47,7 +47,7 @@ class DpiInterfaceTypeBuilder extends IInterfaceTypeBuilder;
 		DpiMethodType ret;
 		chandle method_h;
 		
-		`DYN_CAST(mtb_dpi, mtb);
+		$cast(mtb_dpi, mtb);
 		
 		method_h = tblink_rpc_IInterfaceTypeBuilder_add_method(
 				m_hndl,

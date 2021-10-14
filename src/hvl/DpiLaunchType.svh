@@ -23,7 +23,7 @@ class DpiLaunchType extends ILaunchType;
 		DpiEndpoint     ret;
 		chandle endpoint_h;
 		
-		`DYN_CAST(params_dpi, params);
+		$cast(params_dpi, params);
 		
 		endpoint_h = tblink_rpc_ILaunchType_launch(
 				m_hndl,

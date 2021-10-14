@@ -113,6 +113,16 @@ int32_t TblinkPluginDpi::register_dpi_bfm(
 			const std::string	&invoke_nb_f,
 			const std::string	&invoke_b_f) {
 	fprintf(stdout, "TblinkPluginDpi::register_dpi_bfm\n");
+	ITbLink *tblink = TbLink::inst();
+	ISymFinder *sym_finder = tblink->sym_finder();
+
+	fprintf(stdout, "invoke_nb_f %s=%p\n",
+			invoke_nb_f.c_str(),
+			sym_finder->findSym(invoke_nb_f));
+	fprintf(stdout, "invoke_b_f %s=%p\n",
+			invoke_b_f.c_str(),
+			sym_finder->findSym(invoke_b_f));
+
 	return 0;
 }
 

@@ -5,6 +5,7 @@
  
 `ifndef VERILATOR
 	typedef class TbLinkThread;
+	typedef class TbLinkDeltaCb;
 `endif
 
 // Static class members are not yet supported in Verilator
@@ -86,7 +87,14 @@ class TbLink;
 	function void register_delta_cb();
 		if (!m_delta_cb_pending) begin
 			m_delta_cb_pending = 1;
+`ifdef VERILATOR
 			tblink_rpc_register_delta_cb();
+`else
+			begin
+				TbLinkDeltaCb #(TbLink) cb = new(this);
+				queue_thread(cb);
+			end
+`endif
 		end
 	endfunction
 	
@@ -131,7 +139,7 @@ class TbLink;
 		end
 	endfunction
 	
-	function void start();
+	task start();
 `ifndef VERILATOR
 		if (m_dispatcher_running == 0) begin
 			m_dispatcher_running = 1;
@@ -140,7 +148,7 @@ class TbLink;
 			join_none
 		end
 `endif
-	endfunction
+	endtask
 
 `ifndef VERILATOR
 	task dispatcher();

@@ -31,36 +31,10 @@
 
 typedef void *chandle;
 
-// Externs for DPI-Exported methods
-extern "C" {
-void *svGetScope() __attribute__((weak));
-void *svSetScope(void *) __attribute__((weak));
-void tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) __attribute__((weak));
-void _tblink_rpc_invoke(void *ii_h) __attribute__((weak));
-void tblink_rpc_delta_cb() __attribute__((weak));
-
-void *svGetScope() {
-	return 0;
-}
-
-void *svSetScope(void *) {
-	return 0;
-}
-
-void tblink_rpc_add_time_cb(void *cb_data, uint64_t delta) {
-	;
-}
-
-void _tblink_rpc_invoke(void *ii_h) {
-}
-
-}
-
 using namespace tblink_rpc_core;
 using namespace tblink_rpc_hdl;
 
 static dpi_api_t				prv_dpi;
-static bool						prv_registered = false;
 static void						*prv_pkg_scope = 0;
 static TblinkPluginDpi			*prv_plugin = 0;
 static char						prv_msgbuf[128];
@@ -106,7 +80,9 @@ static void elab_cb(intptr_t callback_id) {
 
 static TblinkPluginDpi *get_plugin() {
 	if (!prv_plugin) {
-		vpi_api_t *vpi_api = get_vpi_api();
+		ITbLink *tblink = TbLink::inst();
+		ISymFinder *sym_finder = tblink->sym_finder();
+		vpi_api_t *vpi_api = get_vpi_api(sym_finder);
 
 		if (!vpi_api) {
 			fprintf(stdout, "Error: Failed to obtain VPI API\n");
@@ -115,12 +91,12 @@ static TblinkPluginDpi *get_plugin() {
 		}
 
 		memset(&prv_dpi, 0, sizeof(prv_dpi));
-		prv_dpi.svGetScope = &svGetScope;
-		prv_dpi.svSetScope = &svSetScope;
+		prv_dpi.svGetScope = sym_finder->findSymT<void *(*)()>("svGetScope");
+		prv_dpi.svSetScope = sym_finder->findSymT<void *(*)(void *)>("svSetScope");
 		prv_dpi.get_pkg_scope = &get_pkg_scope;
-		prv_dpi.invoke = &_tblink_rpc_invoke;
-		prv_dpi.add_time_cb = &tblink_rpc_add_time_cb;
-		prv_dpi.delta_cb = &tblink_rpc_delta_cb;
+		prv_dpi.invoke = sym_finder->findSymT<void (*)(void*)>("_tblink_rpc_invoke");
+		prv_dpi.add_time_cb = sym_finder->findSymT<void (*)(void*,uint64_t)>("tblink_rpc_add_time_cb");
+		prv_dpi.delta_cb = sym_finder->findSymT<void (*)()>("tblink_rpc_delta_cb");
 
 		prv_plugin = new TblinkPluginDpi(
 				vpi_api,
@@ -142,7 +118,7 @@ EXTERN_C int _tblink_rpc_pkg_init(
 
 	// Capture the package scope handle so we can
 	// call back into package methods
-	prv_pkg_scope = svGetScope();
+	prv_pkg_scope = plugin->dpi_api()->svGetScope();
 
 	*time_precision = plugin->vpi_api()->vpi_get(vpiTimePrecision, 0);
 	plugin->have_blocking_tasks(have_blocking_tasks);
@@ -732,12 +708,9 @@ EXTERN_C int _tblink_rpc_register_dpi_bfm(
 		const char				*inst_path,
 		const char				*invoke_nb_f,
 		const char				*invoke_b_f) {
-	if (!prv_plugin) {
-		fprintf(stdout, "TbLink Fatal: tblink_rpc_register_dpi_bfm called before package initialization\n");
-		return -1;
-	}
+	TblinkPluginDpi *plugin = get_plugin();
 
-	return prv_plugin->register_dpi_bfm(
+	return plugin->register_dpi_bfm(
 			inst_path, invoke_nb_f, invoke_b_f);
 }
 
@@ -764,7 +737,8 @@ EXTERN_C int tblink_rpc_invoke_b_dpi_bfm(
 
 EXTERN_C chandle _tblink_rpc_get_plusargs(
 		const char				*prefix) {
-	vpi_api_t *vpi_api = get_vpi_api();
+	TblinkPluginDpi *plugin = get_plugin();
+	vpi_api_t *vpi_api = plugin->vpi_api();
 
 	if (!vpi_api) {
 		fprintf(stdout, "TbLink Fatal: failed to find VPI functions\n");

@@ -70,7 +70,7 @@ static vpi_api_func_s api_tab[] = {
 		{0, 0}
 };
 
-static bool load_vpi_api() {
+static bool load_vpi_api(tblink_rpc_core::ISymFinder *finder) {
 	if (prv_vpi_api_tryload) {
 		return prv_vpi_api_loaded;
 	}
@@ -78,13 +78,15 @@ static bool load_vpi_api() {
 	// Only try to load the VPI API once
 	prv_vpi_api_tryload = true;
 
+	/*
 	void *vpi_lib = find_vpi_lib();
 	if (!vpi_lib) {
 		return false;
 	}
+	 */
 
 	for (uint32_t i=0; api_tab[i].name; i++) {
-		void *val = dlsym(vpi_lib, api_tab[i].name);
+		void *val = finder->findSym(api_tab[i].name);
 		if (!val) {
 			snprintf(prv_vpi_api_buf, sizeof(prv_vpi_api_buf),
 					"Failed to find VPI symbol \"%s\" (%s)",
@@ -98,9 +100,9 @@ static bool load_vpi_api() {
 	return prv_vpi_api_loaded;
 }
 
-vpi_api_t *get_vpi_api() {
+vpi_api_t *get_vpi_api(tblink_rpc_core::ISymFinder *finder) {
 	if (!prv_vpi_api_tryload) {
-		prv_vpi_api_loaded = load_vpi_api();
+		prv_vpi_api_loaded = load_vpi_api(finder);
 		prv_vpi_api_tryload = true;
 	}
 

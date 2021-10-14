@@ -107,6 +107,7 @@ def main():
             done = True
         
         params = endpoint.mkValVec()
+        params.push_back(endpoint.mkValIntS(1, 32))
 
         if debug:
             print("--> invoke", flush=True)    

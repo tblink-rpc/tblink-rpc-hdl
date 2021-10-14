@@ -7,6 +7,7 @@
 
 #pragma once
 #include "vpi_user.h"
+#include "tblink_rpc/ISymFinder.h"
 
 typedef struct vpi_api_s {
 	void (*vpi_get_value)(vpiHandle, p_vpi_value);
@@ -25,7 +26,7 @@ typedef struct vpi_api_s {
 	vpiHandle (*vpi_register_systf)(p_vpi_systf_data);
 } vpi_api_t;
 
-vpi_api_t *get_vpi_api();
+vpi_api_t *get_vpi_api(tblink_rpc_core::ISymFinder *finder);
 
 /**
  * Returns an error message when the API fails to load

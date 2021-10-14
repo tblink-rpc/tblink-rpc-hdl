@@ -43,28 +43,28 @@ class DpiParamVal extends IParamVal;
 			case (v.kind())
 				Bool: begin
 					DpiParamValBool dpi_v;
-					`DYN_CAST(dpi_v, v);
+					$cast(dpi_v, v);
 					return dpi_v.m_hndl;
 				end
 				Int: begin
 					DpiParamValInt dpi_v;
-					`DYN_CAST(dpi_v, v);
+					$cast(dpi_v, v);
 					return dpi_v.m_hndl;
 				end
 				Map: begin
 					DpiParamValMap dpi_v;
-					`DYN_CAST(dpi_v, v);
+					$cast(dpi_v, v);
 					return dpi_v.m_hndl;
 				end
 				Str: begin
 					DpiParamValStr dpi_v;
-					`DYN_CAST(dpi_v, v);
+					$cast(dpi_v, v);
 					return dpi_v.m_hndl;
 				end
 				Vec: begin
 					/*
 					DpiParamValVec dpi_v;
-					`DYN_CAST(dpi_v, v);
+					$cast(dpi_v, v);
 					return dpi_v.m_hndl;
 					 */
 				end

@@ -12,16 +12,6 @@
  */
 package tblink_rpc;
 	
-
-`ifdef VERILATOR
-	// Dynamic cast currently has issues with Verilator
-	// Specifically, seems to be an issue with no timeunit
-//	`define DYN_CAST(tgt, src) $display("TBLink Error: Verilator doesn't support dynamic cast")
-	`define DYN_CAST(tgt, src) $cast(tgt, src)
-`else
-	`define DYN_CAST(tgt, src) $cast(tgt, src)
-`endif
-	
 	typedef class IInterfaceTypeBuilder;
 	typedef class IInterfaceType;
 	typedef class IInterfaceInst;
@@ -108,7 +98,7 @@ package tblink_rpc;
 	`include "TbLink.svh"
 
 	// Ensure that we always initialize tblink
-	TbLink _prv_tblink = TbLink::inst();
+//	TbLink _prv_tblink = TbLink::inst();
 
 	import "DPI-C" context function chandle tblink_rpc_iftype_find_method(
 			chandle		iftype_h,
@@ -134,34 +124,25 @@ package tblink_rpc;
 			chandle			method_h,
 			chandle			params_h);
 
-
+	/**
+	 * Time-based features aren't supported in Verilator
+	 */
 `ifndef VERILATOR
-
 	`include "TbLinkThread.svh"
-	`include "TbLinkTimedCb.svh"
+	`include "TbLinkDeltaCb.svh"
 	`include "TbLinkInvokeB.svh"
-`else
-	function void _tblink_start_dispatcher();
-		$display("TODO: _tblink_start_dispatcher() for Verilator");
-	endfunction
+	`include "TbLinkTimedCb.svh"
 `endif /* ifndef VERILATOR */
 
-`ifdef UNDEFINED
-	task automatic tblink_rpc_run();
-		_tblink_start_dispatcher();
+	/**
+	 * Called to start TbLink's main thread. This must be called
+	 * at least once from the testbench
+	 */
+	task automatic tblink_rpc_start();
+		TbLink tblink = TbLink::inst();
+		tblink.start();
 	endtask
-`endif
 	
-	task automatic tblink_rpc_IEndpoint_start(chandle ep_h);
-			// TODO: ensure launching thread is running
-		$display("TODO: _start");
-		if (_tblink_rpc_IEndpoint_start(ep_h) == -1) begin
-			$display("TBLink Error: start failed");
-			$finish(1);
-		end
-//		_tblink_rpc_IEndpoint_start(ep_h);
-	endtask
-		
 	// IEndpoint functions
 	
 	function automatic void _tblink_rpc_invoke(chandle invoke_info_h);
@@ -201,7 +182,10 @@ package tblink_rpc;
 		end
 	endfunction
 	export "DPI-C" function _tblink_rpc_invoke;
-	
+
+	/**
+	 * Obtain command-line arguments
+	 */
 	function automatic void tblink_rpc_get_plusargs(
 			string prefix, 
 			ref string plusargs[$]);
@@ -230,7 +214,9 @@ package tblink_rpc;
 
 	/**
 	 * Register DPI-accessible functions that can be
-	 * used to invoke methods from the endpoint
+	 * used to invoke methods from the endpoint. BFM
+	 * registration done in this way is used to register
+	 * BFMs that will be accessed via DPI
 	 */
 	function automatic int tblink_rpc_register_dpi_bfm(
 			string					inst_path,

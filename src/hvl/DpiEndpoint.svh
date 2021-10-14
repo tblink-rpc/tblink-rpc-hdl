@@ -79,7 +79,7 @@ class DpiEndpoint extends IEndpoint;
 		DpiInterfaceType ret;
 		chandle iftype_h;
 		
-		`DYN_CAST(builder_dpi, iftype_b);
+		$cast(builder_dpi, iftype_b);
 		iftype_h = tblink_rpc_IEndpoint_defineInterfaceType(
 				m_hndl,
 				builder_dpi.m_hndl);
@@ -98,7 +98,7 @@ class DpiEndpoint extends IEndpoint;
 		DpiInterfaceInst ifinst;
 		chandle ifinst_h;
 		
-		`DYN_CAST(iftype_dpi, iftype);
+		$cast(iftype_dpi, iftype);
 		
 		ifinst_h = _tblink_rpc_IEndpoint_defineInterfaceInst(
 				m_hndl,

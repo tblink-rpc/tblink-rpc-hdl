@@ -33,22 +33,22 @@ class DpiType extends IType;
 			case (t.kind())
 				Bool, Str: begin
 					DpiType type_dpi;
-					`DYN_CAST(type_dpi, t);
+					$cast(type_dpi, t);
 					return type_dpi.m_hndl;
 				end
 				Int: begin
 					DpiTypeInt type_dpi;
-					`DYN_CAST(type_dpi, t);
+					$cast(type_dpi, t);
 					return type_dpi.m_hndl;
 				end
 				Map: begin
 					DpiTypeMap type_dpi;
-					`DYN_CAST(type_dpi, t);
+					$cast(type_dpi, t);
 					return type_dpi.m_hndl;
 				end
 				Vec: begin
 					DpiTypeVec type_dpi;
-					`DYN_CAST(type_dpi, t);
+					$cast(type_dpi, t);
 					return type_dpi.m_hndl;
 				end
 			endcase

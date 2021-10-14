@@ -39,7 +39,7 @@ class DpiInvokeInfo extends InvokeInfo;
 		chandle params_h = tblink_rpc_InvokeInfo_params(m_hndl);
 		IParamVal params_v = DpiParamVal::mk(params_h);
 		
-		`DYN_CAST(ret, params_v);
+		$cast(ret, params_v);
 		
 		return ret;
 	endfunction
