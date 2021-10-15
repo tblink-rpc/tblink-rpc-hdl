@@ -22,6 +22,7 @@ class IEndpointServices;
 	virtual function int add_time_cb(
 		longint unsigned			simtime,
 		longint						callback_id);
+		return -1;
 	endfunction
 		
 	virtual function void cancel_callback(
@@ -29,9 +30,11 @@ class IEndpointServices;
 	endfunction
 		
 	virtual function longint unsigned get_time();
+		return -1;
 	endfunction
 		
 	virtual function int time_precision();
+		return -1;
 	endfunction
 		
 	virtual function void run_until_event();

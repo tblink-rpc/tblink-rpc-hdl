@@ -49,6 +49,10 @@ class DpiInterfaceImpl extends IInterfaceImpl;
 				ifinst_dpi.m_hndl,
 				method_dpi.m_hndl,
 				params_dpi.m_hndl);
+		
+		if (retval_h != null) begin
+			$display("TODO: construct retval");
+		end
 
 		return retval;
 	endfunction

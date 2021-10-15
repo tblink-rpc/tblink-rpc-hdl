@@ -41,7 +41,7 @@ class IInterfaceInst;
 		IMethodType					method,
 		IParamValVec				params);
 	endtask
-	
+
 	virtual function IParamValBool mkValBool(
 		int unsigned		val);
 		return null;

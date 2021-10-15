@@ -36,7 +36,7 @@ class TestEndpointServices(EndpointServices):
         raise NotImplementedError("run_until_event not implemented by class %s" % str(type(self)))
 
 def main():
-    debug = True
+    debug = False
     print("Hello from main")
     port = int(os.environ["TBLINK_PORT"])
     host = os.environ["TBLINK_HOST"]

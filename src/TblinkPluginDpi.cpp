@@ -112,18 +112,36 @@ int32_t TblinkPluginDpi::register_dpi_bfm(
 			const std::string	&inst_path,
 			const std::string	&invoke_nb_f,
 			const std::string	&invoke_b_f) {
-	fprintf(stdout, "TblinkPluginDpi::register_dpi_bfm\n");
+	fprintf(stdout, "TblinkPluginDpi::register_dpi_bfm %s\n", inst_path.c_str());
 	ITbLink *tblink = TbLink::inst();
 	ISymFinder *sym_finder = tblink->sym_finder();
+	nb_f_t nb_f = sym_finder->findSymT<nb_f_t>(invoke_nb_f);
+	b_f_t  b_f  = sym_finder->findSymT<b_f_t>(invoke_b_f);
+	void *scope = m_dpi_api->svGetScope();
 
-	fprintf(stdout, "invoke_nb_f %s=%p\n",
-			invoke_nb_f.c_str(),
-			sym_finder->findSym(invoke_nb_f));
-	fprintf(stdout, "invoke_b_f %s=%p\n",
-			invoke_b_f.c_str(),
-			sym_finder->findSym(invoke_b_f));
+	fprintf(stdout, "scope: %p\n", scope);
+	fprintf(stdout, "invoke_nb_f %s=%p\n", invoke_nb_f.c_str(), nb_f);
+	fprintf(stdout, "invoke_b_f %s=%p\n", invoke_b_f.c_str(), b_f);
+
+	if (!nb_f || !b_f) {
+		return -1;
+	}
+
+	m_dpi_invoke_m.insert({inst_path, {scope, nb_f, b_f}});
 
 	return 0;
+}
+
+TblinkPluginDpi::invoke_info_t TblinkPluginDpi::get_dpi_invoke_info(
+			const std::string	&inst_path) {
+	invoke_info_t ret;
+	std::unordered_map<std::string,invoke_info_t>::const_iterator it;
+
+	if ((it=m_dpi_invoke_m.find(inst_path)) != m_dpi_invoke_m.end()) {
+		return it->second;
+	} else {
+		return ret;
+	}
 }
 
 ParamValVec *TblinkPluginDpi::get_plusargs(const std::string &prefix) {

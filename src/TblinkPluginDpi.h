@@ -7,6 +7,7 @@
 
 #pragma once
 #include <memory>
+#include <unordered_map>
 #include "dpi_api.h"
 #include "vpi_api.h"
 #include "tblink_rpc/ITbLink.h"
@@ -22,6 +23,11 @@ typedef std::unique_ptr<TblinkPluginDpi> TblinkPluginDpiUP;
  * Global TbLink Entrypoint for DPI environments
  */
 class TblinkPluginDpi {
+public:
+	typedef void *(*nb_f_t)(void *ifinst, void *method, void *params);
+	typedef int (*b_f_t)(void **reval, void *ifinst, void *method, void *params);
+	typedef std::tuple<void *, nb_f_t, b_f_t> invoke_info_t;
+
 public:
 	TblinkPluginDpi(
 			vpi_api_t		*vpi_api,
@@ -54,6 +60,9 @@ public:
 			const std::string	&invoke_nb_f,
 			const std::string	&invoke_b_f);
 
+	invoke_info_t get_dpi_invoke_info(
+			const std::string	&inst_path);
+
 	ParamValVec *get_plusargs(
 			const std::string	&prefix);
 
@@ -63,6 +72,7 @@ private:
 	bool						m_have_blocking_tasks;
 	tblink_rpc_core::ITbLink	*m_tblink;
 	tblink_rpc_core::IEndpoint	*m_auto_ep;
+	std::unordered_map<std::string, invoke_info_t>	m_dpi_invoke_m;
 
 };
 

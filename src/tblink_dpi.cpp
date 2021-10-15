@@ -388,16 +388,12 @@ static void invoke_req(
 	dpi_api_t *dpi_api = prv_plugin->dpi_api();
 	dpi_api->svSetScope(dpi_api->get_pkg_scope());
 
-	fprintf(stdout, "invoke_req\n");
-	fflush(stdout);
-
 	InvokeInfoDpi *ii = new InvokeInfoDpi(
 			inst,
 			method,
 			call_id,
 			params->cloneT<IParamValVec>());
 	dpi_api->invoke(reinterpret_cast<chandle>(ii));
-	fflush(stdout);
 }
 
 EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
@@ -530,10 +526,6 @@ EXTERN_C uint32_t tblink_rpc_IParamValVec_size(void *hndl) {
 }
 
 EXTERN_C chandle tblink_rpc_IParamValVec_at(chandle hndl, uint32_t idx) {
-	fprintf(stdout, "vector_at: hndl=%p\n", hndl);
-	fprintf(stdout, "  vv=%p\n",
-			dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl)));
-	fflush(stdout);
 	return reinterpret_cast<chandle>(
 			dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl))->at(idx));
 }
@@ -704,7 +696,7 @@ EXTERN_C const char *tblink_rpc_libpath() {
 	return prv_msgbuf;
 }
 
-EXTERN_C int _tblink_rpc_register_dpi_bfm(
+EXTERN_C int tblink_rpc_register_dpi_bfm(
 		const char				*inst_path,
 		const char				*invoke_nb_f,
 		const char				*invoke_b_f) {
@@ -719,10 +711,32 @@ EXTERN_C chandle tblink_rpc_invoke_nb_dpi_bfm(
 		chandle					ifinst,
 		chandle					method,
 		chandle					params) {
-	fprintf(stdout, "tblink_rpc_invoke_nb_dpi_bfm\n");
-	fflush(stdout);
+	chandle ret = 0;
+	TblinkPluginDpi *plugin = get_plugin();
+	TblinkPluginDpi::invoke_info_t invoke_i =
+			plugin->get_dpi_invoke_info(inst_path);
 
-	return 0;
+	if (std::get<1>(invoke_i) == 0) {
+		fprintf(stdout,
+				"TbLink Error: No DPI-invoke functions registered for scope %s\n",
+				inst_path);
+		fflush(stdout);
+	} else {
+		fprintf(stdout, "--> svSetScope\n");
+		fflush(stdout);
+		void *ex_scope = plugin->dpi_api()->svSetScope(std::get<0>(invoke_i));
+		fprintf(stdout, "<-- svSetScope\n");
+		fflush(stdout);
+		fprintf(stdout, "--> invoke scope=%p\n", plugin->dpi_api()->svGetScope());
+		fflush(stdout);
+		ret = std::get<1>(invoke_i)(ifinst, method, params);
+		fprintf(stdout, "<-- invoke %p\n", ret);
+		fflush(stdout);
+//		plugin->dpi_api()->svSetScope(ex_scope);
+		fflush(stdout);
+	}
+
+	return ret;
 }
 
 EXTERN_C int tblink_rpc_invoke_b_dpi_bfm(
@@ -732,6 +746,20 @@ EXTERN_C int tblink_rpc_invoke_b_dpi_bfm(
 		chandle					method,
 		chandle					params) {
 	*retval = 0;
+
+	TblinkPluginDpi *plugin = get_plugin();
+	TblinkPluginDpi::invoke_info_t invoke_i =
+			plugin->get_dpi_invoke_info(inst_path);
+
+	if (!std::get<2>(invoke_i)) {
+		fprintf(stdout,
+				"TbLink Error: No DPI-invoke functions registered for scope %s\n",
+				inst_path);
+	} else {
+		plugin->dpi_api()->svSetScope(std::get<0>(invoke_i));
+		return std::get<2>(invoke_i)(retval, ifinst, method, params);
+	}
+
 	return 0;
 }
 

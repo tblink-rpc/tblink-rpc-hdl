@@ -65,7 +65,6 @@ module smoke_bfm(
 		IParamVal retval;
 		longint id = method.id();
 		
-		$display("invoke_nb");
 		case (id)
 			0: begin
 				int rv;
@@ -136,6 +135,8 @@ module smoke_bfm(
 		DpiInterfaceInst ifinst = new(ifinst_h);
 		DpiMethodType method = new(method_h);
 		DpiParamValVec params = new(params_h);
+		$display("smoke_bfm_core_invoke_nb");
+		return null;
 	endfunction
 	export "DPI-C" function smoke_bfm_core_invoke_nb;
 		

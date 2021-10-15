@@ -149,8 +149,6 @@ package tblink_rpc;
 		DpiInvokeInfo ii = new(invoke_info_h);
 		IMethodType method_t = ii.method();
 		
-		$display("_tblink_rpc_invoke");
-		
 		if (method_t.is_blocking() != 0) begin
 `ifndef VERILATOR
 			// Invoke indirectly
@@ -173,12 +171,12 @@ package tblink_rpc;
 			IInterfaceImpl ifimpl = ifinst.get_impl();
 			IParamVal retval;
 			
-			$display("Invoke directly");
-			
 			retval = ifimpl.invoke_nb(
 					ii.inst(),
 					ii.method(),
 					ii.params());
+		
+			ii.invoke_rsp(retval);
 		end
 	endfunction
 	export "DPI-C" function _tblink_rpc_invoke;
@@ -217,7 +215,6 @@ package tblink_rpc;
 	 * used to invoke methods from the endpoint. BFM
 	 * registration done in this way is used to register
 	 * BFMs that will be accessed via DPI
-	 */
 	function automatic int tblink_rpc_register_dpi_bfm(
 			string					inst_path,
 			string					invoke_nb_f,
@@ -225,8 +222,9 @@ package tblink_rpc;
 		TbLink tblink = TbLink::inst();
 		return _tblink_rpc_register_dpi_bfm(inst_path, invoke_nb_f, invoke_b_f);
 	endfunction
+	 */
 	
-	import "DPI-C" context function int _tblink_rpc_register_dpi_bfm(
+	import "DPI-C" context function int tblink_rpc_register_dpi_bfm(
 			string					inst_path,
 			string					invoke_nb_f,
 			string					invoke_b_f);
