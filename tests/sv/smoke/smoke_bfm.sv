@@ -135,8 +135,25 @@ module smoke_bfm(
 		DpiInterfaceInst ifinst = new(ifinst_h);
 		DpiMethodType method = new(method_h);
 		DpiParamValVec params = new(params_h);
-		$display("smoke_bfm_core_invoke_nb");
-		return null;
+		IParamVal retval;
+		chandle retval_h;
+		longint id = method.id();
+		
+		case (id)
+			0: begin
+				int rv;
+				IParamValInt v;
+				$cast(v, params.at(0));
+				rv = inc(v.val_s());
+				retval = ifinst.mkValIntS(rv, 32);
+			end
+			default:
+				$display("Error: unknown method id %0d", id);
+		endcase
+
+		retval_h = DpiParamVal::getHndl(retval);
+		
+		return retval_h;
 	endfunction
 	export "DPI-C" function smoke_bfm_core_invoke_nb;
 		

@@ -22,6 +22,9 @@ class IParamVal;
 	virtual function kind_e kind();
 		return Bool;
 	endfunction
+	
+	virtual function void dispose();
+	endfunction
 		
 	virtual function IParamVal clone();
 		return null;

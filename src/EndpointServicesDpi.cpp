@@ -146,11 +146,7 @@ void EndpointServicesDpi::idle() {
 		// reschedule this for a delta away
 		m_hit_event = false;
 		_add_time_cb(0, 0, std::bind(&EndpointServicesDpi::idle, this));
-		fprintf(stdout, "schedule delta\n");
-		fflush(stdout);
 	} else {
-		fprintf(stdout, "wait req\n");
-		fflush(stdout);
 		int32_t ret = 0;
 		while (!m_run_until_event && !m_shutdown && ret != -1) {
 			ret = m_endpoint->await_req();

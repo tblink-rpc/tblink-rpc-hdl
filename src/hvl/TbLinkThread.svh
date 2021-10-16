@@ -8,6 +8,8 @@
  * Base class for dynamically-created tblink-rpc threads
  */
 class TbLinkThread;
+	TbLinkThread		m_next;
+	
 	function new();
 	endfunction
 	

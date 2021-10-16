@@ -53,11 +53,11 @@ package tblink_rpc;
 	`include "DpiTypeMap.svh"
 	`include "DpiTypeVec.svh"
 	`include "DpiType.svh"
+	`include "DpiParamVal.svh"
 	`include "DpiInterfaceInst.svh"
 	`include "DpiMethodTypeBuilder.svh"
 	`include "DpiInterfaceTypeBuilder.svh"
 	`include "DpiInterfaceType.svh"
-	`include "DpiParamVal.svh"
 	`include "DpiInvokeInfo.svh"
 	`include "DpiLaunchParams.svh"
 	`include "DpiLaunchType.svh"
@@ -95,6 +95,8 @@ package tblink_rpc;
 	`include "SVLaunchParams.svh"
 	`include "SVLaunchTypeLoopback.svh"
 	
+	`include "TbLinkThread.svh"
+	
 	`include "TbLink.svh"
 
 	// Ensure that we always initialize tblink
@@ -128,11 +130,10 @@ package tblink_rpc;
 	 * Time-based features aren't supported in Verilator
 	 */
 `ifndef VERILATOR
-	`include "TbLinkThread.svh"
 	`include "TbLinkDeltaCb.svh"
-	`include "TbLinkInvokeB.svh"
 	`include "TbLinkTimedCb.svh"
 `endif /* ifndef VERILATOR */
+	`include "TbLinkInvokeB.svh"
 
 	/**
 	 * Called to start TbLink's main thread. This must be called
@@ -145,41 +146,47 @@ package tblink_rpc;
 	
 	// IEndpoint functions
 	
-	function automatic void _tblink_rpc_invoke(chandle invoke_info_h);
-		DpiInvokeInfo ii = new(invoke_info_h);
-		IMethodType method_t = ii.method();
-		
-		if (method_t.is_blocking() != 0) begin
-`ifndef VERILATOR
-			// Invoke indirectly
-			TbLinkInvokeB t = new(
-					ii.inst(),
-					ii.method(),
-					ii.params());
+	function automatic void tblink_rpc_invoke(
+		chandle			ifinst_h,
+		chandle			method_h,
+		longint			call_id,
+		chandle			params_h);
+		DpiInterfaceInst	ifinst = new(ifinst_h);
+		DpiMethodType		method = new(method_h);
+		DpiParamValVec		params = new(params_h);
+	
+		if (method.is_blocking() != 0) begin
 			TbLink tblink = TbLink::inst();
+			IParamVal params_val_c;
+			IParamValVec params_c;
+			TbLinkInvokeB	invoke_t;
 			
-			$display("Invoking Indirectly");
+			params_val_c = params.clone();
+			$cast(params_c, params_val_c);
+			
+			// Invoke indirectly
+			invoke_t = new(
+					ifinst,
+					method,
+					call_id,
+					params_c);
+			
 			// Know this never blocks
-			tblink.queue_thread(t);
-`else
-			$display("TBLink Error: attempting to call a blocking method in Verilator");
-			$finish(1);
-`endif
+			tblink.queue_thread(invoke_t);
 		end else begin
 			// Invoke directly
-			IInterfaceInst ifinst = ii.inst();
 			IInterfaceImpl ifimpl = ifinst.get_impl();
 			IParamVal retval;
 			
 			retval = ifimpl.invoke_nb(
-					ii.inst(),
-					ii.method(),
-					ii.params());
+					ifinst,
+					method,
+					params);
 		
-			ii.invoke_rsp(retval);
+			ifinst.invoke_rsp(call_id, retval);
 		end
 	endfunction
-	export "DPI-C" function _tblink_rpc_invoke;
+	export "DPI-C" function tblink_rpc_invoke;
 
 	/**
 	 * Obtain command-line arguments

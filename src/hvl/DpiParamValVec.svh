@@ -33,6 +33,10 @@ class DpiParamValVec extends IParamValVec;
 	virtual function void dispose();
 		DpiParamVal::do_dispose(m_hndl);
 	endfunction
+	
+	virtual function IParamVal clone();
+		return DpiParamVal::_clone(m_hndl);
+	endfunction
 
 endclass
 

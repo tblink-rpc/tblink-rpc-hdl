@@ -29,9 +29,7 @@ class DpiInterfaceImpl extends IInterfaceImpl;
 		DpiMethodType			method_dpi;
 		DpiParamValVec			params_dpi;
 		chandle					retval_h;
-		DpiParamVal				retval;
-		
-		$display("DpiInterfaceImpl::invoke_nb");
+		IParamVal				retval;
 		
 		if (!$cast(ifinst_dpi, ifinst)) begin
 			$display("TbLink Error: ifinst is not a DPI instance");
@@ -51,7 +49,7 @@ class DpiInterfaceImpl extends IInterfaceImpl;
 				params_dpi.m_hndl);
 		
 		if (retval_h != null) begin
-			$display("TODO: construct retval");
+			retval = DpiParamVal::mk(retval_h);
 		end
 
 		return retval;
@@ -62,8 +60,34 @@ class DpiInterfaceImpl extends IInterfaceImpl;
 		input IInterfaceInst	ifinst,
 		input IMethodType		method,
 		IParamValVec			params);
-		$display("Error: invoke not overridden");
-		$finish();
+		DpiInterfaceInst		ifinst_dpi;
+		DpiMethodType			method_dpi;
+		DpiParamValVec			params_dpi;
+		chandle					retval_h;
+		
+		retval = null;
+		
+		if (!$cast(ifinst_dpi, ifinst)) begin
+			$display("TbLink Error: ifinst is not a DPI instance");
+			return;
+		end
+		if (!$cast(method_dpi, method)) begin
+			return;
+		end
+		if (!$cast(params_dpi, params)) begin
+			return;
+		end
+		
+		tblink_rpc_invoke_b_dpi_bfm(
+				m_inst_path,
+				retval_h,
+				ifinst_dpi.m_hndl,
+				method_dpi.m_hndl,
+				params_dpi.m_hndl);
+		
+		if (retval_h != null) begin
+			retval = DpiParamVal::mk(retval_h);
+		end
 	endtask
 
 endclass

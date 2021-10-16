@@ -44,8 +44,8 @@ def main():
     print("connect: %s:%d" % (host, port))
     
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     sock.connect((host, port))
+    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     
     transport = TransportJsonSocket(sock)
     endpoint = EndpointMsgTransport(transport)

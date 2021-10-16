@@ -27,6 +27,14 @@ class DpiParamValInt extends IParamValInt;
 	virtual function longint unsigned val_u();
 		return tblink_rpc_IParamValInt_val_u(m_hndl);
 	endfunction
+	
+	virtual function void dispose();
+		DpiParamVal::do_dispose(m_hndl);
+	endfunction
+	
+	virtual function IParamVal clone();
+		return DpiParamVal::_clone(m_hndl);
+	endfunction
 
 endclass
 

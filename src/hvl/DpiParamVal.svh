@@ -4,8 +4,10 @@
  ****************************************************************************/
 
 typedef class DpiParamValBool;
+typedef class DpiParamValInt;
 typedef class DpiParamValMap;
 typedef class DpiParamValVec;
+typedef class DpiParamValStr;
   
 /**
  * Class: DpiParamVal
@@ -100,7 +102,6 @@ class DpiParamVal extends IParamVal;
 				$finish();
 			end
 		endcase
-//		ret.m_hndl = hndl;
 		return ret;
 	endfunction
 	

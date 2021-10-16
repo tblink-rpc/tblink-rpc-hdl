@@ -28,14 +28,11 @@ class loopback_smoke_bfm_impl #(type T=IInterfaceImpl) extends IInterfaceImpl;
 		
 		params.push_back(v1_v);
 		
-		$display("TODO: inc");
-		$display("--> invoke");
 		retval = m_ifinst.invoke_nb(
 					m_inc,
 					params);
 		$cast(retval_i, retval);
-		
-		$display("<-- invoke");
+
 		return retval_i.val_s();
 	endfunction
 	

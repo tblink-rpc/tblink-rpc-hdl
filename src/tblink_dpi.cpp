@@ -19,7 +19,6 @@
 #include "vpi_api.h"
 #include "ILaunch.h"
 #include "EndpointServicesDpi.h"
-#include "InterfaceInstProxyDpi.h"
 #include "InvokeInfoDpi.h"
 #include "ParamValVec.h"
 #include "ParamValStr.h"
@@ -94,9 +93,10 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.svGetScope = sym_finder->findSymT<void *(*)()>("svGetScope");
 		prv_dpi.svSetScope = sym_finder->findSymT<void *(*)(void *)>("svSetScope");
 		prv_dpi.get_pkg_scope = &get_pkg_scope;
-		prv_dpi.invoke = sym_finder->findSymT<void (*)(void*)>("_tblink_rpc_invoke");
+		prv_dpi.invoke = sym_finder->findSymT<void (*)(void*,void*,intptr_t,void*)>("tblink_rpc_invoke");
 		prv_dpi.add_time_cb = sym_finder->findSymT<void (*)(void*,uint64_t)>("tblink_rpc_add_time_cb");
 		prv_dpi.delta_cb = sym_finder->findSymT<void (*)()>("tblink_rpc_delta_cb");
+		prv_dpi.dispatch_cb = sym_finder->findSymT<int (*)()>("tblink_rpc_dispatch_cb");
 
 		prv_plugin = new TblinkPluginDpi(
 				vpi_api,
@@ -242,9 +242,9 @@ EXTERN_C int tblink_rpc_IEndpoint_connect_complete(
 	return ret;
 }
 
-EXTERN_C int _tblink_rpc_IEndpoint_start(
+EXTERN_C int _tblink_rpc_IEndpoint_await_run_until_event(
 		chandle			endpoint_h) {
-	return reinterpret_cast<IEndpoint *>(endpoint_h)->start();
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->await_run_until_event();
 }
 
 EXTERN_C char *tblink_rpc_IEndpoint_last_error(chandle endpoint_h) {
@@ -388,12 +388,13 @@ static void invoke_req(
 	dpi_api_t *dpi_api = prv_plugin->dpi_api();
 	dpi_api->svSetScope(dpi_api->get_pkg_scope());
 
-	InvokeInfoDpi *ii = new InvokeInfoDpi(
-			inst,
-			method,
+	dpi_api->invoke(
+			reinterpret_cast<chandle>(inst),
+			reinterpret_cast<chandle>(method),
 			call_id,
-			params->cloneT<IParamValVec>());
-	dpi_api->invoke(reinterpret_cast<chandle>(ii));
+			reinterpret_cast<chandle>(
+					static_cast<IParamVal *>(params)));
+	fflush(stdout);
 }
 
 EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
@@ -477,8 +478,8 @@ EXTERN_C uint64_t tblink_rpc_IParamValInt_val_u(chandle hndl_h) {
 }
 
 EXTERN_C void *_tblink_rpc_iparam_val_clone(void *hndl) {
-	return reinterpret_cast<void *>(
-			reinterpret_cast<IParamVal *>(hndl)->clone());
+	IParamVal *ret = reinterpret_cast<IParamVal *>(hndl)->clone();
+	return reinterpret_cast<void *>(ret);
 }
 EXTERN_C uint32_t _tblink_rpc_iparam_val_type(void *hndl) {
 	return reinterpret_cast<IParamVal *>(hndl)->type();
@@ -552,6 +553,15 @@ EXTERN_C chandle tblink_rpc_IInterfaceInst_type(
 EXTERN_C uint32_t tblink_rpc_IInterfaceInst_is_mirror(
 		chandle			ifinst_h) {
 	return reinterpret_cast<IInterfaceInst *>(ifinst_h)->is_mirror();
+}
+
+EXTERN_C void tblink_rpc_IInterfaceInst_invoke_rsp(
+		chandle			ifinst_h,
+		intptr_t		call_id,
+		chandle			retval) {
+	reinterpret_cast<IInterfaceInst *>(ifinst_h)->invoke_rsp(
+			call_id,
+			reinterpret_cast<IParamVal *>(retval));
 }
 
 EXTERN_C chandle tblink_rpc_IInterfaceInst_mkValBool(
@@ -722,18 +732,8 @@ EXTERN_C chandle tblink_rpc_invoke_nb_dpi_bfm(
 				inst_path);
 		fflush(stdout);
 	} else {
-		fprintf(stdout, "--> svSetScope\n");
-		fflush(stdout);
-		void *ex_scope = plugin->dpi_api()->svSetScope(std::get<0>(invoke_i));
-		fprintf(stdout, "<-- svSetScope\n");
-		fflush(stdout);
-		fprintf(stdout, "--> invoke scope=%p\n", plugin->dpi_api()->svGetScope());
-		fflush(stdout);
+		plugin->dpi_api()->svSetScope(std::get<0>(invoke_i));
 		ret = std::get<1>(invoke_i)(ifinst, method, params);
-		fprintf(stdout, "<-- invoke %p\n", ret);
-		fflush(stdout);
-//		plugin->dpi_api()->svSetScope(ex_scope);
-		fflush(stdout);
 	}
 
 	return ret;
@@ -806,11 +806,12 @@ EXTERN_C chandle _tblink_rpc_get_plusargs(
 
 /********************************************************************
  * Delta callback support for automatic endpoint bring-up
+ * Note: these functions are only used when running with Verilator,
+ * since Verilator doesn't support behavior timing constructs (eg #10)
  ********************************************************************/
 
 static PLI_INT32 _tblink_rpc_delta_cb(p_cb_data cbd) {
 	TblinkPluginDpi *plugin = get_plugin();
-	fprintf(stdout, "tblink_rpc_delta_cb %p\n", prv_pkg_scope);
 	plugin->dpi_api()->svSetScope(prv_pkg_scope);
 	plugin->dpi_api()->delta_cb();
 	return 0;
@@ -827,6 +828,28 @@ EXTERN_C void tblink_rpc_register_delta_cb() {
 	vt.type = vpiSimTime;
 	cbd.reason = cbAfterDelay;
 	cbd.cb_rtn = &_tblink_rpc_delta_cb;
+	cbd.time = &vt;
+	plugin->vpi_api()->vpi_register_cb(&cbd);
+}
+
+static PLI_INT32 _tblink_rpc_dispatch_cb(p_cb_data cbd) {
+	TblinkPluginDpi *plugin = get_plugin();
+	plugin->dpi_api()->svSetScope(prv_pkg_scope);
+	int ret = plugin->dpi_api()->dispatch_cb();
+	return 0;
+}
+
+EXTERN_C void tblink_rpc_register_dispatch_cb() {
+	s_cb_data cbd;
+	s_vpi_time vt;
+	TblinkPluginDpi *plugin = get_plugin();
+
+	memset(&cbd, 0, sizeof(cbd));
+	memset(&vt, 0, sizeof(vt));
+
+	vt.type = vpiSimTime;
+	cbd.reason = cbAfterDelay;
+	cbd.cb_rtn = &_tblink_rpc_dispatch_cb;
 	cbd.time = &vt;
 	plugin->vpi_api()->vpi_register_cb(&cbd);
 }

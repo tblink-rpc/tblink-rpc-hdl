@@ -51,7 +51,6 @@ interface loopback_smoke_bfm_core();
 		IParamVal retval;
 		longint id = method.id();
 		
-		$display("invoke_nb");
 		case (id)
 			0: begin
 				int rv;

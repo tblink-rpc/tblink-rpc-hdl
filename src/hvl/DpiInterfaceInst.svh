@@ -30,6 +30,17 @@ class DpiInterfaceInst extends IInterfaceInst;
 		return prv_hndl2impl[m_hndl];
 	endfunction
 	
+	virtual function void invoke_rsp(
+		longint				call_id,
+		IParamVal			retval);
+		chandle		retval_h;
+		
+		retval_h = DpiParamVal::getHndl(retval);
+		
+		tblink_rpc_IInterfaceInst_invoke_rsp(m_hndl, call_id, retval_h);
+	endfunction
+		
+	
 	virtual function IParamValBool mkValBool(
 		int unsigned		val);
 	endfunction
@@ -89,6 +100,10 @@ class DpiInterfaceInst extends IInterfaceInst;
 
 endclass
 
+import "DPI-C" context function void tblink_rpc_IInterfaceInst_invoke_rsp(
+		chandle			ifinst,
+		longint			call_id,
+		chandle			retval);
 import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_mkValBool(
 		chandle			ifinst,
 		int unsigned	val);

@@ -22,6 +22,14 @@ class DpiParamValStr extends IParamValStr;
 	virtual function string val();
 		return tblink_rpc_IParamValStr_val(m_hndl);
 	endfunction
+	
+	virtual function void dispose();
+		DpiParamVal::do_dispose(m_hndl);
+	endfunction
+	
+	virtual function IParamVal clone();
+		return DpiParamVal::_clone(m_hndl);
+	endfunction
 
 endclass
 

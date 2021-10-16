@@ -41,7 +41,7 @@ class IEndpoint;
 		return -1;
 	endfunction
 	
-	virtual function int start();
+	virtual function int await_run_until_event();
 		return -1;
 	endfunction
 	

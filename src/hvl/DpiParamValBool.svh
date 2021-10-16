@@ -23,6 +23,10 @@ class DpiParamValBool extends IParamValBool;
 	virtual function kind_e kind();
 		return DpiParamVal::_kind(m_hndl);
 	endfunction
+	
+	virtual function void dispose();
+		DpiParamVal::do_dispose(m_hndl);
+	endfunction
 
 	virtual function IParamVal clone();
 		return DpiParamVal::_clone(m_hndl);

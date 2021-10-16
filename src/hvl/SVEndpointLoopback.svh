@@ -88,7 +88,6 @@ class SVEndpointLoopback extends IEndpoint;
 			inst_name, 
 			(is_mirror != 0), 
 			ifinst_impl);
-		$display("defineInterfaceInst: %0s", inst_name);
 		m_ifinst_m[inst_name] = ifinst;
 	
 		return ifinst;
@@ -145,9 +144,6 @@ class SVEndpointLoopback extends IEndpoint;
 		SVInterfaceInst ifinst;
 		IParamVal retval;
 		
-		$display("invoke_nb: ifinst_name=%0s", ifinst_name);
-		
-//		ifinst = m_peer_ep.m_ifinst_m[ifinst_name];
 		ifinst = m_peer_ep.find_ifinst(ifinst_name);
 		
 		retval = ifinst.m_impl.invoke_nb(

@@ -3,8 +3,8 @@
  * TbLink.svh
  ****************************************************************************/
  
-`ifndef VERILATOR
 	typedef class TbLinkThread;
+`ifndef VERILATOR
 	typedef class TbLinkDeltaCb;
 `endif
 
@@ -24,6 +24,9 @@ class TbLink;
 `ifndef VERILATOR
 	mailbox #(TbLinkThread)		m_dispatch_q = new();
 	bit							m_dispatcher_running;
+`else
+	TbLinkThread				m_dispatch_q;
+	bit							m_dispatch_scheduled;
 `endif
 	bit							m_delta_cb_pending;
 	int							m_last_ifinst_count;
@@ -132,10 +135,12 @@ class TbLink;
 				return;
 			end
 
-			$display("--> process_one_message");
-			while (m_default_ep.process_one_message() != -1) begin
+			$display("--> await_run_until_event");
+			if (m_default_ep.await_run_until_event() == -1) begin
+				$display("TbLink Error: failed while waiting for run-until-event");
+				$finish(1);
 			end
-			$display("<-- process_one_message");
+			$display("<-- await_run_until_event");
 		end
 	endfunction
 	
@@ -147,6 +152,8 @@ class TbLink;
 				dispatcher();
 			join_none
 		end
+`else
+		dispatch();
 `endif
 	endtask
 
@@ -161,11 +168,30 @@ class TbLink;
 			join_none
 		end
 	endtask
+`else
+	task dispatch();
+		m_dispatch_scheduled = 0;
+		while (m_dispatch_q != null) begin
+			TbLinkThread t = m_dispatch_q;
+			m_dispatch_q = m_dispatch_q.m_next;
+			t.run();
+		end
+	endtask
+`endif
 	
 	function void queue_thread(TbLinkThread t);
+`ifndef VERILATOR
 		void'(m_dispatch_q.try_put(t));
-	endfunction
+`else
+		t.m_next = m_dispatch_q;
+		m_dispatch_q = t;
+		
+		if (!m_dispatch_scheduled) begin
+			tblink_rpc_register_dispatch_cb();
+			m_dispatch_scheduled = 1;
+		end
 `endif
+	endfunction
 	
 	function IEndpoint get_default_ep();
 		if (m_default_ep == null) begin
@@ -264,6 +290,11 @@ import "DPI-C" context function int _tblink_rpc_pkg_init(
 import "DPI-C" context function chandle tblink_rpc_findLaunchType(string id);
 import "DPI-C" context function string tblink_rpc_libpath();
 
+`ifdef VERILATOR
+/**
+ * Time-based callbacks and running of tasks are implemented
+ * via VPI in Verilator. The functions implement the interface.
+ */
 function automatic void tblink_rpc_delta_cb();
 	TbLink tblink = TbLink::inst();
 	tblink.delta_cb();
@@ -271,3 +302,12 @@ endfunction
 export "DPI-C" function tblink_rpc_delta_cb;
 import "DPI-C" context function void tblink_rpc_register_delta_cb();
 
+import "DPI-C" context function void tblink_rpc_register_dispatch_cb();
+
+task automatic tblink_rpc_dispatch_cb();
+	TbLink tblink = TbLink::inst();
+	tblink.dispatch();
+endtask
+export "DPI-C" task tblink_rpc_dispatch_cb;
+
+`endif /* VERILATOR */

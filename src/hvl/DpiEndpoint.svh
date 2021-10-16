@@ -39,8 +39,8 @@ class DpiEndpoint extends IEndpoint;
 		return tblink_rpc_IEndpoint_connect_complete(m_hndl);
 	endfunction
 	
-	virtual function int start();
-		return _tblink_rpc_IEndpoint_start(m_hndl);
+	virtual function int await_run_until_event();
+		return _tblink_rpc_IEndpoint_await_run_until_event(m_hndl);
 	endfunction
 		
 	function int shutdown();
@@ -228,7 +228,8 @@ import "DPI-C" context function chandle _tblink_rpc_endpoint_new(int have_blocki
 import "DPI-C" context function chandle _tblink_rpc_endpoint_default();
 import "DPI-C" context function int tblink_rpc_IEndpoint_build_complete(chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_connect_complete(chandle endpoint_h);
-import "DPI-C" context function int _tblink_rpc_IEndpoint_start(chandle endpoint_h);
+import "DPI-C" context function int _tblink_rpc_IEndpoint_await_run_until_event(
+	chandle 	endpoint_h);
 import "DPI-C" context function int _tblink_rpc_endpoint_shutdown(chandle endpoint_h);
 import "DPI-C" context function string tblink_rpc_IEndpoint_last_error(chandle endpoint_h);
 import "DPI-C" context function chandle tblink_rpc_IEndpoint_findInterfaceType(

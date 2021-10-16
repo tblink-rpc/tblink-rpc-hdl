@@ -41,6 +41,11 @@ class IInterfaceInst;
 		IMethodType					method,
 		IParamValVec				params);
 	endtask
+	
+	virtual function void invoke_rsp(
+		longint						call_id,
+		IParamVal					retval);
+	endfunction
 
 	virtual function IParamValBool mkValBool(
 		int unsigned		val);
