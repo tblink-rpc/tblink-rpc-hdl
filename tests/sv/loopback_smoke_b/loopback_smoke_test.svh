@@ -59,7 +59,8 @@ class loopback_smoke_test extends uvm_test;
 		$display("--> run_phase");
 		phase.raise_objection(this, "Main", 1);
 		for (int i=0; i<400000; i++) begin
-			int rv = m_driver.m_impl.inc(i);
+			int rv;
+		        m_driver.m_impl.inc(rv, i);
 //			$display("inc: %0d => %0d", i, rv);
 			if (rv != i+1) begin
 				`uvm_fatal("loopback_smoke_test", "Incorrect result");

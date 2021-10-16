@@ -38,8 +38,8 @@ class IInterfaceInst;
 	
 	virtual task invoke_b(
 		output IParamVal			retval,
-		IMethodType					method,
-		IParamValVec				params);
+		input  IMethodType			method,
+		input  IParamValVec			params);
 	endtask
 	
 	virtual function void invoke_rsp(

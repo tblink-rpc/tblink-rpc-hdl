@@ -61,8 +61,13 @@ class SVInterfaceInst extends IInterfaceInst;
 	
 	virtual task invoke_b(
 		output IParamVal			retval,
-		IMethodType					method,
-		IParamValVec				params);
+		input IMethodType			method,
+		input IParamValVec			params);
+		m_ep.invoke_b(
+				m_name,
+				retval,
+				method,
+				params);
 	endtask	
 	
 	virtual function IParamValBool mkValBool(

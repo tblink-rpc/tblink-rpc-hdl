@@ -434,8 +434,6 @@ EXTERN_C chandle tblink_rpc_IEndpoint_getInterfaceInstAt(
 
 EXTERN_C void tblink_rpc_notify_time_cb(void *cb_data) {
 	TimeCallbackClosureDpi *closure = reinterpret_cast<TimeCallbackClosureDpi *>(cb_data);
-	fprintf(stdout, "_tblink_rpc_notify_time_cb\n");
-	fflush(stdout);
 	closure->notify();
 	delete closure;
 }

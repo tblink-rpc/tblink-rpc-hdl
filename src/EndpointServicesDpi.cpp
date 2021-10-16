@@ -136,8 +136,8 @@ void EndpointServicesDpi::hit_event() {
 }
 
 void EndpointServicesDpi::idle() {
-	fprintf(stdout, "idle\n");
-	fflush(stdout);
+//	fprintf(stdout, "idle\n");
+//	fflush(stdout);
 	if (m_shutdown) {
 		return;
 	}

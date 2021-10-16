@@ -154,6 +154,22 @@ class SVEndpointLoopback extends IEndpoint;
 		return retval;
 	endfunction
 	
+	virtual task invoke_b(
+		input string			ifinst_name,
+		output IParamVal		retval,
+		input  IMethodType		method,
+		input  IParamValVec		params);
+		SVInterfaceInst ifinst;
+		
+		ifinst = m_peer_ep.find_ifinst(ifinst_name);
+		
+		ifinst.m_impl.invoke_b(
+				retval,
+				ifinst, 
+				method, 
+				params);
+	endtask
+	
 	static function IEndpoint mk();
 		SVEndpointLoopback hdl = new(1);
 		SVEndpointLoopback hvl = new(0);
