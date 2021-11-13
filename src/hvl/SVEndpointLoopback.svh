@@ -15,6 +15,7 @@ class SVEndpointLoopback extends IEndpoint;
 	bit							m_is_hdl;
 	SVInterfaceType				m_iftype_m[string];
 	SVInterfaceInst				m_ifinst_m[string];
+	SVInterfaceInst				m_ifinsts[$];
 
 	function new(bit is_hdl);
 		$display("SVEndpointLoopback: is_hdl=%0d", is_hdl);
@@ -40,6 +41,10 @@ class SVEndpointLoopback extends IEndpoint;
 	virtual function int is_connect_complete();
 		return 0;
 	endfunction	
+	
+	virtual function int await_run_until_event();
+		return 0;
+	endfunction
 	
 	virtual function IInterfaceType findInterfaceType(string name);
 		if (m_is_hdl) begin
@@ -91,6 +96,17 @@ class SVEndpointLoopback extends IEndpoint;
 		m_ifinst_m[inst_name] = ifinst;
 	
 		return ifinst;
+	endfunction
+	
+	virtual function int process_one_message();
+		return 0;
+	endfunction
+	
+	virtual function void getInterfaceInsts(ref IInterfaceInst ifinsts[$]);
+		ifinsts = '{};
+		foreach (m_ifinsts[i]) begin
+			ifinsts.push_back(m_ifinsts[i]);
+		end
 	endfunction
 	
 	virtual function IParamValBool mkValBool(
