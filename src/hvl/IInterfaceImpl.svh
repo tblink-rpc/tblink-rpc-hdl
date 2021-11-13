@@ -12,6 +12,9 @@
  */
 class IInterfaceImpl;
 	
+	virtual function void init(IInterfaceInst ifinst);
+	endfunction
+	
 	virtual function IParamVal invoke_nb(
 		input IInterfaceInst	ifinst,
 		input IMethodType		method,

@@ -94,6 +94,7 @@ class SVEndpointLoopback extends IEndpoint;
 			(is_mirror != 0), 
 			ifinst_impl);
 		m_ifinst_m[inst_name] = ifinst;
+		ifinst_impl.init(ifinst);
 	
 		return ifinst;
 	endfunction

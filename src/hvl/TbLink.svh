@@ -30,6 +30,7 @@ class TbLink;
 `endif
 	bit							m_delta_cb_pending;
 	int							m_last_ifinst_count;
+	int							m_zero_count_repeat;
 
 	function new();
 		
@@ -107,8 +108,9 @@ class TbLink;
 		
 		m_default_ep.getInterfaceInsts(ifinsts);
 		$display("delta_cb: %0d interfaces", ifinsts.size());
-		if (ifinsts.size() != m_last_ifinst_count) begin
+		if ((ifinsts.size() != m_last_ifinst_count) || (ifinsts.size() == 0 && m_zero_count_repeat < 4)) begin
 			$display("waiting another delta...");
+			m_zero_count_repeat++;
 			m_last_ifinst_count = ifinsts.size();
 			register_delta_cb();
 		end else begin
