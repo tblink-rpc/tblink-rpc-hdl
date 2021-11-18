@@ -96,6 +96,9 @@ class DpiInterfaceInst extends IInterfaceInst;
 	endfunction
 	
 	virtual function IParamValVec mkValVec();
+		chandle val_v = tblink_rpc_IInterfaceInst_mkValVec(m_hndl);
+		DpiParamValVec ret = new(val_v);
+		return ret;
 	endfunction	
 
 endclass

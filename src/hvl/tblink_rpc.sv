@@ -69,6 +69,7 @@ package tblink_rpc;
 	`include "DpiParamValVec.svh"
 	`include "DpiInterfaceImpl.svh"
 
+	`include "DpiEndpointServicesProxy.svh"
 	`include "DpiEndpoint.svh"
 
 	`include "SVTypeInt.svh"
@@ -90,6 +91,7 @@ package tblink_rpc;
 	`include "SVInterfaceType.svh"
 	`include "SVInterfaceTypeBuilder.svh"
 	`include "SVEndpoint.svh"
+	`include "SVEndpointServices.svh"
 	`include "SVEndpointLoopback.svh"
 	`include "SVLaunchTypeRegistration.svh"
 	`include "SVLaunchParams.svh"
@@ -160,6 +162,12 @@ package tblink_rpc;
 			IParamVal params_val_c;
 			IParamValVec params_c;
 			TbLinkInvokeB	invoke_t;
+			
+`ifndef VERILATOR
+			if (!tblink.m_dispatcher_running) begin
+				$display("TbLink Warning: Attempting to schedule a call before dispatcher is running");
+			end
+`endif
 			
 			params_val_c = params.clone();
 			$cast(params_c, params_val_c);

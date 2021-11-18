@@ -25,9 +25,8 @@ class DpiParamValVec extends IParamValVec;
 	endfunction
 	
 	virtual function void push_back(IParamVal v);
-		DpiParamVal v_dpi;
-		$cast(v_dpi, v);
-		tblink_rpc_IParamValVec_push_back(m_hndl, v_dpi.m_hndl);
+		chandle v_hndl = DpiParamVal::getHndl(v);
+		tblink_rpc_IParamValVec_push_back(m_hndl, v_hndl);
 	endfunction
 	
 	virtual function void dispose();

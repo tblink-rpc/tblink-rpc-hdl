@@ -20,6 +20,8 @@ class DpiEndpoint extends IEndpoint;
 	chandle					m_ifinst_m[IInterfaceImpl];
 	bit						m_started = 0;
 	bit						m_running = 0;
+	IEndpointServices		m_services;
+	chandle					m_services_proxy;
 	`ifndef VERILATOR
 		// Requests for new threads are queued here
 		mailbox #(TbLinkThread)   	m_thread_q = new();
@@ -30,13 +32,33 @@ class DpiEndpoint extends IEndpoint;
 	function new(chandle hndl);
 		m_hndl = hndl;
 	endfunction
+	
+	virtual function int init(
+		IEndpointServices		ep_services);
+		ep_services.init(this);
+		m_services = ep_services;
+		
+		m_services_proxy = newDpiEndpointServicesProxy(ep_services);
+		return tblink_rpc_IEndpoint_init(
+				m_hndl,
+				m_services_proxy, 
+				null);
+	endfunction
 
 	virtual function int build_complete();
 		return tblink_rpc_IEndpoint_build_complete(m_hndl);
 	endfunction
+	
+	virtual function int is_build_complete();
+		return tblink_rpc_IEndpoint_is_build_complete(m_hndl);
+	endfunction
 		
 	virtual function int connect_complete();
 		return tblink_rpc_IEndpoint_connect_complete(m_hndl);
+	endfunction
+	
+	virtual function int is_connect_complete();
+		return tblink_rpc_IEndpoint_is_connect_complete(m_hndl);
 	endfunction
 	
 	virtual function int await_run_until_event();
@@ -226,8 +248,14 @@ endclass
 
 import "DPI-C" context function chandle _tblink_rpc_endpoint_new(int have_blocking_tasks);
 import "DPI-C" context function chandle _tblink_rpc_endpoint_default();
+import "DPI-C" context function int tblink_rpc_IEndpoint_init(
+	chandle endpoint_h, 
+	chandle services_h, 
+	chandle listener_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_build_complete(chandle endpoint_h);
+import "DPI-C" context function int tblink_rpc_IEndpoint_is_build_complete(chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_connect_complete(chandle endpoint_h);
+import "DPI-C" context function int tblink_rpc_IEndpoint_is_connect_complete(chandle endpoint_h);
 import "DPI-C" context function int _tblink_rpc_IEndpoint_await_run_until_event(
 	chandle 	endpoint_h);
 import "DPI-C" context function int _tblink_rpc_endpoint_shutdown(chandle endpoint_h);
