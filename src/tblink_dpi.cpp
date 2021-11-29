@@ -18,6 +18,7 @@
 #include "dpi_api.h"
 #include "vpi_api.h"
 #include "ILaunch.h"
+#include "DpiEndpointServicesProxy.h"
 #include "EndpointServicesDpi.h"
 #include "InvokeInfoDpi.h"
 #include "ParamValVec.h"
@@ -97,6 +98,13 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.add_time_cb = sym_finder->findSymT<void (*)(void*,uint64_t)>("tblink_rpc_add_time_cb");
 		prv_dpi.delta_cb = sym_finder->findSymT<void (*)()>("tblink_rpc_delta_cb");
 		prv_dpi.dispatch_cb = sym_finder->findSymT<int (*)()>("tblink_rpc_dispatch_cb");
+		prv_dpi.eps_proxy_shutdown = sym_finder->findSymT<void(*)(void*)>("tblink_rpc_DpiEndpointServicesProxy_shutdown");
+		prv_dpi.eps_proxy_run_until_event = sym_finder->findSymT<void(*)(void*)>(
+				"tblink_rpc_DpiEndpointServicesProxy_run_until_event");
+		prv_dpi.eps_proxy_hit_event = sym_finder->findSymT<void(*)(void*)>(
+				"tblink_rpc_DpiEndpointServicesProxy_hit_event");
+		prv_dpi.eps_proxy_idle = sym_finder->findSymT<void(*)(void*)>(
+				"tblink_rpc_DpiEndpointServicesProxy_idle");
 
 		prv_plugin = new TblinkPluginDpi(
 				vpi_api,
@@ -148,6 +156,13 @@ EXTERN_C void tblink_rpc_InvokeInfo_invoke_rsp(chandle ii_h, chandle retval_h) {
 			ii->call_id(),
 			reinterpret_cast<IParamVal *>(retval_h));
 	delete ii;
+}
+
+EXTERN_C chandle tblink_rpc_DpiEndpointServicesProxy_new() {
+	TblinkPluginDpi *plugin = get_plugin();
+	return reinterpret_cast<chandle>(
+			static_cast<IEndpointServices *>(
+					new DpiEndpointServicesProxy(plugin->dpi_api())));
 }
 
 EXTERN_C void *_tblink_rpc_endpoint_new(int have_blocking_tasks) {
@@ -205,41 +220,33 @@ EXTERN_C chandle _tblink_rpc_endpoint_default() {
 	return reinterpret_cast<chandle>(prv_plugin->endpoint());
 }
 
+EXTERN_C int tblink_rpc_IEndpoint_init(
+		chandle				endpoint_h,
+		chandle				services_h,
+		chandle				listener_h) {
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->init(
+			reinterpret_cast<IEndpointServices *>(services_h),
+			reinterpret_cast<IEndpointListener *>(listener_h));
+}
+
 EXTERN_C int tblink_rpc_IEndpoint_build_complete(
 		chandle				endpoint_h) {
-	int32_t ret = 0;
-	IEndpoint *ep = reinterpret_cast<IEndpoint *>(endpoint_h);
-	if (ep->build_complete() != 0) {
-		return -1;
-	}
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->build_complete();
+}
 
-	while ((ret=ep->is_build_complete()) == 0) {
-		if (ep->process_one_message() == -1) {
-			ret = -1;
-			break;
-		}
-	}
-
-	return ret;
+EXTERN_C int tblink_rpc_IEndpoint_is_build_complete(
+		chandle				endpoint_h) {
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->is_build_complete();
 }
 
 EXTERN_C int tblink_rpc_IEndpoint_connect_complete(
 		chandle			endpoint_h) {
-	IEndpoint *ep = reinterpret_cast<IEndpoint *>(endpoint_h);
-	int ret = ep->connect_complete();
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->connect_complete();
+}
 
-	if (ret == -1) {
-		return ret;
-	}
-
-	while ((ret=ep->is_connect_complete()) == 0) {
-		if (ep->process_one_message() == -1) {
-			ret = -1;
-			break;
-		}
-	}
-
-	return ret;
+EXTERN_C int tblink_rpc_IEndpoint_is_connect_complete(
+		chandle			endpoint_h) {
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->is_connect_complete();
 }
 
 EXTERN_C int _tblink_rpc_IEndpoint_await_run_until_event(

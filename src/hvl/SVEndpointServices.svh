@@ -1,17 +1,21 @@
-
 /****************************************************************************
- * IEndpointServices.svh
+ * SVEndpointServices.svh
  ****************************************************************************/
 
   
 /**
- * Class: IEndpointServices
+ * Class: SVEndpointServices
  * 
- * TODO: Add class documentation
+ * Provides a basic SV implementation of endpoint services
  */
-class IEndpointServices;
-		
+class SVEndpointServices extends IEndpointServices;
+	IEndpoint			m_ep;
+
+	function new();
+	endfunction
+
 	virtual function void init(IEndpoint ep);
+		m_ep = ep;
 	endfunction
 		
 	virtual function args(ref string argv[$]);
@@ -24,18 +28,21 @@ class IEndpointServices;
 	virtual function int add_time_cb(
 		longint unsigned			simtime,
 		longint						callback_id);
+		// TODO: Should be able to implement via TbLink singleton
 		return -1;
 	endfunction
 		
 	virtual function void cancel_callback(
 		longint						callback_id);
+		// TODO: Should be able to implement via TbLink singleton
 	endfunction
 		
 	virtual function longint unsigned get_time();
-		return -1;
+		return $time;
 	endfunction
 		
 	virtual function int time_precision();
+		// TODO: Should be able to implement via TbLink singleton
 		return -1;
 	endfunction
 		
@@ -47,7 +54,7 @@ class IEndpointServices;
 		
 	virtual function void idle();
 	endfunction
-		
+
 endclass
 
 
