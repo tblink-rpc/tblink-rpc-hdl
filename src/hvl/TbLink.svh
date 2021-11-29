@@ -70,6 +70,9 @@ class TbLink;
 					params.add_arg(args[i]);
 				end
 
+				// Ensure the launcher knows to register this as a default endpoint
+				params.add_param("is_default", "1");
+
 				m_default_ep = launch_t.launch(params, errmsg);
 				
 				if (m_default_ep == null) begin

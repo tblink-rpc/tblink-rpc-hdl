@@ -39,7 +39,7 @@ class DpiLaunchType extends ILaunchType;
 	
 	virtual function ILaunchParams newLaunchParams();
 		DpiLaunchParams ret;
-		chandle launch_h = tblink_rpc_newLaunchParams();
+		chandle launch_h = tblink_rpc_ILaunchType_newLaunchParams(m_hndl);
 		
 		ret = new(launch_h);
 		
@@ -53,5 +53,6 @@ import "DPI-C" context function chandle tblink_rpc_ILaunchType_launch(
 		input chandle 	params,
 		output string	error);
 		
-import "DPI-C" context function chandle tblink_rpc_newLaunchParams();
+import "DPI-C" context function chandle tblink_rpc_ILaunchType_newLaunchParams(
+		input chandle	launch);
 

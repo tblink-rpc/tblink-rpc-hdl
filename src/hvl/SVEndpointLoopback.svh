@@ -94,6 +94,7 @@ class SVEndpointLoopback extends IEndpoint;
 			(is_mirror != 0), 
 			ifinst_impl);
 		m_ifinst_m[inst_name] = ifinst;
+		m_ifinsts.push_back(ifinst);
 		ifinst_impl.init(ifinst);
 	
 		return ifinst;
@@ -104,6 +105,7 @@ class SVEndpointLoopback extends IEndpoint;
 	endfunction
 	
 	virtual function void getInterfaceInsts(ref IInterfaceInst ifinsts[$]);
+		$display("getInterfaceInsts: %0d", m_ifinsts.size());
 		ifinsts = '{};
 		foreach (m_ifinsts[i]) begin
 			ifinsts.push_back(m_ifinsts[i]);
