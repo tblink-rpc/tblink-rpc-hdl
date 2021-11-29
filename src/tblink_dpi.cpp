@@ -632,10 +632,6 @@ EXTERN_C chandle tblink_rpc_findLaunchType(const char *id) {
 	return reinterpret_cast<chandle>(TbLink::inst()->findLaunchType(id));
 }
 
-EXTERN_C chandle tblink_rpc_newLaunchParams() {
-	return reinterpret_cast<chandle>(TbLink::inst()->newLaunchParams());
-}
-
 EXTERN_C void tblink_rpc_ILaunchParams_add_arg(
 		chandle				params,
 		const char			*arg) {
@@ -647,6 +643,11 @@ EXTERN_C void tblink_rpc_ILaunchParams_add_param(
 		const char			*key,
 		const char			*val) {
 	reinterpret_cast<ILaunchParams *>(params)->add_param(key, val);
+}
+
+EXTERN_C chandle tblink_rpc_ILaunchType_newLaunchParams(chandle launch) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<ILaunchType *>(launch)->newLaunchParams());
 }
 
 EXTERN_C chandle tblink_rpc_ILaunchType_launch(
