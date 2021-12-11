@@ -290,6 +290,11 @@ EXTERN_C int tblink_rpc_IEndpoint_is_connect_complete(
 	return reinterpret_cast<IEndpoint *>(endpoint_h)->is_connect_complete();
 }
 
+EXTERN_C int tblink_rpc_IEndpoint_comm_state(
+		chandle			endpoint_h) {
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->comm_state();
+}
+
 EXTERN_C int _tblink_rpc_IEndpoint_await_run_until_event(
 		chandle			endpoint_h) {
 	return reinterpret_cast<IEndpoint *>(endpoint_h)->await_run_until_event();
@@ -573,8 +578,22 @@ EXTERN_C uint32_t tblink_rpc_IParamValVec_size(void *hndl) {
 }
 
 EXTERN_C chandle tblink_rpc_IParamValVec_at(chandle hndl, uint32_t idx) {
+	IParamVal *v = reinterpret_cast<IParamVal *>(hndl);
+	IParamValVec *vv = dynamic_cast<IParamValVec *>(v);
+	fprintf(stdout, "tblink_rpc_IParamValVec_at: %p %d\n", hndl, idx);
+	fflush(stdout);
+	if (vv->size()) {
+		return reinterpret_cast<chandle>(vv->at(idx));
+	} else {
+		return 0;
+	}
+
+	/*
+	IParamVal *ret = vv->at(idx);
 	return reinterpret_cast<chandle>(
-			dynamic_cast<IParamValVec *>(reinterpret_cast<IParamVal *>(hndl))->at(idx));
+			dynamic_cast<IParamValVec *>(
+					reinterpret_cast<IParamVal *>(hndl))->at(idx));
+	 */
 }
 
 EXTERN_C void tblink_rpc_IParamValVec_push_back(chandle hndl, chandle val_h) {

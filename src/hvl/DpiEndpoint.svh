@@ -65,6 +65,10 @@ class DpiEndpoint extends IEndpoint;
 		return tblink_rpc_IEndpoint_is_connect_complete(m_hndl);
 	endfunction
 	
+	virtual function comm_state_e comm_state();
+		return comm_state_e'(tblink_rpc_IEndpoint_comm_state(m_hndl));
+	endfunction
+	
 	virtual function void addListener(IEndpointListener l);
 		connectDpiEndpointListenerProxy(m_hndl, l);
 	endfunction
@@ -276,6 +280,7 @@ import "DPI-C" context function int tblink_rpc_IEndpoint_build_complete(chandle 
 import "DPI-C" context function int tblink_rpc_IEndpoint_is_build_complete(chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_connect_complete(chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_is_connect_complete(chandle endpoint_h);
+import "DPI-C" context function int tblink_rpc_IEndpoint_comm_state(chandle endpoint_h);
 import "DPI-C" context function int _tblink_rpc_IEndpoint_await_run_until_event(
 	chandle 	endpoint_h);
 import "DPI-C" context function int _tblink_rpc_endpoint_shutdown(chandle endpoint_h);

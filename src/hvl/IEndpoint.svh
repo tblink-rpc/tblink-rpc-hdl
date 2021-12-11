@@ -13,6 +13,11 @@ typedef class IEndpointListener;
  */
 class IEndpoint;
 	
+	typedef enum {
+		Waiting,
+		Released
+	} comm_state_e;
+	
 	virtual function int init(
 		IEndpointServices		ep_services);
 		$display("TBLink Error: IEndpoint::init unimplemented");
@@ -58,6 +63,12 @@ class IEndpoint;
 	
 	virtual function int shutdown();
 		return -1;
+	endfunction
+	
+	virtual function comm_state_e comm_state();
+		$display("TbLink Error: IEndpoint::comm_state not implemented");
+		$finish(1);
+		return Released;
 	endfunction
 	
 	virtual function string last_error();

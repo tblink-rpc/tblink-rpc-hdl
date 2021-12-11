@@ -8,11 +8,13 @@
  * 
  * TODO: Add class documentation
  */
-class SVEndpointSequencer;
+class SVEndpointSequencer extends IEndpointListener;
 	IEndpoint				m_ep;
+	semaphore				m_ev_sem = new(0);
 
 	function new(IEndpoint ep);
 		m_ep = ep;
+		m_ep.addListener(this);
 	endfunction
 	
 	task start();
@@ -134,23 +136,44 @@ class SVEndpointSequencer;
 	endtask
 	
 	task run();
+		IEndpoint::comm_state_e state = m_ep.comm_state();
 		// TODO: Process messages (blocking) until the mode is changed
 		// - Release
 		// - Async
 		//
-		$display("--> await_run_until_event");
-		repeat (100) begin
-			$display("... delta");
-			#0;
+		
+		while (state == IEndpoint::Waiting || state == IEndpoint::Released) begin
+
+			// Process messages while in Waiting state
+			while (state == IEndpoint::Waiting) begin
+				m_ep.process_one_message();
+				// Allow a delta to expire in between to 
+				// support loopback connections (specifically DPI<->VPI
+				#0;
+				
+				state = m_ep.comm_state();
+			end
+
+			// Wait for events while in Released state
+			while (state == IEndpoint::Released) begin
+				// Wait for an event callback
+				$display("--> m_ev_sem.wait");
+				m_ev_sem.get(1);
+				$display("<-- m_ev_sem.wait");
+				
+				// Allow a delta to expire in between to 
+				// support loopback connections (specifically DPI<->VPI
+				#0;
+				
+				state = m_ep.comm_state();
+			end
 		end
-		/*
-		if (m_ep.await_run_until_event() == -1) begin
-			$display("TbLink Error: failed while waiting for run-until-event");
-			$finish(1);
-		end
-		 */
-		$display("<-- await_run_until_event");				
 	endtask
+	
+	function void event_f(IEndpointEvent ev);
+		$display("SVEndpointSequencer::event_f");
+		m_ev_sem.put(1);
+	endfunction
 
 endclass
 
