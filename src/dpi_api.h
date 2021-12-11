@@ -31,6 +31,10 @@ typedef struct dpi_api_s {
 	void (*eps_proxy_hit_event)(void *hndl);
 	void (*eps_proxy_idle)(void *hndl);
 
+	void (*epl_event)(void *hndl, void *ev);
+
+	void (*toggle_vpi_ev)();
+
 } dpi_api_t;
 
 

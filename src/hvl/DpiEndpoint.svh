@@ -44,6 +44,10 @@ class DpiEndpoint extends IEndpoint;
 				m_services_proxy, 
 				null);
 	endfunction
+	
+	virtual function int is_init();
+		return tblink_rpc_IEndpoint_is_init(m_hndl);
+	endfunction
 
 	virtual function int build_complete();
 		return tblink_rpc_IEndpoint_build_complete(m_hndl);
@@ -59,6 +63,14 @@ class DpiEndpoint extends IEndpoint;
 	
 	virtual function int is_connect_complete();
 		return tblink_rpc_IEndpoint_is_connect_complete(m_hndl);
+	endfunction
+	
+	virtual function void addListener(IEndpointListener l);
+		connectDpiEndpointListenerProxy(m_hndl, l);
+	endfunction
+	
+	virtual function void removeListener(IEndpointListener l);
+		disconnectDpiEndpointListenerProxy(m_hndl, l);
 	endfunction
 	
 	virtual function int await_run_until_event();
@@ -138,8 +150,14 @@ class DpiEndpoint extends IEndpoint;
 		return tblink_rpc_IEndpoint_process_one_message(m_hndl);
 	endfunction
 	
+	virtual task process_one_message_b(output int ret);
+		// In the base case, we still perform a complete block
+		ret = process_one_message();
+	endtask
+	
 	virtual function void getInterfaceInsts(ref IInterfaceInst ifinsts[$]);
 		int unsigned count = tblink_rpc_IEndpoint_getInterfaceInstCount(m_hndl);
+		ifinsts = '{};
 		for (int unsigned i=0; i<count; i++) begin
 			chandle ifinst_h = tblink_rpc_IEndpoint_getInterfaceInstAt(m_hndl, i);
 			DpiInterfaceInst ifinst = new(ifinst_h);
@@ -252,6 +270,8 @@ import "DPI-C" context function int tblink_rpc_IEndpoint_init(
 	chandle endpoint_h, 
 	chandle services_h, 
 	chandle listener_h);
+import "DPI-C" context function int tblink_rpc_IEndpoint_is_init(
+	chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_build_complete(chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_is_build_complete(chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_connect_complete(chandle endpoint_h);

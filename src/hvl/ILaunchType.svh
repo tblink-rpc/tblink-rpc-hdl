@@ -16,8 +16,9 @@ class ILaunchType;
 	endfunction
 	
 	virtual function IEndpoint launch(
-		input ILaunchParams params,
-		output string		errmsg);
+		input ILaunchParams 		params,
+		input IEndpointServices 	services,
+		output string				errmsg);
 		return null;
 	endfunction
 	

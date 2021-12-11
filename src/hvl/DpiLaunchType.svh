@@ -17,17 +17,24 @@ class DpiLaunchType extends ILaunchType;
 	endfunction
 
 	virtual function IEndpoint launch(
-		input ILaunchParams params,
-		output string		errmsg);
-		DpiLaunchParams params_dpi;
-		DpiEndpoint     ret;
+		input ILaunchParams 	params,
+		input IEndpointServices services,
+		output string			errmsg);
+		DpiLaunchParams 	params_dpi;
+		DpiEndpoint     	ret;
 		chandle endpoint_h;
+		chandle services_h;
+		
+		if (services != null) begin
+			services_h = newDpiEndpointServicesProxy(services);
+		end
 		
 		$cast(params_dpi, params);
 		
 		endpoint_h = tblink_rpc_ILaunchType_launch(
 				m_hndl,
 				params_dpi.m_hndl,
+				services_h,
 				errmsg);
 		
 		if (endpoint_h !=null) begin
@@ -51,6 +58,7 @@ endclass
 import "DPI-C" context function chandle tblink_rpc_ILaunchType_launch(
 		input chandle	launch,
 		input chandle 	params,
+		input chandle	services,
 		output string	error);
 		
 import "DPI-C" context function chandle tblink_rpc_ILaunchType_newLaunchParams(

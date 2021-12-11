@@ -18,8 +18,11 @@
 #include "dpi_api.h"
 #include "vpi_api.h"
 #include "ILaunch.h"
+#include "DpiEndpointLoopbackVpi.h"
+#include "DpiEndpointListenerProxy.h"
 #include "DpiEndpointServicesProxy.h"
 #include "EndpointServicesDpi.h"
+#include "EndpointServicesDpiFactory.h"
 #include "InvokeInfoDpi.h"
 #include "ParamValVec.h"
 #include "ParamValStr.h"
@@ -78,6 +81,8 @@ static void elab_cb(intptr_t callback_id) {
 	 */
 }
 
+static void tblink_rpc_toggle_vpi_ev();
+
 static TblinkPluginDpi *get_plugin() {
 	if (!prv_plugin) {
 		ITbLink *tblink = TbLink::inst();
@@ -89,6 +94,8 @@ static TblinkPluginDpi *get_plugin() {
 			fflush(stdout);
 			return 0;
 		}
+
+
 
 		memset(&prv_dpi, 0, sizeof(prv_dpi));
 		prv_dpi.svGetScope = sym_finder->findSymT<void *(*)()>("svGetScope");
@@ -106,9 +113,17 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.eps_proxy_idle = sym_finder->findSymT<void(*)(void*)>(
 				"tblink_rpc_DpiEndpointServicesProxy_idle");
 
+		prv_dpi.epl_event = sym_finder->findSymT<void(*)(void*,void*)>(
+				"tblink_rpc_DpiEndpointListenerProxy_event");
+
+		prv_dpi.toggle_vpi_ev = &tblink_rpc_toggle_vpi_ev;
+
 		prv_plugin = new TblinkPluginDpi(
 				vpi_api,
 				&prv_dpi);
+
+		tblink->setDefaultServicesFactory(
+				new EndpointServicesDpiFactory(&prv_dpi, vpi_api));
 	}
 
 	return prv_plugin;
@@ -158,11 +173,32 @@ EXTERN_C void tblink_rpc_InvokeInfo_invoke_rsp(chandle ii_h, chandle retval_h) {
 	delete ii;
 }
 
+EXTERN_C chandle tblink_rpc_DpiEndpointLoopbackVpi_new() {
+	TblinkPluginDpi *plugin = get_plugin();
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IEndpoint *>(
+					new DpiEndpointLoopbackVpi(plugin->dpi_api(), 0)));
+}
+
+EXTERN_C chandle tblink_rpc_DpiEndpointListenerProxy_connect(chandle ep_h) {
+	TblinkPluginDpi *plugin = get_plugin();
+	DpiEndpointListenerProxy *proxy = new DpiEndpointListenerProxy(plugin->dpi_api());
+	reinterpret_cast<IEndpoint *>(ep_h)->addListener(proxy);
+	return reinterpret_cast<chandle>(static_cast<IEndpointListener *>(proxy));
+}
+
+EXTERN_C void tblink_rpc_DpiEndpointListenerProxy_disconnect(
+		chandle		ep_h,
+		chandle		proxy_h) {
+	reinterpret_cast<IEndpoint *>(ep_h)->removeListener(
+			reinterpret_cast<IEndpointListener *>(proxy_h));
+}
+
 EXTERN_C chandle tblink_rpc_DpiEndpointServicesProxy_new() {
 	TblinkPluginDpi *plugin = get_plugin();
 	return reinterpret_cast<chandle>(
-			static_cast<IEndpointServices *>(
-					new DpiEndpointServicesProxy(plugin->dpi_api())));
+			static_cast<IEndpointServices *>(new DpiEndpointServicesProxy(
+					plugin->dpi_api())));
 }
 
 EXTERN_C void *_tblink_rpc_endpoint_new(int have_blocking_tasks) {
@@ -227,6 +263,11 @@ EXTERN_C int tblink_rpc_IEndpoint_init(
 	return reinterpret_cast<IEndpoint *>(endpoint_h)->init(
 			reinterpret_cast<IEndpointServices *>(services_h),
 			reinterpret_cast<IEndpointListener *>(listener_h));
+}
+
+EXTERN_C int tblink_rpc_IEndpoint_is_init(
+		chandle				endpoint_h) {
+	return reinterpret_cast<IEndpoint *>(endpoint_h)->is_init();
 }
 
 EXTERN_C int tblink_rpc_IEndpoint_build_complete(
@@ -639,6 +680,24 @@ EXTERN_C chandle tblink_rpc_findLaunchType(const char *id) {
 	return reinterpret_cast<chandle>(TbLink::inst()->findLaunchType(id));
 }
 
+EXTERN_C chandle tblink_rpc_TbLink_inst() {
+	return reinterpret_cast<chandle>(
+			static_cast<ITbLink *>(TbLink::inst()));
+}
+
+EXTERN_C void tblink_rpc_TbLink_setDefaultEP(
+		chandle				tblink,
+		chandle				ep) {
+	reinterpret_cast<ITbLink *>(tblink)->setDefaultEP(
+			reinterpret_cast<IEndpoint *>(ep));
+}
+
+EXTERN_C chandle tblink_rpc_TbLink_getDefaultEP(
+		chandle				tblink) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<ITbLink *>(tblink)->getDefaultEP());
+}
+
 EXTERN_C void tblink_rpc_ILaunchParams_add_arg(
 		chandle				params,
 		const char			*arg) {
@@ -660,9 +719,9 @@ EXTERN_C chandle tblink_rpc_ILaunchType_newLaunchParams(chandle launch) {
 EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 		chandle				launch,
 		chandle				params,
+		chandle				services_h,
 		char				**error) {
-	ILaunchType::result_t res = reinterpret_cast<ILaunchType *>(launch)->launch(
-			reinterpret_cast<ILaunchParams *>(params));
+	ILaunchType::result_t res;
 	TblinkPluginDpi *plugin = get_plugin();
 
 	if (!plugin) {
@@ -670,6 +729,12 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 		*error = prv_msgbuf;
 		return 0;
 	}
+
+	IEndpointServices *services = reinterpret_cast<IEndpointServices *>(services_h);
+
+	res = reinterpret_cast<ILaunchType *>(launch)->launch(
+			reinterpret_cast<ILaunchParams *>(params),
+			services);
 
 	if (!res.first) {
 		strncpy(prv_msgbuf, res.second.c_str(), sizeof(prv_msgbuf));
@@ -860,3 +925,67 @@ EXTERN_C void tblink_rpc_register_dispatch_cb() {
 	plugin->vpi_api()->vpi_register_cb(&cbd);
 }
 
+static vpiHandle notify_ev = 0;
+static bool notify_ev_val = 0;
+
+static void tblink_rpc_toggle_vpi_ev() {
+	TblinkPluginDpi *plugin = get_plugin();
+	s_vpi_value val;
+
+	val.format = vpiIntVal;
+	notify_ev_val = (notify_ev_val)?0:1;
+	val.value.integer = notify_ev_val;
+
+	plugin->vpi_api()->vpi_put_value(notify_ev, &val, 0, vpiNoDelay);
+}
+
+static PLI_INT32 tblink_rpc_register_vpi_ev(PLI_BYTE8 *cbd) {
+	TblinkPluginDpi *plugin = get_plugin();
+	VpiHandleSP vpi = VpiHandle::mk(plugin->vpi_api());
+
+	VpiHandleSP systf_h = vpi->systf_h();
+	VpiHandleSP args_h = systf_h->tf_args();
+	notify_ev = args_h->scan()->release();
+
+	fprintf(stdout, "register_ev: notify_ev=%p\n", notify_ev);
+	fflush(stdout);
+
+	return 0;
+}
+
+static void vpi_startup(void) {
+	fprintf(stdout, "--> vpi_startup\n");
+
+	ITbLink *tblink = TbLink::inst();
+	ISymFinder *sym_finder = tblink->sym_finder();
+	vpi_api_t *vpi_api = get_vpi_api(sym_finder);
+
+	fprintf(stdout, "<-- vpi_startup\n");
+
+	{
+		s_vpi_systf_data tf_data;
+		tf_data.type = vpiSysTask;
+		tf_data.sysfunctype = vpiSysTask;
+		tf_data.compiletf = 0;
+		tf_data.sizetf = 0;
+		tf_data.user_data = 0;
+		tf_data.tfname = "$tblink_rpc_register_vpi_ev";
+		tf_data.calltf = &tblink_rpc_register_vpi_ev;
+		vpi_api->vpi_register_systf(&tf_data);
+	}
+
+}
+
+void (*vlog_startup_routines[])() = {
+	vpi_startup,
+    0
+};
+
+
+// For non-VPI compliant applications that cannot find vlog_startup_routines symbol
+void vlog_startup_routines_bootstrap() {
+    for (int i = 0; vlog_startup_routines[i]; i++) {
+    	void (*routine)() = vlog_startup_routines[i];
+        routine();
+    }
+}

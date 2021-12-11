@@ -43,7 +43,10 @@ package tblink_rpc;
 	`include "InvokeInfo.svh"
 	`include "IInterfaceImpl.svh"
 	`include "IEndpoint.svh"
+	`include "IEndpointEvent.svh"
+	`include "IEndpointListener.svh"
 	`include "IEndpointServices.svh"
+	`include "IEndpointServicesFactory.svh"
 	
 	`include "ILaunchParams.svh"
 	`include "ILaunchType.svh"
@@ -56,6 +59,7 @@ package tblink_rpc;
 	`include "DpiParamVal.svh"
 	`include "DpiInterfaceInst.svh"
 	`include "DpiMethodTypeBuilder.svh"
+	
 	`include "DpiInterfaceTypeBuilder.svh"
 	`include "DpiInterfaceType.svh"
 	`include "DpiInvokeInfo.svh"
@@ -71,6 +75,9 @@ package tblink_rpc;
 
 	`include "DpiEndpointServicesProxy.svh"
 	`include "DpiEndpoint.svh"
+	`include "DpiEndpointEvent.svh"
+	`include "DpiEndpointListenerProxy.svh"
+	`include "DpiEndpointLoopbackVpi.svh"
 
 	`include "SVTypeInt.svh"
 	`include "SVTypeMap.svh"
@@ -91,11 +98,14 @@ package tblink_rpc;
 	`include "SVInterfaceType.svh"
 	`include "SVInterfaceTypeBuilder.svh"
 	`include "SVEndpoint.svh"
+	`include "SVEndpointSequencer.svh"
 	`include "SVEndpointServices.svh"
+	`include "SVEndpointServicesFactory.svh"
 	`include "SVEndpointLoopback.svh"
 	`include "SVLaunchTypeRegistration.svh"
 	`include "SVLaunchParams.svh"
 	`include "SVLaunchTypeLoopback.svh"
+	`include "SVLaunchTypeNativeLoopbackVpi.svh"
 	
 	`include "TbLinkThread.svh"
 	
@@ -142,8 +152,11 @@ package tblink_rpc;
 	 * at least once from the testbench
 	 */
 	task automatic tblink_rpc_start();
-		TbLink tblink = TbLink::inst();
+		TbLink tblink;
+		$display("--> tblink_rpc_start");
+		tblink = TbLink::inst();
 		tblink.start();
+		$display("<-- tblink_rpc_start");
 	endtask
 	
 	// IEndpoint functions

@@ -222,6 +222,7 @@ void EndpointServicesDpi::notify_time_cb(intptr_t callback_id) {
 void EndpointServicesDpi::build_connect_catcher() {
 	m_build_connect_catcher_count++;
 
+	/* TODO:
 	if (m_endpoint->state() == tblink_rpc_core::IEndpoint::Init) {
 		if (m_build_connect_catcher_count < 10) {
 			// Reset the callback
@@ -240,6 +241,7 @@ void EndpointServicesDpi::build_connect_catcher() {
 			}
 		}
 	}
+	 */
 }
 
 } /* namespace tblink_rpc_hdl */

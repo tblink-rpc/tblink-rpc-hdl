@@ -21,9 +21,17 @@ class SVLaunchTypeLoopback extends ILaunchType;
 	endfunction
 	
 	virtual function IEndpoint launch(
-		input ILaunchParams params,
-		output string		errmsg);
-		return SVEndpointLoopback::mk();
+		input ILaunchParams 		params,
+		input IEndpointServices		services,
+		output string				errmsg);
+		IEndpoint ep = SVEndpointLoopback::mk();
+		
+		if (services == null) begin
+			// TODO: Use the default factory
+		end
+		
+		ep.init(services);
+		return ep;
 	endfunction
 	
 	virtual function ILaunchParams newLaunchParams();

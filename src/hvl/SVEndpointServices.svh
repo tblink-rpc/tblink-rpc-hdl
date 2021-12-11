@@ -2,6 +2,7 @@
  * SVEndpointServices.svh
  ****************************************************************************/
 
+typedef class TbLink;
   
 /**
  * Class: SVEndpointServices
@@ -29,12 +30,14 @@ class SVEndpointServices extends IEndpointServices;
 		longint unsigned			simtime,
 		longint						callback_id);
 		// TODO: Should be able to implement via TbLink singleton
+		$display("TODO: SVEndpointServices::add_time_cb");
 		return -1;
 	endfunction
 		
 	virtual function void cancel_callback(
 		longint						callback_id);
 		// TODO: Should be able to implement via TbLink singleton
+		$display("TODO: SVEndpointServices::cancel_callback");
 	endfunction
 		
 	virtual function longint unsigned get_time();
@@ -42,8 +45,8 @@ class SVEndpointServices extends IEndpointServices;
 	endfunction
 		
 	virtual function int time_precision();
-		// TODO: Should be able to implement via TbLink singleton
-		return -1;
+		TbLink tblink = TbLink::inst();
+		return tblink.getTimePrecision();
 	endfunction
 		
 	virtual function void run_until_event();

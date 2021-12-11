@@ -38,6 +38,7 @@ static void tblink_vpi_sigpipe(int sig) {
 	prv_endpoint->shutdown();
 }
 
+#ifdef UNDEFINED
 static void vpi_startup(void) {
 #ifdef UNDEFINED
     vpi_api_t *vpi_api = get_vpi_api();
@@ -99,3 +100,4 @@ void vlog_startup_routines_bootstrap() {
     }
 }
 
+#endif

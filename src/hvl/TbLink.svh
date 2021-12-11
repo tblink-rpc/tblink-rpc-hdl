@@ -19,6 +19,8 @@ TbLink			_tblink_inst;
  */
 class TbLink;
 	IEndpoint					m_default_ep;
+	IEndpointServicesFactory	m_default_services_f;
+	SVEndpointSequencer			m_default_ep_seqr;
 	int							m_time_precision;
 	ILaunchType					m_sv_launch_type_m[string];
 `ifndef VERILATOR
@@ -33,15 +35,39 @@ class TbLink;
 	int							m_zero_count_repeat;
 
 	function new();
-		
 		// Manually register known launch types
 		begin
 			SVLaunchTypeLoopback launch_t = new();
-			m_sv_launch_type_m["sv.loopback"] = launch_t;
+			m_sv_launch_type_m[launch_t.name()] = launch_t;
 		end
-		
-		auto_launch();
-
+		begin
+			SVLaunchTypeNativeLoopbackVpi launch_t = new();
+			m_sv_launch_type_m[launch_t.name()] = launch_t;
+		end
+		begin
+			SVEndpointServicesFactory f = new();
+			m_default_services_f = f;
+		end
+	endfunction
+	
+	function void setDefaultEp(IEndpoint ep);
+		m_default_ep = ep;
+	endfunction
+	
+	function IEndpoint getDefaultEp();
+		return m_default_ep;
+	endfunction
+	
+	function IEndpointServicesFactory getDefaultServicesFactory();
+		return m_default_services_f;
+	endfunction
+	
+	function void setDefaultServicesFactory(IEndpointServicesFactory f);
+		m_default_services_f = f;
+	endfunction
+	
+	function int getTimePrecision();
+		return m_time_precision;
 	endfunction
 	
 	function void auto_launch();
@@ -73,14 +99,15 @@ class TbLink;
 				// Ensure the launcher knows to register this as a default endpoint
 				params.add_param("is_default", "1");
 
-				m_default_ep = launch_t.launch(params, errmsg);
+				m_default_ep = launch_t.launch(params, null, errmsg);
 				
 				if (m_default_ep == null) begin
 					$display("TBLink Error: failed to launch %0s: %0s",
 							launch, errmsg);
 				end
-			
-				register_delta_cb();
+		
+//				$display("-- register_delta_cb");
+//				register_delta_cb();
 			end
 		end else begin
 			$display("TbLink Note: no default endpoint launched");
@@ -134,6 +161,7 @@ class TbLink;
 				$finish();
 				return;
 			end
+			
 			if (m_default_ep.connect_complete() == -1) begin
 				$display("connect-complete failed");
 				$finish();
@@ -148,11 +176,25 @@ class TbLink;
 			$display("<-- await_run_until_event");
 		end
 	endfunction
+
+`ifndef VERILATOR
+	task start_default_ep();
+
+		
+	endtask
+`endif
 	
 	task start();
+		$display("start");
 `ifndef VERILATOR
 		if (m_dispatcher_running == 0) begin
 			m_dispatcher_running = 1;
+			
+			if (m_default_ep != null) begin
+				m_default_ep_seqr = new(m_default_ep);
+				m_default_ep_seqr.start();
+			end
+			
 			fork
 				dispatcher();
 			join_none
@@ -234,6 +276,7 @@ class TbLink;
 	static function TbLink inst();
 		if (_tblink_inst == null) begin
 			_tblink_inst = new();
+			_tblink_inst.auto_launch();
 		end
 		return _tblink_inst;
 	endfunction
@@ -267,7 +310,9 @@ endclass
 	
 `endif /* !VERILATOR */
 
-function bit tblink_rpc_init();
+import "DPI-C" context function chandle vpi_iterate(int, chandle);
+
+function automatic bit tblink_rpc_init();
 	// Initialize DPI context for package
 	int unsigned time_precision;
 	TbLink tblink;
@@ -294,6 +339,13 @@ import "DPI-C" context function int _tblink_rpc_pkg_init(
 		output int 				time_precision);
 import "DPI-C" context function chandle tblink_rpc_findLaunchType(string id);
 import "DPI-C" context function string tblink_rpc_libpath();
+
+import "DPI-C" context function chandle tblink_rpc_TbLink_inst();
+import "DPI-C" context function void tblink_rpc_TbLink_setDefaultEP(
+	chandle		tblink,
+	chandle		ep);
+import "DPI-C" context function chandle tblink_rpc_TbLink_getDefaultEP(
+	chandle		tblink);
 
 `ifdef VERILATOR
 /**

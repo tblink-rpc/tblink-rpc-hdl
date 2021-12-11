@@ -4,6 +4,7 @@
  ****************************************************************************/
 
 typedef class IEndpointServices;
+typedef class IEndpointListener;
   
 /**
  * Class: IEndpoint
@@ -41,6 +42,16 @@ class IEndpoint;
 		return -1;
 	endfunction
 	
+	virtual function void addListener(IEndpointListener l);
+		$display("TbLink Error: IEndpoint::addListener not implemented");
+		$finish(1);
+	endfunction
+	
+	virtual function void removeListener(IEndpointListener l);
+		$display("TbLink Error: IEndpoint::removeListener not implemented");
+		$finish(1);
+	endfunction
+	
 	virtual function int await_run_until_event();
 		return -1;
 	endfunction
@@ -76,6 +87,10 @@ class IEndpoint;
 	virtual function int process_one_message();
 		return -1;
 	endfunction
+	
+	virtual task process_one_message_b(output int ret);
+		ret = -1;
+	endtask
 	
 	virtual function void getInterfaceInsts(ref IInterfaceInst ifinsts[$]);
 	endfunction
