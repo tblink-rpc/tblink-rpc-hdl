@@ -27,6 +27,20 @@ class SVLaunchParams extends ILaunchParams;
 		m_params[key] = val;
 	endfunction
 	
+	virtual function bit has_param(
+		string				key);
+		return m_params.exists(key) != 0;
+	endfunction
+	
+	virtual function string get_param(
+		string				key);
+		if (m_params.exists(key) != 0) begin
+			return m_params[key];
+		end else begin
+			return "";
+		end
+	endfunction
+	
 	virtual function string_m params();
 		return m_params;
 	endfunction

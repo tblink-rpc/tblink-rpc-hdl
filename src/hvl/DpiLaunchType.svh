@@ -38,7 +38,7 @@ class DpiLaunchType extends ILaunchType;
 				errmsg);
 		
 		if (endpoint_h !=null) begin
-			ret = new(endpoint_h);
+			ret = mkDpiEndpoint(endpoint_h);
 		end
 		
 		return ret;

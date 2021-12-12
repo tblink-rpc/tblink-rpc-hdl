@@ -41,5 +41,13 @@ import "DPI-C" context function void tblink_rpc_ILaunchParams_add_param(
 	chandle 		hndl,
 	string			key,
 	string			val);
+	
+import "DPI-C" context function int tblink_rpc_ILaunchParams_has_param(
+	chandle 		hndl,
+	string			key);
+	
+import "DPI-C" context function string tblink_rpc_ILaunchParams_get_param(
+	chandle 		hndl,
+	string			key);
 
 

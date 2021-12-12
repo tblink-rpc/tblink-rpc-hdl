@@ -14,6 +14,7 @@
  */
 class DpiEndpoint extends IEndpoint;
 	chandle					m_hndl;
+	DpiEndpoint				m_this;
 
 	int unsigned			m_ifinst_id;
 	IInterfaceImpl			m_ifimpl_m[chandle];
@@ -28,14 +29,19 @@ class DpiEndpoint extends IEndpoint;
 		TbLinkTimedCb				m_cb_m[chandle];
 	`endif
 	InvokeInfo						m_next_ii;
-		
-	function new(chandle hndl);
+
+	function new();
+	endfunction
+	
+	/*
+	function new(chandle hndl=null);
 		m_hndl = hndl;
 	endfunction
+	 */
 	
 	virtual function int init(
 		IEndpointServices		ep_services);
-		ep_services.init(this);
+		ep_services.init(m_this);
 		m_services = ep_services;
 		
 		m_services_proxy = newDpiEndpointServicesProxy(ep_services);
@@ -266,6 +272,15 @@ class DpiEndpoint extends IEndpoint;
 	`endif /* UNDEFINED */
 
 endclass
+
+function DpiEndpoint mkDpiEndpoint(chandle hndl);
+	DpiEndpoint ret;
+	
+	ret = new();
+	ret.m_hndl = hndl;
+	ret.m_this = ret;
+	return ret;
+endfunction
 
 
 import "DPI-C" context function chandle _tblink_rpc_endpoint_new(int have_blocking_tasks);

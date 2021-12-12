@@ -327,6 +327,11 @@ EXTERN_C chandle tblink_rpc_IEndpoint_newInterfaceTypeBuilder(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->newInterfaceTypeBuilder(name));
 }
 
+EXTERN_C int tblink_rpc_IEndpointEvent_kind(chandle ev) {
+//	return reinterpret_cast<int>(
+return			static_cast<int>(reinterpret_cast<IEndpointEvent *>(ev)->kind());
+}
+
 EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeBool(
 		chandle				iftype_b) {
 	return reinterpret_cast<chandle>(
@@ -728,6 +733,20 @@ EXTERN_C void tblink_rpc_ILaunchParams_add_param(
 		const char			*key,
 		const char			*val) {
 	reinterpret_cast<ILaunchParams *>(params)->add_param(key, val);
+}
+
+EXTERN_C int tblink_rpc_ILaunchParams_has_param(
+		chandle				params,
+		const char			*key) {
+	return reinterpret_cast<ILaunchParams *>(params)->has_param(key);
+}
+
+EXTERN_C const char *tblink_rpc_ILaunchParams_get_param(
+		chandle				params,
+		const char			*key) {
+	strcpy(prv_msgbuf,
+			reinterpret_cast<ILaunchParams *>(params)->get_param(key).c_str());
+	return prv_msgbuf;
 }
 
 EXTERN_C chandle tblink_rpc_ILaunchType_newLaunchParams(chandle launch) {

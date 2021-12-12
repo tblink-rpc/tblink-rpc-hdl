@@ -64,7 +64,6 @@ package tblink_rpc;
 	`include "DpiInterfaceType.svh"
 	`include "DpiInvokeInfo.svh"
 	`include "DpiLaunchParams.svh"
-	`include "DpiLaunchType.svh"
 	`include "DpiMethodType.svh"
 	`include "DpiParamValBool.svh"
 	`include "DpiParamValInt.svh"
@@ -78,6 +77,8 @@ package tblink_rpc;
 	`include "DpiEndpointEvent.svh"
 	`include "DpiEndpointListenerProxy.svh"
 	`include "DpiEndpointLoopbackVpi.svh"
+	
+	`include "DpiLaunchType.svh"
 
 	`include "SVTypeInt.svh"
 	`include "SVTypeMap.svh"

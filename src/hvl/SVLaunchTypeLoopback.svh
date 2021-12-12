@@ -25,12 +25,13 @@ class SVLaunchTypeLoopback extends ILaunchType;
 		input IEndpointServices		services,
 		output string				errmsg);
 		IEndpoint ep = SVEndpointLoopback::mk();
+		int ret;
 		
 		if (services == null) begin
 			// TODO: Use the default factory
 		end
 		
-		ep.init(services);
+		ret = ep.init(services);
 		return ep;
 	endfunction
 	

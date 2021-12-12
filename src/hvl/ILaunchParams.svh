@@ -26,6 +26,16 @@ class ILaunchParams;
 		string				val);
 	endfunction
 	
+	virtual function bit has_param(
+		string				key);
+		return 0;
+	endfunction
+	
+	virtual function string get_param(
+		string				key);
+		return "";
+	endfunction
+	
 	virtual function string_m params();
 		string_m ret;
 		return ret;

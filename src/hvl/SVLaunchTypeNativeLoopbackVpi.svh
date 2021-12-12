@@ -19,6 +19,7 @@ class SVLaunchTypeNativeLoopbackVpi extends ILaunchType;
 		input IEndpointServices		services,
 		output string				errmsg);
 		DpiEndpointLoopbackVpi ep = DpiEndpointLoopbackVpi::mk();
+		int ret;
 	
 		// TODO: handle services
 		// - Think we need a proxy if 'services' is specified on the input
@@ -29,7 +30,8 @@ class SVLaunchTypeNativeLoopbackVpi extends ILaunchType;
 		// TODO: Register as SV and C++ default if 'is_default' is set
 		begin
 			ILaunchParams::string_m pm = params.params();
-			if (pm.exists("is_default") && pm["is_default"] == "1") begin
+			if (params.has_param(string'("is_default")) && 
+					params.get_param(string'("is_default")) == "1") begin
 				TbLink tblink = TbLink::inst();
 				tblink.setDefaultEp(ep);
 				tblink_rpc_TbLink_setDefaultEP(
@@ -46,7 +48,7 @@ class SVLaunchTypeNativeLoopbackVpi extends ILaunchType;
 		end
 		
 		$display("TODO: implement launch");
-		ep.init(services);
+		ret = ep.init(services);
 		
 		return ep;
 	endfunction

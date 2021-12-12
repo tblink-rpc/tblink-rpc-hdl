@@ -97,7 +97,7 @@ class TbLink;
 				end
 
 				// Ensure the launcher knows to register this as a default endpoint
-				params.add_param("is_default", "1");
+				params.add_param(string'("is_default"), string'("1"));
 
 				m_default_ep = launch_t.launch(params, null, errmsg);
 				
@@ -309,8 +309,6 @@ endclass
 	export "DPI-C" function tblink_rpc_add_time_cb;	
 	
 `endif /* !VERILATOR */
-
-import "DPI-C" context function chandle vpi_iterate(int, chandle);
 
 function automatic bit tblink_rpc_init();
 	// Initialize DPI context for package

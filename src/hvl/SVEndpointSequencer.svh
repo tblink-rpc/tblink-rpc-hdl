@@ -2,6 +2,7 @@
  * SVEndpointSequencer.svh
  ****************************************************************************/
 
+`ifndef VERILATOR
   
 /**
  * Class: SVEndpointSequencer
@@ -177,4 +178,10 @@ class SVEndpointSequencer extends IEndpointListener;
 
 endclass
 
+`else // VERILATOR
+	
+class SVEndpointSequencer extends IEndpointListener;
+endclass
+
+`endif
 
