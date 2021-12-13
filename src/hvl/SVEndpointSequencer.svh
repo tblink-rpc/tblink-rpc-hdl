@@ -178,6 +178,11 @@ class SVEndpointSequencer extends IEndpointListener;
 
 endclass
 
+function automatic SVEndpointSequencer mkSVEndpointSequencer(IEndpoint ep);
+	SVEndpointSequencer seqr = new(ep);
+	return seqr;
+endfunction
+
 `else // VERILATOR
 	
 typedef class SVEndpointSequencer;
@@ -318,7 +323,7 @@ class SVEndpointSequencer extends IEndpointListener;
 endclass
 
 
-function SVEndpointSequencer mkSVEndpointSequencer(IEndpoint ep);
+function automatic SVEndpointSequencer mkSVEndpointSequencer(IEndpoint ep);
 	SVEndpointSequencer seqr = new(ep);
 	SVEndpointSequencerThread thread = new(seqr);
 	seqr.init(thread);

@@ -201,7 +201,7 @@ class TbLink;
 			m_dispatcher_running = 1;
 			
 			if (m_default_ep != null) begin
-				m_default_ep_seqr = SVEndpointSequencer::mk(m_default_ep);
+				m_default_ep_seqr = mkSVEndpointSequencer(m_default_ep);
 				m_default_ep_seqr.start();
 			end
 			

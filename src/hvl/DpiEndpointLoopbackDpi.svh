@@ -4,20 +4,6 @@
  
 typedef class TbLink;
 
-typedef class DpiEndpointLoopbackDpi;
-
-class _DpiEndpointLoopbackVpiRunThread extends TbLinkThread;
-	DpiEndpointLoopbackDpi m_ep;
-	
-	function new(DpiEndpointLoopbackDpi ep);
-		m_ep = ep;
-	endfunction
-	
-	virtual task run();
-		m_ep.run();
-	endtask
-endclass
-  
 /**
  * Class: DpiEndpointLoopbackDpi
  * 
@@ -27,16 +13,6 @@ class DpiEndpointLoopbackDpi extends DpiEndpoint;
 
 	function new(chandle hndl);
 		m_hndl = hndl;
-		begin
-		TbLink tblink = TbLink::inst();
-		_DpiEndpointLoopbackVpiRunThread t;
-`ifndef VERILATOR
-		t = new(this);
-		tblink.queue_thread(t);
-`else
-		$display("TODO: handle startup");
-`endif
-		end
 	endfunction
 
 	virtual task process_one_message_b(output int ret);

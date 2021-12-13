@@ -28,11 +28,7 @@ endclass
 class DpiEndpointLoopbackVpi extends DpiEndpoint;
 
 	function new(chandle hndl);
-`ifndef VERILATOR
-		super.new(hndl);
-`else
 		m_hndl = hndl;
-`endif
 		begin
 		TbLink tblink = TbLink::inst();
 		_DpiEndpointLoopbackVpiRunThread t;
@@ -62,7 +58,7 @@ class DpiEndpointLoopbackVpi extends DpiEndpoint;
 		forever begin
 			@(prv_event);
 			$display("--> async: process_one_message()");
-			process_one_message();
+			void'(process_one_message());
 			$display("<-- async: process_one_message()");
 		end
 		$display("%0t <-- run()", $time);
