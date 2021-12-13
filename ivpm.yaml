@@ -4,9 +4,13 @@ package:
     version: 0.0.1
 
     deps:
+        - name: cython
+          src: pypi
         - name: tblink-rpc-core
           url:  https://github.com/tblink-rpc/tblink-rpc-core.git
     dev-deps:
+        - name: cython
+          src: pypi
         - name: tblink-rpc-core
           url:  https://github.com/tblink-rpc/tblink-rpc-core.git
         - name: mkdv
