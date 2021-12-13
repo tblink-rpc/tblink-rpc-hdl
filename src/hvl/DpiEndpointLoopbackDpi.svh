@@ -1,17 +1,15 @@
 /****************************************************************************
- * DpiEndpointLoopbackVpi.svh
+ * DpiEndpointLoopbackDpi.svh
  ****************************************************************************/
  
-reg prv_event = 0;
-
 typedef class TbLink;
 
-typedef class DpiEndpointLoopbackVpi;
+typedef class DpiEndpointLoopbackDpi;
 
 class _DpiEndpointLoopbackVpiRunThread extends TbLinkThread;
-	DpiEndpointLoopbackVpi m_ep;
+	DpiEndpointLoopbackDpi m_ep;
 	
-	function new(DpiEndpointLoopbackVpi ep);
+	function new(DpiEndpointLoopbackDpi ep);
 		m_ep = ep;
 	endfunction
 	
@@ -21,23 +19,18 @@ class _DpiEndpointLoopbackVpiRunThread extends TbLinkThread;
 endclass
   
 /**
- * Class: DpiEndpointLoopbackVpi
+ * Class: DpiEndpointLoopbackDpi
  * 
  * TODO: Add class documentation
  */
-class DpiEndpointLoopbackVpi extends DpiEndpoint;
+class DpiEndpointLoopbackDpi extends DpiEndpoint;
 
 	function new(chandle hndl);
-`ifndef VERILATOR
-		super.new(hndl);
-`else
 		m_hndl = hndl;
-`endif
 		begin
 		TbLink tblink = TbLink::inst();
 		_DpiEndpointLoopbackVpiRunThread t;
 `ifndef VERILATOR
-		$tblink_rpc_register_vpi_ev(prv_event);
 		t = new(this);
 		tblink.queue_thread(t);
 `else
@@ -56,24 +49,11 @@ class DpiEndpointLoopbackVpi extends DpiEndpoint;
 		$display("<-- process_one_message_b");
 	endtask
 	
-	task run();
-`ifndef VERILATOR
-		$display("%0t --> run()", $time);
-		forever begin
-			@(prv_event);
-			$display("--> async: process_one_message()");
-			process_one_message();
-			$display("<-- async: process_one_message()");
-		end
-		$display("%0t <-- run()", $time);
-`endif
-	endtask
-	
-	static function DpiEndpointLoopbackVpi mk(chandle hndl=null);
-		DpiEndpointLoopbackVpi ret;
+	static function DpiEndpointLoopbackDpi mk(chandle hndl=null);
+		DpiEndpointLoopbackDpi ret;
 		
 		if (hndl == null) begin
-			hndl = tblink_rpc_DpiEndpointLoopbackVpi_new();
+			hndl = tblink_rpc_DpiEndpointLoopback_new();
 		end
 		
 		ret = new(hndl);
@@ -83,4 +63,4 @@ class DpiEndpointLoopbackVpi extends DpiEndpoint;
 	
 endclass
 
-import "DPI-C" context function chandle tblink_rpc_DpiEndpointLoopbackVpi_new();
+import "DPI-C" context function chandle tblink_rpc_DpiEndpointLoopback_new();

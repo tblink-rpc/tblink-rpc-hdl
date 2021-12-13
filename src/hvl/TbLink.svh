@@ -1,16 +1,16 @@
-
 /****************************************************************************
  * TbLink.svh
  ****************************************************************************/
  
-	typedef class TbLinkThread;
 `ifndef VERILATOR
-	typedef class TbLinkDeltaCb;
+typedef class TbLinkDeltaCb;
 `endif
 
 // Static class members are not yet supported in Verilator
 typedef class TbLink;
 TbLink			_tblink_inst;
+
+bit prv_tblink_init = tblink_rpc_init();
   
 /**
  * Class: TbLink
@@ -28,6 +28,7 @@ class TbLink;
 	bit							m_dispatcher_running;
 `else
 	TbLinkThread				m_dispatch_q;
+	bit							m_dispatch_started;
 	bit							m_dispatch_scheduled;
 `endif
 	bit							m_delta_cb_pending;
@@ -35,15 +36,24 @@ class TbLink;
 	int							m_zero_count_repeat;
 
 	function new();
+
+		
 		// Manually register known launch types
 		begin
 			SVLaunchTypeLoopback launch_t = new();
 			m_sv_launch_type_m[launch_t.name()] = launch_t;
 		end
+`ifndef VERILATOR
 		begin
 			SVLaunchTypeNativeLoopbackVpi launch_t = new();
 			m_sv_launch_type_m[launch_t.name()] = launch_t;
 		end
+`else
+		begin
+			SVLaunchTypeNativeLoopbackDpi launch_t = new();
+			m_sv_launch_type_m[launch_t.name()] = launch_t;
+		end
+`endif
 		begin
 			SVEndpointServicesFactory f = new();
 			m_default_services_f = f;
@@ -191,7 +201,7 @@ class TbLink;
 			m_dispatcher_running = 1;
 			
 			if (m_default_ep != null) begin
-				m_default_ep_seqr = new(m_default_ep);
+				m_default_ep_seqr = SVEndpointSequencer::mk(m_default_ep);
 				m_default_ep_seqr.start();
 			end
 			
@@ -200,9 +210,25 @@ class TbLink;
 			join_none
 		end
 `else
+		if (m_dispatch_started == 0) begin
+			m_dispatch_started = 1;
+			
+			if (m_default_ep != null) begin
+				m_default_ep_seqr = mkSVEndpointSequencer(m_default_ep);
+				m_default_ep_seqr.start();
+			end
+		end
 		dispatch();
 `endif
 	endtask
+
+`ifdef VERILATOR
+	function TbLinkThread next_thread();
+		TbLinkThread t = m_dispatch_q;
+		m_dispatch_q = t.next();
+		return t;
+	endfunction
+`endif
 
 `ifndef VERILATOR
 	task dispatcher();
@@ -217,20 +243,33 @@ class TbLink;
 	endtask
 `else
 	task dispatch();
+		TbLinkThread q = m_dispatch_q;
+		m_dispatch_q = null;
 		m_dispatch_scheduled = 0;
-		while (m_dispatch_q != null) begin
-			TbLinkThread t = m_dispatch_q;
-			m_dispatch_q = m_dispatch_q.m_next;
+		$display("--> dispatch");
+		while (q != null) begin
+			TbLinkThread t = q;
+			q = t.next();
+			t.set_next(null);
+//			$display("t=%p m_dispatch_q=%p", t, q);
+			$display("--> run");
 			t.run();
+			$display("<-- run");
 		end
+		$display("<-- dispatch");
 	endtask
 `endif
 	
 	function void queue_thread(TbLinkThread t);
+		$display("--> queue_thread");
 `ifndef VERILATOR
 		void'(m_dispatch_q.try_put(t));
 `else
-		t.m_next = m_dispatch_q;
+		if (t.next() != null) begin
+			$display("Internal Error: thread already scheduled");
+			return;
+		end
+		t.set_next(m_dispatch_q);
 		m_dispatch_q = t;
 		
 		if (!m_dispatch_scheduled) begin
@@ -238,6 +277,7 @@ class TbLink;
 			m_dispatch_scheduled = 1;
 		end
 `endif
+		$display("<-- queue_thread");
 	endfunction
 	
 	function IEndpoint get_default_ep();
@@ -314,6 +354,7 @@ function automatic bit tblink_rpc_init();
 	// Initialize DPI context for package
 	int unsigned time_precision;
 	TbLink tblink;
+	$display("tblink_rpc_init");
 	if (_tblink_rpc_pkg_init(
 				`ifdef VERILATOR
 					0,
@@ -330,7 +371,6 @@ function automatic bit tblink_rpc_init();
 	return 1;
 endfunction
 
-bit prv_tblink_init = tblink_rpc_init();
 
 import "DPI-C" context function int _tblink_rpc_pkg_init(
 		input int unsigned 		have_blocking_tasks,

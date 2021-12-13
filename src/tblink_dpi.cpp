@@ -18,6 +18,7 @@
 #include "dpi_api.h"
 #include "vpi_api.h"
 #include "ILaunch.h"
+#include "DpiEndpointLoopback.h"
 #include "DpiEndpointLoopbackVpi.h"
 #include "DpiEndpointListenerProxy.h"
 #include "DpiEndpointServicesProxy.h"
@@ -42,7 +43,13 @@ static void						*prv_pkg_scope = 0;
 static TblinkPluginDpi			*prv_plugin = 0;
 static char						prv_msgbuf[128];
 
+static TblinkPluginDpi *get_plugin();
+
 static void *get_pkg_scope() {
+	TblinkPluginDpi *plugin = get_plugin();
+	if (!prv_pkg_scope) {
+		prv_pkg_scope = prv_dpi.svGetScope();
+	}
 	return prv_pkg_scope;
 }
 
@@ -134,6 +141,9 @@ EXTERN_C int _tblink_rpc_pkg_init(
 		int32_t				*time_precision) {
 	TblinkPluginDpi *plugin = get_plugin();
 
+	fprintf(stdout, "_tblink_rpc_pkg_init\n");
+	fflush(stdout);
+
 	if (!plugin) {
 		fprintf(stdout, "Tblink Error: failed to initialize plugin\n");
 		return 0;
@@ -171,6 +181,13 @@ EXTERN_C void tblink_rpc_InvokeInfo_invoke_rsp(chandle ii_h, chandle retval_h) {
 			ii->call_id(),
 			reinterpret_cast<IParamVal *>(retval_h));
 	delete ii;
+}
+
+EXTERN_C chandle tblink_rpc_DpiEndpointLoopback_new() {
+	TblinkPluginDpi *plugin = get_plugin();
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IEndpoint *>(
+					new DpiEndpointLoopback(plugin->dpi_api(), 0)));
 }
 
 EXTERN_C chandle tblink_rpc_DpiEndpointLoopbackVpi_new() {
@@ -444,14 +461,14 @@ static void invoke_req(
 		intptr_t								call_id,
 		tblink_rpc_core::IParamValVec			*params) {
 	dpi_api_t *dpi_api = prv_plugin->dpi_api();
+	tblink_rpc_core::IParamVal *params_v = static_cast<tblink_rpc_core::IParamVal *>(params);
 	dpi_api->svSetScope(dpi_api->get_pkg_scope());
 
 	dpi_api->invoke(
 			reinterpret_cast<chandle>(inst),
 			reinterpret_cast<chandle>(method),
 			call_id,
-			reinterpret_cast<chandle>(
-					static_cast<IParamVal *>(params)));
+			reinterpret_cast<chandle>(params_v));
 	fflush(stdout);
 }
 
@@ -585,20 +602,11 @@ EXTERN_C uint32_t tblink_rpc_IParamValVec_size(void *hndl) {
 EXTERN_C chandle tblink_rpc_IParamValVec_at(chandle hndl, uint32_t idx) {
 	IParamVal *v = reinterpret_cast<IParamVal *>(hndl);
 	IParamValVec *vv = dynamic_cast<IParamValVec *>(v);
-	fprintf(stdout, "tblink_rpc_IParamValVec_at: %p %d\n", hndl, idx);
-	fflush(stdout);
 	if (vv->size()) {
 		return reinterpret_cast<chandle>(vv->at(idx));
 	} else {
 		return 0;
 	}
-
-	/*
-	IParamVal *ret = vv->at(idx);
-	return reinterpret_cast<chandle>(
-			dynamic_cast<IParamValVec *>(
-					reinterpret_cast<IParamVal *>(hndl))->at(idx));
-	 */
 }
 
 EXTERN_C void tblink_rpc_IParamValVec_push_back(chandle hndl, chandle val_h) {

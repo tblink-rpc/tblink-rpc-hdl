@@ -2,6 +2,8 @@
  * TblinkThread.svh
  ****************************************************************************/
 
+typedef class TbLinkThread;
+
 /**
  * TbLinkThread
  * 
@@ -11,6 +13,14 @@ class TbLinkThread;
 	TbLinkThread		m_next;
 	
 	function new();
+	endfunction
+	
+	function TbLinkThread next();
+		return m_next;
+	endfunction
+	
+	function void set_next(TbLinkThread t);
+		m_next = t;
 	endfunction
 	
 	virtual task run();

@@ -41,12 +41,16 @@ class DpiInterfaceImpl extends IInterfaceImpl;
 		if (!$cast(params_dpi, params)) begin
 			return null;
 		end
+	
+		$display("invoke_nb: params_dpi.m_hndl=%p", params_dpi.m_hndl);
 		
 		retval_h = tblink_rpc_invoke_nb_dpi_bfm(
 				m_inst_path,
 				ifinst_dpi.m_hndl,
 				method_dpi.m_hndl,
 				params_dpi.m_hndl);
+		
+		$display("invoke_nb: retval_h=%0p", retval_h);
 		
 		if (retval_h != null) begin
 			retval = DpiParamVal::mk(retval_h);

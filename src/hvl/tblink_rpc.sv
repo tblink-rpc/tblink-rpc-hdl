@@ -51,6 +51,7 @@ package tblink_rpc;
 	`include "ILaunchParams.svh"
 	`include "ILaunchType.svh"
 	
+	`include "TbLinkThread.svh"
 
 	`include "DpiTypeInt.svh"
 	`include "DpiTypeMap.svh"
@@ -76,7 +77,10 @@ package tblink_rpc;
 	`include "DpiEndpoint.svh"
 	`include "DpiEndpointEvent.svh"
 	`include "DpiEndpointListenerProxy.svh"
+	`include "DpiEndpointLoopbackDpi.svh"
+`ifndef VERILATOR
 	`include "DpiEndpointLoopbackVpi.svh"
+`endif
 	
 	`include "DpiLaunchType.svh"
 
@@ -106,11 +110,45 @@ package tblink_rpc;
 	`include "SVLaunchTypeRegistration.svh"
 	`include "SVLaunchParams.svh"
 	`include "SVLaunchTypeLoopback.svh"
+	`include "SVLaunchTypeNativeLoopbackDpi.svh"
+`ifndef VERILATOR
 	`include "SVLaunchTypeNativeLoopbackVpi.svh"
+`endif
 	
-	`include "TbLinkThread.svh"
 	
 	`include "TbLink.svh"
+	
+	function automatic TbLink tblink();
+		TbLink _tblink;
+
+		/**
+		 * Under normal circumstances, the package should be 
+		 * registered as part of package initialization. 
+		 * Verilator doesn't reliably trigger package initialization
+		 * so we manually call/check here
+		 */
+		if (!prv_tblink_init) begin
+			int unsigned time_precision;
+			$display("Calling init");
+			if (_tblink_rpc_pkg_init(
+					`ifdef VERILATOR
+						0,
+					`else
+						1,
+					`endif
+					time_precision) == 0) begin
+				$display("Error: failed to initialize tblink package");
+			end
+	
+			_tblink = TbLink::inst();
+			_tblink.m_time_precision = time_precision;			
+			prv_tblink_init = 1;
+		end else begin
+			_tblink = TbLink::inst();
+		end
+		
+		return _tblink;
+	endfunction
 
 	// Ensure that we always initialize tblink
 //	TbLink _prv_tblink = TbLink::inst();
@@ -170,6 +208,8 @@ package tblink_rpc;
 		DpiInterfaceInst	ifinst = new(ifinst_h);
 		DpiMethodType		method = new(method_h);
 		DpiParamValVec		params = new(params_h);
+		
+		$display("tblink_rpc_invoke: params_h=%p", params_h);
 	
 		if (method.is_blocking() != 0) begin
 			TbLink tblink = TbLink::inst();

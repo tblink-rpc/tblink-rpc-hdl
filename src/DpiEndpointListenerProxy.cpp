@@ -20,6 +20,9 @@ DpiEndpointListenerProxy::~DpiEndpointListenerProxy() {
 }
 
 void DpiEndpointListenerProxy::event(const IEndpointEvent *ev) {
+	fprintf(stdout, "DpiEndpointListenerProxy::event: scope=%p\n",
+			m_dpi_api->get_pkg_scope());
+	fflush(stdout);
 	m_dpi_api->svSetScope(m_dpi_api->get_pkg_scope());
 	m_dpi_api->epl_event(
 			reinterpret_cast<void *>(this),

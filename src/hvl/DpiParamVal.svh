@@ -76,6 +76,7 @@ class DpiParamVal extends IParamVal;
 
 	static function IParamVal mk(chandle hndl);
 		IParamVal ret;
+		$display("DpiParamVal::mk %p", hndl);
 		case (_tblink_rpc_iparam_val_type(hndl))
 			Bool: begin
 				DpiParamValBool t = new(hndl);

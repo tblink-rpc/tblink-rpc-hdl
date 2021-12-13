@@ -180,8 +180,151 @@ endclass
 
 `else // VERILATOR
 	
-class SVEndpointSequencer extends IEndpointListener;
+typedef class SVEndpointSequencer;
+typedef class TbLink;
+
+class SVEndpointSequencerThread extends TbLinkThread;
+	
+	SVEndpointSequencer			m_seqr;
+	
+	function new(SVEndpointSequencer seqr);
+		m_seqr = seqr;
+	endfunction
+	
+	virtual task run();
+		m_seqr.run();
+	endtask
+	
 endclass
+
+class SVEndpointSequencer extends IEndpointListener;
+	
+	typedef enum {
+		WaitBfmRegistration,
+		WaitBuildComplete,
+		WaitConnectComplete,
+		ProcessMessages,
+		Terminated
+	} seqr_state_e;
+
+	IEndpoint						m_ep;
+	seqr_state_e					m_state;
+	SVEndpointSequencerThread		m_thread;
+	bit								m_thread_queued;
+	TbLink							m_tblink;
+	int								m_last_ifinst_count;
+	int								m_it_count;
+	
+	function new(IEndpoint ep);
+		m_ep = ep;
+		m_state = WaitBfmRegistration;
+		m_tblink = TbLink::inst();
+	endfunction
+	
+	function void init(SVEndpointSequencerThread t);
+		m_thread = t;
+	endfunction
+	
+	task start();
+		$display("SVEndpointSequencer::start");
+		if (!m_thread_queued) begin
+			m_thread_queued = 1;
+			m_tblink.queue_thread(m_thread);
+		end
+	endtask
+	
+	virtual function void event_f(IEndpointEvent ev);
+		$display("SVEndpointSequencer: event_f");
+		if (!m_thread_queued) begin
+			m_thread_queued = 1;
+			m_tblink.queue_thread(m_thread);
+		end
+	endfunction
+	
+	task run();
+		$display("SVEndpointSequencer::run");
+		m_thread_queued = 0;
+		case (m_state)
+			WaitBfmRegistration: begin
+				IInterfaceInst ifinsts[$];
+				m_ep.getInterfaceInsts(ifinsts);
+		
+				$display("ifinst_count: %0d ifinsts.size: %0d", m_last_ifinst_count, ifinsts.size());
+				if (m_last_ifinst_count > 0 && m_last_ifinst_count == ifinsts.size()) begin
+					$display("Moving to BuildComplete");
+					m_state = WaitBuildComplete;
+					if (m_ep.build_complete() == -1) begin
+						$display("TbLink Error: Build-complete failed");
+						$finish();
+						m_state = Terminated;
+					end
+				end else begin
+					m_it_count++;
+					if (ifinsts.size() == 0 && m_it_count >= 16) begin
+						m_state = Terminated;
+						$display("TbLink Error: Failed to find any BFM instances");
+						$finish();
+					end
+				end
+				m_thread_queued = 1;
+				m_tblink.queue_thread(m_thread);
+				m_last_ifinst_count = ifinsts.size();
+			end
+			WaitBuildComplete: begin
+				int ret = m_ep.is_build_complete();
+				$display("WaitBuildComplete: %0d", ret);
+				if (ret == 1) begin
+					m_state = WaitConnectComplete;
+					if (m_ep.connect_complete() == -1) begin
+						m_state = Terminated;
+						$display("TbLink Error: Connect-complete failed");
+						$finish();
+					end
+					m_thread_queued = 1;
+					m_tblink.queue_thread(m_thread);
+				end else if (ret == -1) begin
+					m_state = Terminated;
+					$display("TbLink Error: Is-Build-Complete failed");
+					$finish();
+				end
+			end
+			WaitConnectComplete: begin
+				int ret = m_ep.is_connect_complete();
+				$display("WaitConnectComplete");
+				if (ret == 1) begin
+					m_state = ProcessMessages;
+					m_thread_queued = 1;
+					m_tblink.queue_thread(m_thread);
+				end else if (ret == -1) begin
+					m_state = Terminated;
+					$display("TbLink Error: Is-Connect-Complete failed");
+					$finish();
+				end
+			end
+			ProcessMessages: begin
+				// Park for now
+			end
+			Terminated: begin
+				// Park
+			end
+			default: begin
+				$display("TbLink Error: unhandled sequencer state");
+				$finish();
+			end
+		endcase
+	endtask
+	
+	
+endclass
+
+
+function SVEndpointSequencer mkSVEndpointSequencer(IEndpoint ep);
+	SVEndpointSequencer seqr = new(ep);
+	SVEndpointSequencerThread thread = new(seqr);
+	seqr.init(thread);
+	ep.addListener(seqr);
+	return seqr;
+endfunction
 
 `endif
 
