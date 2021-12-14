@@ -21,7 +21,7 @@ class DpiInvokeInfo extends InvokeInfo;
 	virtual function IInterfaceInst inst();
 		DpiInterfaceInst ret;
 		chandle hndl = tblink_rpc_InvokeInfo_ifinst(m_hndl);
-		ret = new(hndl, null);
+		ret = new(hndl);
 		
 		return ret;
 	endfunction

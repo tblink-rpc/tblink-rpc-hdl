@@ -38,6 +38,10 @@ class SVInterfaceInst extends IInterfaceInst;
 		return m_impl;
 	endfunction
 	
+	virtual function IEndpoint endpoint();
+		return m_ep;
+	endfunction
+	
 	virtual function string name();
 		return m_name;
 	endfunction

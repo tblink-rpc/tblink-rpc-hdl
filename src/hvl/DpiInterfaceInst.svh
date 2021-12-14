@@ -7,6 +7,7 @@ typedef class DpiParamValInt;
 
 IInterfaceImpl prv_hndl2impl[chandle];
 
+typedef class DpiEndpoint;
 typedef class DpiMethodType;
 typedef class DpiParamValMap;
 typedef class DpiParamValStr;
@@ -45,13 +46,9 @@ DpiInterfaceInstInvokeClosure prv_closure_m[chandle];
  */
 class DpiInterfaceInst extends IInterfaceInst;
 	chandle				m_hndl;
-	chandle				m_ep_h;
 
-	function new(
-		chandle 		hndl,
-		chandle			ep_h);
+	function new(chandle hndl);
 		m_hndl = hndl;
-		m_ep_h = ep_h;
 	endfunction
 
 	virtual function void set_impl(IInterfaceImpl impl);
@@ -60,6 +57,12 @@ class DpiInterfaceInst extends IInterfaceInst;
 	
 	virtual function IInterfaceImpl get_impl();
 		return prv_hndl2impl[m_hndl];
+	endfunction
+	
+	virtual function IEndpoint endpoint();
+		DpiEndpoint ep = mkDpiEndpoint(
+			tblink_rpc_IInterfaceInst_endpoint(m_hndl));
+		return ep;
 	endfunction
 	
 	virtual function IParamVal invoke_nb(
@@ -83,10 +86,13 @@ class DpiInterfaceInst extends IInterfaceInst;
 				method_dpi.m_hndl,
 				params_h,
 				closure.m_hndl));
-		
-		while (!closure.m_valid) begin
-			if (tblink_rpc_IEndpoint_process_one_message(m_ep_h) == -1) begin
-				break;
+
+		if (!closure.m_valid) begin
+			chandle ep_h = tblink_rpc_IInterfaceInst_endpoint(m_hndl);
+			while (!closure.m_valid) begin
+				if (tblink_rpc_IEndpoint_process_one_message(ep_h) == -1) begin
+					break;
+				end
 			end
 		end
 		
@@ -206,6 +212,9 @@ export "DPI-C" function tblink_rpc_closure_invoke_rsp;
 import "DPI-C" context function chandle tblink_rpc_IInterfaceInstInvokeClosure_new();
 import "DPI-C" context function void tblink_rpc_IInterfaceInstInvokeClosure_dispose(
 		chandle			closure);
+		
+import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_endpoint(
+		chandle			ifinst);
 
 import "DPI-C" context function int tblink_rpc_IInterfaceInst_invoke_nb(
 		chandle			ifinst,

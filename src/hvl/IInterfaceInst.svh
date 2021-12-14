@@ -18,6 +18,11 @@ class IInterfaceInst;
 		return null;
 	endfunction
 	
+	virtual function IEndpoint endpoint();
+		$display("TbLink Error: IInterfaceInst::endpoint not implemented");
+		$finish();
+	endfunction
+	
 	virtual function string name();
 		return "";
 	endfunction

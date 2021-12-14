@@ -649,6 +649,12 @@ EXTERN_C void tblink_rpc_IParamValVec_push_back(chandle hndl, chandle val_h) {
 			reinterpret_cast<IParamVal *>(val_h));
 }
 
+EXTERN_C chandle tblink_rpc_IInterfaceInst_endpoint(
+		chandle			ifinst_h) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceInst *>(ifinst_h)->endpoint());
+}
+
 EXTERN_C char *tblink_rpc_IInterfaceInst_name(
 		chandle			ifinst_h) {
 	strncpy(prv_msgbuf,
