@@ -150,7 +150,7 @@ class DpiEndpoint extends IEndpoint;
 				inst_name,
 				is_mirror);
 		
-		ifinst = new(ifinst_h);
+		ifinst = new(ifinst_h, m_hndl);
 		ifinst.set_impl(ifinst_impl);
 		
 		return ifinst;
@@ -170,7 +170,7 @@ class DpiEndpoint extends IEndpoint;
 		ifinsts = '{};
 		for (int unsigned i=0; i<count; i++) begin
 			chandle ifinst_h = tblink_rpc_IEndpoint_getInterfaceInstAt(m_hndl, i);
-			DpiInterfaceInst ifinst = new(ifinst_h);
+			DpiInterfaceInst ifinst = new(ifinst_h, m_hndl);
 			ifinsts.push_back(ifinst);
 		end
 	endfunction

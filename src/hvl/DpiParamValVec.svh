@@ -14,6 +14,10 @@ class DpiParamValVec extends IParamValVec;
 		m_hndl = hndl;
 	endfunction
 	
+	virtual function kind_e kind();
+		return DpiParamVal::_kind(m_hndl);
+	endfunction
+	
 	virtual function int unsigned size();
 		return tblink_rpc_IParamValVec_size(m_hndl);
 	endfunction	

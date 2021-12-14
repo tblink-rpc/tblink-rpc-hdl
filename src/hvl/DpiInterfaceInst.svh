@@ -7,8 +7,36 @@ typedef class DpiParamValInt;
 
 IInterfaceImpl prv_hndl2impl[chandle];
 
+typedef class DpiMethodType;
 typedef class DpiParamValMap;
 typedef class DpiParamValStr;
+
+class DpiInterfaceInstInvokeClosure;
+	chandle				m_hndl;
+	IParamVal			m_retval;
+	bit					m_valid;
+`ifndef VERILATOR
+	semaphore			m_sem = new();
+`endif
+	
+	function new();
+		m_hndl = tblink_rpc_IInterfaceInstInvokeClosure_new();
+	endfunction
+	
+	function void dispose();
+		tblink_rpc_IInterfaceInstInvokeClosure_dispose(m_hndl);
+	endfunction
+	
+	function void response(chandle retval_h);
+		m_valid = 1;
+		m_retval = DpiParamVal::mk(retval_h);
+`ifndef VERILATOR
+		m_sem.put(1);
+`endif
+	endfunction
+endclass
+
+DpiInterfaceInstInvokeClosure prv_closure_m[chandle];
   
 /**
  * Class: DpiInterfaceInst
@@ -17,9 +45,13 @@ typedef class DpiParamValStr;
  */
 class DpiInterfaceInst extends IInterfaceInst;
 	chandle				m_hndl;
+	chandle				m_ep_h;
 
-	function new(chandle hndl);
+	function new(
+		chandle 		hndl,
+		chandle			ep_h);
 		m_hndl = hndl;
+		m_ep_h = ep_h;
 	endfunction
 
 	virtual function void set_impl(IInterfaceImpl impl);
@@ -33,15 +65,37 @@ class DpiInterfaceInst extends IInterfaceInst;
 	virtual function IParamVal invoke_nb(
 		IMethodType					method,
 		IParamValVec				params);
+		DpiInterfaceInstInvokeClosure	closure = new();
 		DpiMethodType method_dpi;
 		chandle params_h;
+
+		$display("Add %0p to map", closure.m_hndl);
+		prv_closure_m[closure.m_hndl] = closure;
 		
 		$cast(method_dpi, method);
 		params_h = DpiParamVal::getHndl(params);
+	
+		$display("m_hndl=%0p method_h=%0p params_h=%0p closure_h=%0p",
+				m_hndl, method_dpi.m_hndl, params_h,
+				closure.m_hndl);
+		void'(tblink_rpc_IInterfaceInst_invoke_nb(
+				m_hndl,
+				method_dpi.m_hndl,
+				params_h,
+				closure.m_hndl));
 		
-		$display("TbLink Error: IInterfaceInst::invoke_nb not implemented");
-		$finish();
-		return null;
+		while (!closure.m_valid) begin
+			if (tblink_rpc_IEndpoint_process_one_message(m_ep_h) == -1) begin
+				break;
+			end
+		end
+		
+		// Expect closure to have been invoked
+		$display("Remove %0p from map", closure.m_hndl);
+		prv_closure_m.delete(closure.m_hndl);
+		closure.dispose();
+	
+		return closure.m_retval;
 	endfunction
 	
 	virtual task invoke_b(
@@ -126,6 +180,38 @@ class DpiInterfaceInst extends IInterfaceInst;
 
 endclass
 
+/**
+ * Function: tblink_rpc_invoke_rsp
+ * 
+ * Called by the InterfaceInst implementation (C++) to complete
+ * a non-blocking invocation
+ * 
+ * Parameters:
+ * - chandle closure 
+ * - chandle retval 
+ * 
+ * Returns:
+ *   void
+ */
+function automatic void tblink_rpc_closure_invoke_rsp(
+		chandle			closure_h,
+		chandle			retval_h);
+	DpiInterfaceInstInvokeClosure closure;
+	$display("tblink_rpc_closure_invoke_rsp: %0p", closure_h);
+	closure = prv_closure_m[closure_h];
+	closure.response(retval_h);
+endfunction
+export "DPI-C" function tblink_rpc_closure_invoke_rsp;
+
+import "DPI-C" context function chandle tblink_rpc_IInterfaceInstInvokeClosure_new();
+import "DPI-C" context function void tblink_rpc_IInterfaceInstInvokeClosure_dispose(
+		chandle			closure);
+
+import "DPI-C" context function int tblink_rpc_IInterfaceInst_invoke_nb(
+		chandle			ifinst,
+		chandle			method,
+		chandle			params,
+		chandle			closure);
 import "DPI-C" context function void tblink_rpc_IInterfaceInst_invoke_rsp(
 		chandle			ifinst,
 		longint			call_id,

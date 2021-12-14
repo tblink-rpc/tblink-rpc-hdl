@@ -33,6 +33,8 @@ typedef struct dpi_api_s {
 
 	void (*epl_event)(void *hndl, void *ev);
 
+	void (*ifi_closure_invoke_rsp)(void *, void *);
+
 	void (*toggle_vpi_ev)();
 
 } dpi_api_t;

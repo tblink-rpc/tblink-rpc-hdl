@@ -21,10 +21,6 @@ class DpiParamVal extends IParamVal;
 		m_hndl = hndl;
 	endfunction
 	
-	virtual function kind_e kind();
-		return _kind(m_hndl);
-	endfunction
-	
 	static function kind_e _kind(chandle hndl);
 		return kind_e'(_tblink_rpc_iparam_val_type(hndl));
 	endfunction
@@ -42,6 +38,7 @@ class DpiParamVal extends IParamVal;
 		if (v == null) begin
 			return null;
 		end else begin
+			$display("getHndl: kind=%0s", v.kind());
 			case (v.kind())
 				Bool: begin
 					DpiParamValBool dpi_v;
@@ -64,11 +61,9 @@ class DpiParamVal extends IParamVal;
 					return dpi_v.m_hndl;
 				end
 				Vec: begin
-					/*
 					DpiParamValVec dpi_v;
 					$cast(dpi_v, v);
 					return dpi_v.m_hndl;
-					 */
 				end
 			endcase
 		end
@@ -76,33 +71,35 @@ class DpiParamVal extends IParamVal;
 
 	static function IParamVal mk(chandle hndl);
 		IParamVal ret;
-		$display("DpiParamVal::mk %p", hndl);
-		case (_tblink_rpc_iparam_val_type(hndl))
-			Bool: begin
-				DpiParamValBool t = new(hndl);
-				ret = t;
-			end
-			Int: begin
-				DpiParamValInt t = new(hndl);
-				ret = t;
-			end
-			Map: begin
-				DpiParamValMap t = new(hndl);
-				ret = t;
-			end
-			Str: begin
-				DpiParamValStr t = new(hndl);
-				ret = t;
-			end
-			Vec: begin
-				DpiParamValVec t = new(hndl);
-				ret = t;
-			end
-			default: begin
-				$display("Error: unhandled value type");
-				$finish();
-			end
-		endcase
+		
+		if (hndl != null) begin
+			case (_tblink_rpc_iparam_val_type(hndl))
+				Bool: begin
+					DpiParamValBool t = new(hndl);
+					ret = t;
+				end
+				Int: begin
+					DpiParamValInt t = new(hndl);
+					ret = t;
+				end
+				Map: begin
+					DpiParamValMap t = new(hndl);
+					ret = t;
+				end
+				Str: begin
+					DpiParamValStr t = new(hndl);
+					ret = t;
+				end
+				Vec: begin
+					DpiParamValVec t = new(hndl);
+					ret = t;
+				end
+				default: begin
+					$display("Error: unhandled value type");
+					$finish();
+				end
+			endcase
+		end
 		return ret;
 	endfunction
 	

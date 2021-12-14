@@ -1,0 +1,19 @@
+CAPI=2:
+#****************************************************************************
+#* tblink-rpc-hdl.core
+#****************************************************************************
+
+name: tblink-rpc::tblink-rpc-hdl:0.1
+
+filesets:
+  sv:
+    files:
+      - src/hvl/tblink_rpc.sv
+    file_type: verilogSource
+    
+targets:
+  default:
+    filesets:
+      - sv
+      
+    

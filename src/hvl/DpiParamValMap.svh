@@ -15,6 +15,10 @@ class DpiParamValMap extends IParamValMap;
 		m_hndl = hndl;
 	endfunction
 	
+	virtual function kind_e kind();
+		return DpiParamVal::_kind(m_hndl);
+	endfunction
+	
 	virtual function bit hasKey(string key);
 		return tblink_rpc_IParamValMap_hasKey(m_hndl, key) != 0;
 	endfunction

@@ -25,6 +25,7 @@
 #include "EndpointServicesDpi.h"
 #include "EndpointServicesDpiFactory.h"
 #include "InvokeInfoDpi.h"
+#include "InterfaceInstInvokeClosure.h"
 #include "ParamValVec.h"
 #include "ParamValStr.h"
 #include "TbLink.h"
@@ -123,6 +124,9 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.epl_event = sym_finder->findSymT<void(*)(void*,void*)>(
 				"tblink_rpc_DpiEndpointListenerProxy_event");
 
+		prv_dpi.ifi_closure_invoke_rsp = sym_finder->findSymT<void(*)(void*,void*)>(
+				"tblink_rpc_closure_invoke_rsp");
+
 		prv_dpi.toggle_vpi_ev = &tblink_rpc_toggle_vpi_ev;
 
 		prv_plugin = new TblinkPluginDpi(
@@ -173,6 +177,31 @@ EXTERN_C chandle tblink_rpc_InvokeInfo_params(chandle ii_h) {
 	return reinterpret_cast<void *>(
 			static_cast<IParamVal *>(
 					reinterpret_cast<InvokeInfoDpi *>(ii_h)->params()));
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInstInvokeClosure_new() {
+	TblinkPluginDpi *plugin = get_plugin();
+	return reinterpret_cast<chandle>(new InterfaceInstInvokeClosure(
+			plugin->dpi_api()));
+}
+
+EXTERN_C void tblink_rpc_IInterfaceInstInvokeClosure_dispose(chandle closure_h) {
+	delete reinterpret_cast<InterfaceInstInvokeClosure *>(closure_h);
+}
+
+EXTERN_C int tblink_rpc_IInterfaceInst_invoke_nb(
+		chandle			ifinst_h,
+		chandle			method_h,
+		chandle			params_h,
+		chandle			closure_h) {
+	return reinterpret_cast<IInterfaceInst *>(ifinst_h)->invoke_nb(
+			reinterpret_cast<IMethodType *>(method_h),
+			dynamic_cast<IParamValVec *>(
+					reinterpret_cast<IParamVal *>(params_h)),
+			std::bind(
+					&InterfaceInstInvokeClosure::response_f,
+					reinterpret_cast<InterfaceInstInvokeClosure *>(closure_h),
+					std::placeholders::_1));
 }
 
 EXTERN_C void tblink_rpc_InvokeInfo_invoke_rsp(chandle ii_h, chandle retval_h) {
@@ -347,6 +376,12 @@ EXTERN_C chandle tblink_rpc_IEndpoint_newInterfaceTypeBuilder(
 EXTERN_C int tblink_rpc_IEndpointEvent_kind(chandle ev) {
 //	return reinterpret_cast<int>(
 return			static_cast<int>(reinterpret_cast<IEndpointEvent *>(ev)->kind());
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceType_findMethod(
+		chandle				iftype_h,
+		const char			*name) {
+	return reinterpret_cast<IInterfaceType *>(iftype_h)->findMethod(name);
 }
 
 EXTERN_C chandle tblink_rpc_IInterfaceTypeBuilder_mkTypeBool(

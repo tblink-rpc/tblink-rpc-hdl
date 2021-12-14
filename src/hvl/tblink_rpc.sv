@@ -205,7 +205,7 @@ package tblink_rpc;
 		chandle			method_h,
 		longint			call_id,
 		chandle			params_h);
-		DpiInterfaceInst	ifinst = new(ifinst_h);
+		DpiInterfaceInst	ifinst = new(ifinst_h, null); // TODO:
 		DpiMethodType		method = new(method_h);
 		DpiParamValVec		params = new(params_h);
 		
