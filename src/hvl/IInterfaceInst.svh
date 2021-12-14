@@ -33,6 +33,8 @@ class IInterfaceInst;
 	virtual function IParamVal invoke_nb(
 		IMethodType					method,
 		IParamValVec				params);
+		$display("TbLink Error: IInterfaceInst::invoke_nb not implemented");
+		$finish();
 		return null;
 	endfunction
 	
@@ -40,6 +42,8 @@ class IInterfaceInst;
 		output IParamVal			retval,
 		input  IMethodType			method,
 		input  IParamValVec			params);
+		$display("TbLink Error: IInterfaceInst::invoke_b not implemented");
+		$finish();
 	endtask
 	
 	virtual function void invoke_rsp(

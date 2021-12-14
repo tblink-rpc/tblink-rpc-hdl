@@ -232,10 +232,11 @@ class TbLink;
 
 `ifndef VERILATOR
 	task dispatcher();
-		TbLinkThread		t;
 		
 		forever begin
+			automatic TbLinkThread	t;
 			m_dispatch_q.get(t);
+			
 			fork
 				t.run();
 			join_none

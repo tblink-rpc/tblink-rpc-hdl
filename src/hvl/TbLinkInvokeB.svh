@@ -23,8 +23,6 @@ class TbLinkInvokeB extends TbLinkThread;
 	virtual task run();
 		IInterfaceImpl ifimpl = m_ifinst.get_impl();
 		IParamVal retval;
-		//			chandle ifinst = tblink_rpc_InvokeInfo_ifinst(m_ii.m_hndl);
-		//			IInterfaceImpl ifimpl = ifinst2impl_m[ifinst];
 
 		ifimpl.invoke_b(
 				retval,
@@ -33,8 +31,9 @@ class TbLinkInvokeB extends TbLinkThread;
 				m_params);
 
 		// These params are cloned
+		// TODO:
 		m_params.dispose();
-		
+
 		m_ifinst.invoke_rsp(m_call_id, retval);
 	endtask
 endclass
