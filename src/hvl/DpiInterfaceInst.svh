@@ -30,6 +30,29 @@ class DpiInterfaceInst extends IInterfaceInst;
 		return prv_hndl2impl[m_hndl];
 	endfunction
 	
+	virtual function IParamVal invoke_nb(
+		IMethodType					method,
+		IParamValVec				params);
+		DpiMethodType method_dpi;
+		chandle params_h;
+		
+		$cast(method_dpi, method);
+		params_h = DpiParamVal::getHndl(params);
+		
+		$display("TbLink Error: IInterfaceInst::invoke_nb not implemented");
+		$finish();
+		return null;
+	endfunction
+	
+	virtual task invoke_b(
+		output IParamVal			retval,
+		input  IMethodType			method,
+		input  IParamValVec			params);
+		retval = null;
+		$display("TbLink Error: IInterfaceInst::invoke_b not implemented");
+		$finish();
+	endtask
+	
 	virtual function void invoke_rsp(
 		longint				call_id,
 		IParamVal			retval);
