@@ -146,16 +146,23 @@ class SVEndpointSequencer extends IEndpointListener;
 		while (state == IEndpoint::Waiting || state == IEndpoint::Released) begin
 
 			// Process messages while in Waiting state
+			$display("--> Sequencer::Waiting");
 			while (state == IEndpoint::Waiting) begin
+				$display("--> process_one_message");
 				m_ep.process_one_message();
+				$display("<-- process_one_message");
 				// Allow a delta to expire in between to 
-				// support loopback connections (specifically DPI<->VPI
+				// support loopback connections (specifically DPI<->VPI)
+				$display("--> delta");
 				#0;
+				$display("<-- delta");
 				
 				state = m_ep.comm_state();
 			end
+			$display("<-- Sequencer::Waiting");
 
 			// Wait for events while in Released state
+			$display("--> Sequencer::Released");
 			while (state == IEndpoint::Released) begin
 				// Wait for an event callback
 				$display("--> m_ev_sem.wait");
@@ -168,6 +175,7 @@ class SVEndpointSequencer extends IEndpointListener;
 				
 				state = m_ep.comm_state();
 			end
+			$display("<-- Sequencer::Released");
 		end
 	endtask
 	

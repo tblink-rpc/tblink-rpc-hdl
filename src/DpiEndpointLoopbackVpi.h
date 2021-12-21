@@ -63,6 +63,7 @@ public:
 private:
 	dpi_api_t						*m_dpi_api;
 	bool							m_primary;
+	int32_t							m_in_dpi_call;
 	DpiEndpointLoopbackVpi			*m_peer;
 
 	std::vector<Req>				m_req_q;
