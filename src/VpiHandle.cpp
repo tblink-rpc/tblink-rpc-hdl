@@ -101,6 +101,10 @@ void VpiHandle::val_i64(int64_t v) {
     m_vpi->vpi_put_value(m_hndl, &val, 0, vpiNoDelay);
 }
 
+int32_t VpiHandle::val_i32() {
+	return val_i64();
+}
+
 void VpiHandle::val_i32(int32_t v) {
     s_vpi_value val;
 

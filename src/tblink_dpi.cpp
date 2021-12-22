@@ -163,22 +163,6 @@ EXTERN_C int _tblink_rpc_pkg_init(
 	return 1;
 }
 
-EXTERN_C chandle tblink_rpc_InvokeInfo_ifinst(chandle ii) {
-	return reinterpret_cast<void *>(
-			reinterpret_cast<InvokeInfoDpi *>(ii)->inst());
-}
-
-EXTERN_C chandle tblink_rpc_InvokeInfo_method(chandle ii) {
-	return reinterpret_cast<void *>(
-			reinterpret_cast<InvokeInfoDpi *>(ii)->method());
-}
-
-EXTERN_C chandle tblink_rpc_InvokeInfo_params(chandle ii_h) {
-	return reinterpret_cast<void *>(
-			static_cast<IParamVal *>(
-					reinterpret_cast<InvokeInfoDpi *>(ii_h)->params()));
-}
-
 EXTERN_C chandle tblink_rpc_IInterfaceInstInvokeClosure_new() {
 	TblinkPluginDpi *plugin = get_plugin();
 	return reinterpret_cast<chandle>(new InterfaceInstInvokeClosure(
@@ -245,61 +229,6 @@ EXTERN_C chandle tblink_rpc_DpiEndpointServicesProxy_new() {
 	return reinterpret_cast<chandle>(
 			static_cast<IEndpointServices *>(new DpiEndpointServicesProxy(
 					plugin->dpi_api())));
-}
-
-EXTERN_C void *_tblink_rpc_endpoint_new(int have_blocking_tasks) {
-#ifdef UNDEFINED
-	// TODO: need to
-
-	if (!prv_endpoint) {
-		vpi_api_t *vpi_api = get_vpi_api();
-
-		fprintf(stdout, "_tblink_rpc_pkg_init\n");
-		fflush(stdout);
-
-		memset(&prv_dpi, 0, sizeof(prv_dpi));
-		prv_dpi.svGetScope = &svGetScope;
-		prv_dpi.svSetScope = &svSetScope;
-		prv_dpi.get_pkg_scope = &get_pkg_scope;
-		prv_dpi.invoke_nb = &_tblink_rpc_invoke_nb;
-		prv_dpi.invoke_b = &_tblink_rpc_invoke_b;
-		prv_dpi.add_time_cb = &_tblink_rpc_add_time_cb;
-
-		// Add a shutdown callback if the simulator closes down unexpectedly
-		atexit(&tblink_dpi_atexit);
-		signal(SIGPIPE, &tblink_dpi_sigpipe);
-
-		if (!vpi_api) {
-			fprintf(stdout, "Error: failed to load vpi API (%s)\n",
-					get_vpi_api_error());
-			return 0;
-		}
-
-		prv_services = EndpointServicesDpiUP(new EndpointServicesDpi(
-				&prv_dpi,
-				vpi_api,
-				have_blocking_tasks));
-
-
-	    // Create the endpoint
-	    ILaunch *launcher = tblink_rpc_hdl_launcher();
-
-	    if (!launcher) {
-	    	fprintf(stdout, "Error: failed to obtain launcher\n");
-	    	return 0;
-	    }
-
-//	    *time_precision = prv_services->time_precision();
-
-	    prv_endpoint = IEndpointUP(launcher->create_ep(prv_services.get()));
-	}
-
-	return reinterpret_cast<void *>(prv_endpoint.get());
-#endif
-}
-
-EXTERN_C chandle _tblink_rpc_endpoint_default() {
-	return reinterpret_cast<chandle>(prv_plugin->endpoint());
 }
 
 EXTERN_C int tblink_rpc_IEndpoint_init(

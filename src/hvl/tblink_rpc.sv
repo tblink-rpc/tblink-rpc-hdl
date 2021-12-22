@@ -40,7 +40,6 @@ package tblink_rpc;
 	
 	`include "IInterfaceType.svh"
 	`include "IInterfaceInst.svh"
-	`include "InvokeInfo.svh"
 	`include "IInterfaceImpl.svh"
 	`include "IEndpoint.svh"
 	`include "IEndpointEvent.svh"
@@ -63,7 +62,6 @@ package tblink_rpc;
 	
 	`include "DpiInterfaceTypeBuilder.svh"
 	`include "DpiInterfaceType.svh"
-	`include "DpiInvokeInfo.svh"
 	`include "DpiLaunchParams.svh"
 	`include "DpiMethodType.svh"
 	`include "DpiParamValBool.svh"

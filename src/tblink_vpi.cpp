@@ -38,6 +38,8 @@ static void tblink_vpi_sigpipe(int sig) {
 	prv_endpoint->shutdown();
 }
 
+
+
 #ifdef UNDEFINED
 static void vpi_startup(void) {
 #ifdef UNDEFINED

@@ -42,6 +42,8 @@ public:
 
 	void val_i64(int64_t v);
 
+	int32_t val_i32();
+
 	void val_i32(int32_t v);
 
 	uint64_t val_ui64();

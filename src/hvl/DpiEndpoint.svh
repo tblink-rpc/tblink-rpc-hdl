@@ -28,7 +28,6 @@ class DpiEndpoint extends IEndpoint;
 		mailbox #(TbLinkThread)   	m_thread_q = new();
 		TbLinkTimedCb				m_cb_m[chandle];
 	`endif
-	InvokeInfo						m_next_ii;
 
 	function new();
 	endfunction
@@ -228,57 +227,6 @@ class DpiEndpoint extends IEndpoint;
 			`endif
 		end
 	endtask
-		
-	function InvokeInfo get_invoke_info();
-		InvokeInfo ret = m_next_ii;
-		m_next_ii = null;
-		return ret;
-	endfunction
-		
-	function void set_invoke_info(InvokeInfo info);
-		m_next_ii = info;
-	endfunction
-		
-	function void _invoke_nb(InvokeInfo ii);
-`ifdef TODO
-		chandle ifinst_h = tblink_rpc_InvokeInfo_ifinst(ii.m_hndl);
-		IInterfaceImpl impl = m_ifimpl_m[ifinst_h];
-		impl.m_ii = ii;
-		
-		m_next_ii = ii;
-		
-		impl.invoke_nb(ii);
-`endif
-	endfunction
-	
-	`ifdef UNDEFINED
-		function void _invoke_b(InvokeInfo ii);
-			`ifndef VERILATOR
-				tblink_rpc_invoke_b		closure;
-				chandle ifinst_h = tblink_rpc_InvokeInfo_ifinst(ii.m_hndl);
-				IInterfaceImpl impl = m_ifimpl_m[ifinst_h];
-				/*
-			IInterfaceInst inst = new();
-			IMethodType method = new();
-			IParamValVector params = new();
-			
-			$display("_invoke_b: call_id=%0d", call_id);
-		
-			inst.m_hndl = ifinst_h;
-			method.m_hndl = method_h;
-			params.m_hndl = params_h;
-				 */
-			
-				closure = new(ii, impl);
-			
-				void'(m_thread_q.try_put(closure));
-			`else
-				$display("Error: attempting to make a blocking call with Verilator");
-				$finish();
-			`endif
-		endfunction
-	`endif /* UNDEFINED */
-
 endclass
 
 function DpiEndpoint mkDpiEndpoint(chandle hndl);
@@ -291,8 +239,6 @@ function DpiEndpoint mkDpiEndpoint(chandle hndl);
 endfunction
 
 
-import "DPI-C" context function chandle _tblink_rpc_endpoint_new(int have_blocking_tasks);
-import "DPI-C" context function chandle _tblink_rpc_endpoint_default();
 import "DPI-C" context function int tblink_rpc_IEndpoint_init(
 	chandle endpoint_h, 
 	chandle services_h, 
