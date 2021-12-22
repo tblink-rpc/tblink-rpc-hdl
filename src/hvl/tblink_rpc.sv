@@ -141,7 +141,7 @@ package tblink_rpc;
 			end
 	
 			_tblink = TbLink::inst();
-			_tblink.m_time_precision = time_precision;			
+			_tblink.setTimePrecision(time_precision);
 			prv_tblink_init = 1;
 		end else begin
 			_tblink = TbLink::inst();

@@ -560,6 +560,12 @@ EXTERN_C const char *tblink_rpc_IMethodType_name(void *hndl) {
 }
 
 EXTERN_C int64_t tblink_rpc_IMethodType_id(void *hndl) {
+	fprintf(stdout, "tblink_rpc_IMethodType_id: %p 0x%08llx\n",
+			hndl, reinterpret_cast<IMethodType *>(hndl)->id());
+	fflush(stdout);
+	fprintf(stdout, "  name: %s\n",
+			reinterpret_cast<IMethodType *>(hndl)->name().c_str());
+	fflush(stdout);
 	return reinterpret_cast<IMethodType *>(hndl)->id();
 }
 
@@ -883,6 +889,12 @@ EXTERN_C chandle tblink_rpc_invoke_nb_dpi_bfm(
 	TblinkPluginDpi *plugin = get_plugin();
 	TblinkPluginDpi::invoke_info_t invoke_i =
 			plugin->get_dpi_invoke_info(inst_path);
+	IInterfaceInst *ifinst_p = reinterpret_cast<IInterfaceInst *>(ifinst);
+	IMethodType *method_p = reinterpret_cast<IMethodType *>(method);
+
+	fprintf(stdout, "ifinst=%p ifinst_p=%p method=%p method_p=%p\n",
+			ifinst, ifinst_p, method, method_p);
+	fflush(stdout);
 
 	if (std::get<1>(invoke_i) == 0) {
 		fprintf(stdout,
@@ -904,6 +916,12 @@ EXTERN_C int tblink_rpc_invoke_b_dpi_bfm(
 		chandle					method,
 		chandle					params) {
 	*retval = 0;
+	IInterfaceInst *ifinst_p = reinterpret_cast<IInterfaceInst *>(ifinst);
+	IMethodType *method_p = reinterpret_cast<IMethodType *>(method);
+
+	fprintf(stdout, "ifinst=%p ifinst_p=%p method=%p method_p=%p\n",
+			ifinst, ifinst_p, method, method_p);
+	fflush(stdout);
 
 	TblinkPluginDpi *plugin = get_plugin();
 	TblinkPluginDpi::invoke_info_t invoke_i =

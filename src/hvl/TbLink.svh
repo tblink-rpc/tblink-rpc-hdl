@@ -59,6 +59,10 @@ class TbLink;
 			m_default_services_f = f;
 		end
 	endfunction
+
+	function void setTimePrecision(int p);
+		m_time_precision = p;
+	endfunction
 	
 	function void setDefaultEp(IEndpoint ep);
 		m_default_ep = ep;

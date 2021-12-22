@@ -20,6 +20,7 @@ InterfaceInstInvokeClosure::~InterfaceInstInvokeClosure() {
 
 void InterfaceInstInvokeClosure::response_f(
 		tblink_rpc_core::IParamVal *retval) {
+	m_dpi_api->svSetScope(m_dpi_api->get_pkg_scope());
 	m_dpi_api->ifi_closure_invoke_rsp(
 			reinterpret_cast<void *>(this),
 			reinterpret_cast<void *>(retval));

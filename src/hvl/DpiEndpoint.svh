@@ -32,6 +32,14 @@ class DpiEndpoint extends IEndpoint;
 
 	function new();
 	endfunction
+
+	function void set_hndl(chandle h);
+		m_hndl = h;
+	endfunction
+
+	function void set_this(DpiEndpoint t);
+		m_this = t;
+	endfunction
 	
 	/*
 	function new(chandle hndl=null);
@@ -277,8 +285,8 @@ function DpiEndpoint mkDpiEndpoint(chandle hndl);
 	DpiEndpoint ret;
 	
 	ret = new();
-	ret.m_hndl = hndl;
-	ret.m_this = ret;
+	ret.set_hndl(hndl);
+	ret.set_this(ret);
 	return ret;
 endfunction
 
