@@ -8,8 +8,9 @@
 #pragma once
 #include <memory>
 #include <unordered_map>
+
+#include "../vpi/vpi_api.h"
 #include "dpi_api.h"
-#include "vpi_api.h"
 #include "tblink_rpc/ITbLink.h"
 #include "ParamValVec.h"
 

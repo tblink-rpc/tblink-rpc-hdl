@@ -8,7 +8,8 @@
 #pragma once
 #include <functional>
 #include <stdint.h>
-#include "vpi_api.h"
+
+#include "../vpi/vpi_api.h"
 
 namespace tblink_rpc_hdl {
 

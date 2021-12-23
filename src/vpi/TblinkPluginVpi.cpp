@@ -28,9 +28,10 @@ namespace tblink_rpc_hdl {
 using namespace tblink_rpc_core;
 
 TblinkPluginVpi::TblinkPluginVpi(vpi_api_t *vpi) :
-		m_vpi(vpi), m_vpi_glbl(VpiHandleSP(new VpiHandle(vpi, 0))),
-		m_initialized(false) {
+		m_vpi(vpi), m_vpi_glbl(VpiHandleSP(new VpiHandle(vpi, 0))) {
+	DEBUG_ENTER("TblinkPluginVpi");
 	register_tf();
+	DEBUG_LEAVE("TblinkPluginVpi");
 }
 
 TblinkPluginVpi::~TblinkPluginVpi() {
@@ -116,18 +117,36 @@ void TblinkPluginVpi::register_tf() {
     tf_data.type = vpiSysTask;
     tf_data.calltf = &system_tf<&EndpointServicesVpi::ifinst_call_complete>;
     m_vpi->vpi_register_systf(&tf_data);
+#endif
 
     s_cb_data cbd;
     memset(&cbd, 0, sizeof(cbd));
     cbd.user_data = reinterpret_cast<PLI_BYTE8 *>(this);
-    cbd.cb_rtn = &vpi_cb<&EndpointServicesVpi::on_startup>;
+    cbd.cb_rtn = &vpi_cb<&TblinkPluginVpi::on_startup>;
     cbd.reason = cbStartOfSimulation;
     m_vpi->vpi_register_cb(&cbd);
-#endif
 }
+
+PLI_INT32 TblinkPluginVpi::on_startup() {
+	DEBUG_ENTER("on_startup");
+	t_vpi_vlog_info info;
+
+	m_vpi->vpi_get_vlog_info(&info);
+
+	// TODO: determine what (if anything) needs to be launched
+
+	for (uint32_t i=0; i<info.argc; i++) {
+		DEBUG("Arg[%d] %s", i, info.argv[i]);
+	}
+
+	DEBUG_LEAVE("on_startup");
+	return 0;
+}
+
 
 PLI_INT32 TblinkPluginVpi::ITbLink_inst() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
+
 	systf_h->val_ptr(static_cast<ITbLink *>(TbLink::inst()));
 	return 0;
 }

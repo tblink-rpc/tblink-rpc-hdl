@@ -12,7 +12,6 @@
 #include "MethodCallVpi.h"
 #include "tblink_rpc/IInterfaceTypeBuilder.h"
 #include "tblink_rpc/IParamValInt.h"
-#include "glog/logging.h"
 
 #undef EN_DEBUG_ENDPOINT_SERVICES_VPI
 
@@ -117,8 +116,6 @@ void EndpointServicesVpi::notify_time_cb(intptr_t callback_id) {
 
 void EndpointServicesVpi::register_systf() {
     s_vpi_systf_data tf_data;
-
-    LOG(INFO) << "Registering system tasks";
 
     // pybfms_register
     tf_data.type = vpiSysFunc;

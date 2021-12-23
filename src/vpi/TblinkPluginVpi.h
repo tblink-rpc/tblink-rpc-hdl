@@ -18,6 +18,7 @@ public:
 private:
 	void register_tf();
 
+
 	template <PLI_INT32 (TblinkPluginVpi::*M)()> static PLI_INT32 system_tf(PLI_BYTE8 *ud) {
 		TblinkPluginVpi *this_p = reinterpret_cast<TblinkPluginVpi *>(ud);
 		return (this_p->*M)();
@@ -27,6 +28,9 @@ private:
 		TblinkPluginVpi *this_p = reinterpret_cast<TblinkPluginVpi *>(cbd->user_data);
 		return (this_p->*M)();
 	}
+
+	// VPI callbacks
+	PLI_INT32 on_startup();
 
 	// Task Implementations
 	PLI_INT32 ITbLink_inst();
@@ -58,7 +62,6 @@ private:
 private:
 	vpi_api_t					*m_vpi;
 	VpiHandleSP					m_vpi_glbl;
-	bool						m_initialized;
 };
 
 } /* namespace tblink_rpc_hdl */

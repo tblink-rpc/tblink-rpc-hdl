@@ -8,9 +8,9 @@
 #pragma once
 #include <map>
 #include <memory>
-#include "vpi_api.h"
 #include "tblink_rpc/IEndpoint.h"
 #include "tblink_rpc/IEndpointServices.h"
+#include "vpi_api.h"
 #include "VpiHandle.h"
 
 namespace tblink_rpc_hdl {

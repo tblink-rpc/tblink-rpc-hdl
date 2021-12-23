@@ -24,7 +24,7 @@
  *  Provides a dynamic loader for the VPI API
  */
 
-#include "vpi_api.h"
+#include "../vpi/vpi_api.h"
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif

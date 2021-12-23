@@ -9,6 +9,7 @@
  *****************************************************************************/
 #define EXTERN_C extern "C"
 #include <stdio.h>
+#include <string.h>
 #include "vpi_user.h"
 #include <signal.h>
 #include <string>
@@ -17,21 +18,18 @@
 #include <memory>
 #include "dpi_api.h"
 #include "vpi_api.h"
-#include "ILaunch.h"
 #include "DpiEndpointLoopback.h"
 #include "DpiEndpointLoopbackVpi.h"
 #include "DpiEndpointListenerProxy.h"
 #include "DpiEndpointServicesProxy.h"
 #include "EndpointServicesDpi.h"
 #include "EndpointServicesDpiFactory.h"
-#include "InvokeInfoDpi.h"
 #include "InterfaceInstInvokeClosure.h"
 #include "ParamValVec.h"
 #include "ParamValStr.h"
 #include "TbLink.h"
 #include "TblinkPluginDpi.h"
 #include "TimeCallbackClosureDpi.h"
-#include "glog/logging.h"
 #include "tblink_rpc/tblink_rpc.h"
 
 typedef void *chandle;
@@ -186,14 +184,6 @@ EXTERN_C int tblink_rpc_IInterfaceInst_invoke_nb(
 					&InterfaceInstInvokeClosure::response_f,
 					reinterpret_cast<InterfaceInstInvokeClosure *>(closure_h),
 					std::placeholders::_1));
-}
-
-EXTERN_C void tblink_rpc_InvokeInfo_invoke_rsp(chandle ii_h, chandle retval_h) {
-	InvokeInfoDpi *ii = reinterpret_cast<InvokeInfoDpi *>(ii_h);
-	ii->inst()->invoke_rsp(
-			ii->call_id(),
-			reinterpret_cast<IParamVal *>(retval_h));
-	delete ii;
 }
 
 EXTERN_C chandle tblink_rpc_DpiEndpointLoopback_new() {

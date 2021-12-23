@@ -8,7 +8,7 @@ name: tblink-rpc::tblink-rpc-hdl:0.1
 filesets:
   sv:
     files:
-      - src/hvl/tblink_rpc.sv
+      - src/sv/tblink_rpc.sv
     file_type: verilogSource
     
 targets:

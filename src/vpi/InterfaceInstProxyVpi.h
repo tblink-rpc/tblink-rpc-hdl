@@ -7,11 +7,11 @@
 
 #pragma once
 #include <vector>
-#include "vpi_api.h"
 #include "tblink_rpc/IInterfaceInst.h"
 #include "tblink_rpc/IEndpoint.h"
 #include "tblink_rpc/IParamValVec.h"
 #include "MethodCallVpi.h"
+#include "vpi_api.h"
 
 namespace tblink_rpc_hdl {
 

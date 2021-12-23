@@ -8,7 +8,6 @@
 #include <string.h>
 #include "tblink_rpc/IEndpoint.h"
 #include "EndpointServicesDpi.h"
-#include "InvokeInfoDpi.h"
 #include "TimeCallbackClosureDpi.h"
 
 namespace tblink_rpc_hdl {
