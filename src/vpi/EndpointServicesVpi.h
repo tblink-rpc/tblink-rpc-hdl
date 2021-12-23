@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include "tblink_rpc/IEndpoint.h"
+#include "tblink_rpc/IEndpointListener.h"
 #include "tblink_rpc/IEndpointServices.h"
 #include "vpi_api.h"
 #include "VpiHandle.h"
@@ -23,7 +24,7 @@ class EndpointServicesVpi : public tblink_rpc_core::IEndpointServices {
 public:
 	friend class CallbackClosureVpi;
 
-	EndpointServicesVpi(vpi_api_t *vpi);
+	EndpointServicesVpi(vpi_api_t *vpi, bool is_active=false);
 
 	virtual ~EndpointServicesVpi();
 
@@ -59,11 +60,11 @@ public:
 
 private:
 
+	void event(const tblink_rpc_core::IEndpointEvent *ev);
+
 	static PLI_INT32 time_cb(p_cb_data cbd);
 
 	void notify_time_cb(intptr_t callback_id);
-
-	void register_systf();
 
 	template <PLI_INT32 (EndpointServicesVpi::*M)()> static PLI_INT32 system_tf(PLI_BYTE8 *ud) {
 		EndpointServicesVpi *this_p = reinterpret_cast<EndpointServicesVpi *>(ud);
@@ -75,6 +76,12 @@ private:
 		return (this_p->*M)();
 	}
 
+	PLI_INT32 active_startup_await_registration();
+
+	PLI_INT32 active_startup_await_is_build_complete();
+
+	PLI_INT32 active_startup_await_is_connect_complete();
+
 	PLI_INT32 on_startup();
 
 	PLI_INT32 start_of_simulation();
@@ -83,30 +90,17 @@ private:
 
 	PLI_INT32 end_of_simulation();
 
-	PLI_INT32 find_iftype();
-
-	PLI_INT32 new_iftype_builder();
-
-	PLI_INT32 iftype_builder_define_method();
-
-	PLI_INT32 define_iftype();
-
-	PLI_INT32 define_ifinst();
-
-	PLI_INT32 ifinst_call_claim();
-
-	PLI_INT32 ifinst_call_id();
-
-	PLI_INT32 ifinst_call_next_ui();
-
-	PLI_INT32 ifinst_call_complete();
-
 	void post_ev();
 
 
 private:
 	vpi_api_t									*m_vpi;
 	VpiHandleSP									m_global;
+	bool										m_is_active;
+
+	int32_t										m_last_registered_ifinsts;
+	int32_t										m_count;
+
 	intptr_t									m_callback_id;
 	std::map<intptr_t, CallbackClosureVpi *>	m_cb_closure_m;
 	tblink_rpc_core::IEndpoint					*m_endpoint;

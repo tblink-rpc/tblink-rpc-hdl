@@ -5,8 +5,12 @@
  *      Author: mballance
  */
 
+#include <string>
 #include <string.h>
+#include <vector>
 #include "Debug.h"
+#include "EndpointServicesVpi.h"
+#include "EndpointServicesVpiFactory.h"
 #include "tblink_rpc/ITbLink.h"
 #include "TbLink.h"
 #include "TblinkPluginVpi.h"
@@ -30,6 +34,10 @@ using namespace tblink_rpc_core;
 TblinkPluginVpi::TblinkPluginVpi(vpi_api_t *vpi) :
 		m_vpi(vpi), m_vpi_glbl(VpiHandleSP(new VpiHandle(vpi, 0))) {
 	DEBUG_ENTER("TblinkPluginVpi");
+	ITbLink *tblink = TbLink::inst();
+
+	tblink->setDefaultServicesFactory(new EndpointServicesVpiFactory(vpi));
+
 	register_tf();
 	DEBUG_LEAVE("TblinkPluginVpi");
 }
@@ -132,14 +140,50 @@ void TblinkPluginVpi::register_tf() {
 
 PLI_INT32 TblinkPluginVpi::on_startup() {
 	DEBUG_ENTER("on_startup");
+	ITbLink *tblink = TbLink::inst();
 	t_vpi_vlog_info info;
 
 	m_vpi->vpi_get_vlog_info(&info);
 
 	// TODO: determine what (if anything) needs to be launched
+	std::vector<std::string>	launch_args;
+	std::string launch;
 
 	for (uint32_t i=0; i<info.argc; i++) {
 		DEBUG("Arg[%d] %s", i, info.argv[i]);
+		if (!strncmp(info.argv[i], "+tblink.launch=", strlen("+tblink.launch="))) {
+			launch = &info.argv[i][strlen("+tblink.launch=")];
+		} else if (!strncmp(info.argv[i], "+tblink.arg=", strlen("+tblink.arg="))) {
+			launch_args.push_back(&info.argv[i][strlen("+tblink.arg=")]);
+		}
+	}
+
+	if (launch != "") {
+		ILaunchType *launch_t = tblink->findLaunchType(launch);
+
+		// We need the endpoint services for the default endpoint
+		// to be active. The default services are passive
+		EndpointServicesVpi *services = new EndpointServicesVpi(m_vpi, true);
+
+		if (!launch_t) {
+			fprintf(stdout, "TbLink Error: Failed to find launch type %s\n", launch.c_str());
+			return -1;
+		}
+
+		ILaunchParams *params = launch_t->newLaunchParams();
+		for (auto it=launch_args.begin(); it!=launch_args.end(); it++) {
+			params->add_arg(*it);
+		}
+
+		ILaunchType::result_t result = launch_t->launch(params, services);
+
+		if (!result.first) {
+			fprintf(stdout, "TbLink Error: Failed to launch %s: %s\n",
+					launch.c_str(), result.second.c_str());
+			return -1;
+		}
+
+		tblink->setDefaultEP(result.first);
 	}
 
 	DEBUG_LEAVE("on_startup");
@@ -272,8 +316,12 @@ PLI_INT32 TblinkPluginVpi::IInterfaceTypeBuilder_newMethodTypeBuilder() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
 
-	IInterfaceTypeBuilder *iftype_b =
-			args->scan()->val_ptrT<IInterfaceTypeBuilder>();
+	VpiHandleSP iftype_b_h = args->scan();
+	fprintf(stdout, "iftype_b_h: %p\n", iftype_b_h->hndl());
+	fflush(stdout);
+
+	IInterfaceTypeBuilder *iftype_b = iftype_b_h->val_ptrT<IInterfaceTypeBuilder>();
+//			args->scan()->val_ptrT<IInterfaceTypeBuilder>();
 	std::string name = args->scan()->val_str();
 	intptr_t id = args->scan()->val_i64();
 	IType *rtype = args->scan()->val_ptrT<IType>();
@@ -294,10 +342,12 @@ PLI_INT32 TblinkPluginVpi::IInterfaceTypeBuilder_add_method() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
 
-	IInterfaceTypeBuilder *iftype_b =
-			args->scan()->val_ptrT<IInterfaceTypeBuilder>();
-	IMethodTypeBuilder *method_b =
-			args->scan()->val_ptrT<IMethodTypeBuilder>();
+	VpiHandleSP iftype_b_h = args->scan();
+	IInterfaceTypeBuilder *iftype_b = iftype_b_h->val_ptrT<IInterfaceTypeBuilder>();
+//			args->scan()->val_ptrT<IInterfaceTypeBuilder>();
+	VpiHandleSP method_b_h = args->scan();
+	IMethodTypeBuilder *method_b = method_b_h->val_ptrT<IMethodTypeBuilder>();
+//			args->scan()->val_ptrT<IMethodTypeBuilder>();
 
 	systf_h->val_ptrT<IMethodType>(
 			iftype_b->add_method(method_b));
