@@ -96,9 +96,12 @@ void TblinkPluginVpi::register_tf() {
     tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceTypeBuilder_add_method>;
     m_vpi->vpi_register_systf(&tf_data);
 
+    // add_param doesn't return a value, in contrast with the other TbLink functions
+    tf_data.type = vpiSysTask;
     tf_data.tfname = "$tblink_rpc_IMethodTypeBuilder_add_param";
     tf_data.calltf = &system_tf<&TblinkPluginVpi::IMethodTypeBuilder_add_param>;
     m_vpi->vpi_register_systf(&tf_data);
+    tf_data.type = vpiSysFunc;
 
 #ifdef UNDEFINED
     tf_data.tfname = "$tblink_ifinst_call_claim";
