@@ -84,16 +84,6 @@ std::vector<std::string> EndpointServicesVpi::args() {
 	return ret;
 }
 
-void EndpointServicesVpi::shutdown() {
-	// Something else will handle this for
-	// passive endpoints. They're just along
-	// for the ride.
-//	if (m_endpoint->type() == IEndpoint::Active) {
-		m_vpi->vpi_control(vpiFinish, 0);
-		m_shutdown = true;
-//	}
-}
-
 void EndpointServicesVpi::event(const tblink_rpc_core::IEndpointEvent *ev) {
 	;
 }
@@ -409,15 +399,6 @@ int32_t EndpointServicesVpi::time_precision() {
 	int32_t ret =  m_vpi->vpi_get(vpiTimePrecision, 0);
 	fprintf(stdout, "precision: %d\n", ret);
 	return ret;
-}
-
-void EndpointServicesVpi::run_until_event() {
-	m_run_until_event++;
-}
-
-// Notify that we've hit an event
-void EndpointServicesVpi::hit_event() {
-	m_run_until_event--;
 }
 
 void EndpointServicesVpi::inc_pending_nb_calls() {

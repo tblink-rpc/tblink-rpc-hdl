@@ -30,12 +30,6 @@ std::vector<std::string> DpiEndpointServicesProxy::args() {
 	return {};
 }
 
-void DpiEndpointServicesProxy::shutdown() {
-	m_dpi_api->eps_proxy_shutdown(
-			reinterpret_cast<void *>(
-					static_cast<IEndpointServices *>(this)));
-}
-
 int32_t DpiEndpointServicesProxy::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
@@ -64,29 +58,6 @@ uint64_t DpiEndpointServicesProxy::time() {
 int32_t DpiEndpointServicesProxy::time_precision() {
 	// TODO:
 	return -9;
-}
-
-// Release the environment to run
-void DpiEndpointServicesProxy::run_until_event() {
-	m_dpi_api->svSetScope(m_dpi_api->get_pkg_scope());
-	m_dpi_api->eps_proxy_run_until_event(
-			reinterpret_cast<void *>(
-					static_cast<IEndpointServices *>(this)));
-}
-
-// Notify that we've hit an event
-void DpiEndpointServicesProxy::hit_event() {
-	m_dpi_api->svSetScope(m_dpi_api->get_pkg_scope());
-	m_dpi_api->eps_proxy_hit_event(
-			reinterpret_cast<void *>(
-					static_cast<IEndpointServices *>(this)));
-}
-
-void DpiEndpointServicesProxy::idle() {
-	m_dpi_api->svSetScope(m_dpi_api->get_pkg_scope());
-	m_dpi_api->eps_proxy_idle(
-			reinterpret_cast<void *>(
-					static_cast<IEndpointServices *>(this)));
 }
 
 } /* namespace tblink_rpc_hdl */

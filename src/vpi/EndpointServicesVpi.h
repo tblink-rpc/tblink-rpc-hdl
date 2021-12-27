@@ -35,8 +35,6 @@ public:
 	 */
 	virtual std::vector<std::string> args() override;
 
-	virtual void shutdown() override;
-
 	virtual int32_t add_time_cb(
 			uint64_t 		time,
 			intptr_t		callback_id) override;
@@ -47,12 +45,7 @@ public:
 
 	virtual int32_t time_precision() override;
 
-	virtual void run_until_event() override;
-
-	// Notify that we've hit an event
-	virtual void hit_event() override;
-
-	void idle() override;
+	void idle();
 
 	void inc_pending_nb_calls();
 

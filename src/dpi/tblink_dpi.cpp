@@ -223,11 +223,9 @@ EXTERN_C chandle tblink_rpc_DpiEndpointServicesProxy_new() {
 
 EXTERN_C int tblink_rpc_IEndpoint_init(
 		chandle				endpoint_h,
-		chandle				services_h,
-		chandle				listener_h) {
+		chandle				services_h) {
 	return reinterpret_cast<IEndpoint *>(endpoint_h)->init(
-			reinterpret_cast<IEndpointServices *>(services_h),
-			reinterpret_cast<IEndpointListener *>(listener_h));
+			reinterpret_cast<IEndpointServices *>(services_h));
 }
 
 EXTERN_C int tblink_rpc_IEndpoint_is_init(
@@ -761,8 +759,7 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 			new EndpointServicesDpi(
 					plugin->dpi_api(),
 					plugin->vpi_api(),
-					plugin->have_blocking_tasks()),
-			0) != 0) {
+					plugin->have_blocking_tasks())) != 0) {
 		strncpy(prv_msgbuf, res.first->last_error().c_str(), sizeof(prv_msgbuf));
 		*error = prv_msgbuf;
 		return 0;

@@ -146,7 +146,8 @@ PLI_INT32 TblinkPluginVpi::on_startup() {
 	m_vpi->vpi_get_vlog_info(&info);
 
 	// TODO: determine what (if anything) needs to be launched
-	std::vector<std::string>	launch_args;
+	std::vector<std::string>							launch_args;
+	std::vector<std::pair<std::string,std::string>>		launch_params;
 	std::string launch;
 
 	for (uint32_t i=0; i<info.argc; i++) {
@@ -155,6 +156,20 @@ PLI_INT32 TblinkPluginVpi::on_startup() {
 			launch = &info.argv[i][strlen("+tblink.launch=")];
 		} else if (!strncmp(info.argv[i], "+tblink.arg=", strlen("+tblink.arg="))) {
 			launch_args.push_back(&info.argv[i][strlen("+tblink.arg=")]);
+		} else if (!strncmp(info.argv[i], "+tblink.param", strlen("+tblink.param"))) {
+			const char *pname_p = &info.argv[i][strlen("+tblink.param")+1];
+			std::string pname_val = pname_p;
+			int32_t eq_idx = pname_val.find('=');
+
+			if (eq_idx == std::string::npos) {
+				fprintf(stdout, "TbLink Error: malformed param plusarg %s\n", info.argv[i]);
+				fflush(stdout);
+				m_vpi->vpi_control(vpiFinish);
+			} else {
+				std::string pname = pname_val.substr(0, eq_idx);
+				std::string pval = pname_val.substr(eq_idx+1);
+				launch_params.push_back({pname, pval});
+			}
 		}
 	}
 
@@ -174,12 +189,17 @@ PLI_INT32 TblinkPluginVpi::on_startup() {
 		for (auto it=launch_args.begin(); it!=launch_args.end(); it++) {
 			params->add_arg(*it);
 		}
+		for (auto it=launch_params.begin(); it!=launch_params.end(); it++) {
+			params->add_param(it->first, it->second);
+		}
 
 		ILaunchType::result_t result = launch_t->launch(params, services);
 
 		if (!result.first) {
 			fprintf(stdout, "TbLink Error: Failed to launch %s: %s\n",
 					launch.c_str(), result.second.c_str());
+			fflush(stdout);
+			m_vpi->vpi_control(vpiFinish);
 			return -1;
 		}
 

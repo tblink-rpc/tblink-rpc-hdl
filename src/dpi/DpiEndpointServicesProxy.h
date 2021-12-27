@@ -24,8 +24,6 @@ public:
 	 */
 	virtual std::vector<std::string> args() override;
 
-	virtual void shutdown() override;
-
 	virtual int32_t add_time_cb(
 			uint64_t 		time,
 			intptr_t		callback_id) override;
@@ -43,14 +41,6 @@ public:
 	 * -12: 1ps
 	 */
 	virtual int32_t time_precision() override;
-
-	// Release the environment to run
-	virtual void run_until_event() override;
-
-	// Notify that we've hit an event
-	virtual void hit_event() override;
-
-	virtual void idle() override;
 
 private:
 	dpi_api_t				*m_dpi_api;

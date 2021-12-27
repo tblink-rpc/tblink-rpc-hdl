@@ -34,8 +34,6 @@ public:
 	 */
 	virtual std::vector<std::string> args() override;
 
-	virtual void shutdown() override;
-
 	virtual int32_t add_time_cb(
 			uint64_t 		time,
 			intptr_t		callback_id) override;
@@ -45,14 +43,6 @@ public:
 	virtual uint64_t time() override;
 
 	virtual int32_t time_precision() override;
-
-	// Release the environment to run
-	virtual void run_until_event() override;
-
-	// Notify that we've hit an event
-	virtual void hit_event() override;
-
-	void idle();
 
 	void invoke_req(
 			tblink_rpc_core::IInterfaceInst			*inst,

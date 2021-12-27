@@ -54,8 +54,7 @@ class DpiEndpoint extends IEndpoint;
 		m_services_proxy = newDpiEndpointServicesProxy(ep_services);
 		return tblink_rpc_IEndpoint_init(
 				m_hndl,
-				m_services_proxy, 
-				null);
+				m_services_proxy);
 	endfunction
 	
 	virtual function int is_init();
@@ -241,8 +240,7 @@ endfunction
 
 import "DPI-C" context function int tblink_rpc_IEndpoint_init(
 	chandle endpoint_h, 
-	chandle services_h, 
-	chandle listener_h);
+	chandle services_h); 
 import "DPI-C" context function int tblink_rpc_IEndpoint_is_init(
 	chandle endpoint_h);
 import "DPI-C" context function int tblink_rpc_IEndpoint_build_complete(chandle endpoint_h);

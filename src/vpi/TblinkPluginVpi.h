@@ -37,6 +37,8 @@ private:
 
 	PLI_INT32 ITbLink_get_default_ep();
 
+	PLI_INT32 IEndpoint_defineInterfaceInst();
+
 	PLI_INT32 IEndpoint_defineInterfaceType();
 
 	PLI_INT32 IEndpoint_findInterfaceType();

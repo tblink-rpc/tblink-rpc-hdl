@@ -61,13 +61,6 @@ std::vector<std::string> EndpointServicesDpi::args() {
 	return ret;
 }
 
-void EndpointServicesDpi::shutdown() {
-	// Okay to terminate with VPI?
-	m_vpi->vpi()->vpi_control(vpiFinish, 0);
-	m_shutdown = true;
-
-}
-
 int32_t EndpointServicesDpi::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
@@ -121,36 +114,6 @@ uint64_t EndpointServicesDpi::time() {
 int32_t EndpointServicesDpi::time_precision() {
 	int32_t ret =  m_vpi->vpi()->vpi_get(vpiTimePrecision, 0);
 	return ret;
-}
-
-// Release the environment to run
-void EndpointServicesDpi::run_until_event() {
-	m_run_until_event = true;
-}
-
-// Notify that we've hit an event
-void EndpointServicesDpi::hit_event() {
-	m_run_until_event = false;
-	m_hit_event = true;
-}
-
-void EndpointServicesDpi::idle() {
-//	fprintf(stdout, "idle\n");
-//	fflush(stdout);
-	if (m_shutdown) {
-		return;
-	}
-
-	if (m_hit_event) {
-		// reschedule this for a delta away
-		m_hit_event = false;
-		_add_time_cb(0, 0, std::bind(&EndpointServicesDpi::idle, this));
-	} else {
-		int32_t ret = 0;
-		while (!m_run_until_event && !m_shutdown && ret != -1) {
-			ret = m_endpoint->await_req();
-		}
-	}
 }
 
 void EndpointServicesDpi::invoke_req(
