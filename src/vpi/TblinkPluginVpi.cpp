@@ -14,6 +14,7 @@
 #include "tblink_rpc/ITbLink.h"
 #include "TbLink.h"
 #include "TblinkPluginVpi.h"
+#include "VpiEndpointSequencer.h"
 
 #define EN_DEBUG_TBLINK_PLUGIN_VPI
 
@@ -178,7 +179,7 @@ PLI_INT32 TblinkPluginVpi::on_startup() {
 
 		// We need the endpoint services for the default endpoint
 		// to be active. The default services are passive
-		EndpointServicesVpi *services = new EndpointServicesVpi(m_vpi, true);
+		EndpointServicesVpi *services = new EndpointServicesVpi(m_vpi);
 
 		if (!launch_t) {
 			fprintf(stdout, "TbLink Error: Failed to find launch type %s\n", launch.c_str());
@@ -201,6 +202,13 @@ PLI_INT32 TblinkPluginVpi::on_startup() {
 			fflush(stdout);
 			m_vpi->vpi_control(vpiFinish);
 			return -1;
+		} else {
+			VpiEndpointSequencer *seqr = new VpiEndpointSequencer(m_vpi, result.first);
+			if (result.first->init(services) == -1) {
+				fprintf(stdout, "TbLink Error: Initialization failed\n");
+				m_vpi->vpi_control(vpiFinish);
+				result.first = 0;
+			}
 		}
 
 		tblink->setDefaultEP(result.first);
