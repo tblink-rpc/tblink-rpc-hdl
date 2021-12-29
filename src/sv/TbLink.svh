@@ -100,15 +100,27 @@ class TbLink;
 				$finish(1);
 			end else begin
 				ILaunchParams params = launch_t.newLaunchParams();
+				chandle params_proxy = newLaunchParamsProxy(params);
 				string errmsg;
 				string args[$];
+
+				tblink_rpc_ParseLaunchPlusargs(params_proxy, errmsg);
+				delLaunchParamsProxy(params_proxy);
 				
+				if (errmsg != "") begin
+					$display("TbLink Error: %s while parsing launch arguments", errmsg);
+					$finish();
+					return;
+				end
+
+				/*
 				tblink_rpc_get_plusargs("tblink.launcharg", args);
 				
 				foreach (args[i]) begin
 					$display("add arg: %0s", args[i]);
 					params.add_arg(args[i]);
 				end
+				 */
 
 				// Ensure the launcher knows to register this as a default endpoint
 				params.add_param(string'("is_default"), string'("1"));
@@ -118,10 +130,9 @@ class TbLink;
 				if (m_default_ep == null) begin
 					$display("TBLink Error: failed to launch %0s: %0s",
 							launch, errmsg);
+					$finish();
+					return;
 				end
-		
-//				$display("-- register_delta_cb");
-//				register_delta_cb();
 			end
 		end else begin
 			$display("TbLink Note: no default endpoint launched");
@@ -389,6 +400,10 @@ import "DPI-C" context function void tblink_rpc_TbLink_setDefaultEP(
 	chandle		ep);
 import "DPI-C" context function chandle tblink_rpc_TbLink_getDefaultEP(
 	chandle		tblink);
+	
+import "DPI-C" context function void tblink_rpc_ParseLaunchPlusargs(
+	chandle			params_proxy,
+	output string	errmsg);
 
 `ifdef VERILATOR
 /**

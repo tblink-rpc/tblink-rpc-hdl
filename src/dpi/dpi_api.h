@@ -35,6 +35,9 @@ typedef struct dpi_api_s {
 
 	void (*ifi_closure_invoke_rsp)(void *, void *);
 
+	void (*dlp_proxy_add_arg)(void *hndl, const char *arg);
+	void (*dlp_proxy_add_param)(void *hndl, const char *key, const char *val);
+
 	void (*toggle_vpi_ev)();
 
 } dpi_api_t;

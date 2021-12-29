@@ -22,6 +22,7 @@
 #include "DpiEndpointLoopbackVpi.h"
 #include "DpiEndpointListenerProxy.h"
 #include "DpiEndpointServicesProxy.h"
+#include "DpiLaunchParamsProxy.h"
 #include "EndpointServicesDpi.h"
 #include "EndpointServicesDpiFactory.h"
 #include "InterfaceInstInvokeClosure.h"
@@ -125,6 +126,11 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.ifi_closure_invoke_rsp = sym_finder->findSymT<void(*)(void*,void*)>(
 				"tblink_rpc_closure_invoke_rsp");
 
+		prv_dpi.dlp_proxy_add_arg = sym_finder->findSymT<void(*)(void *, const char *)>(
+				"tblink_rpc_DpiLaunchParamsProxy_add_arg");
+		prv_dpi.dlp_proxy_add_param = sym_finder->findSymT<void(*)(void *, const char *, const char *)>(
+				"tblink_rpc_DpiLaunchParamsProxy_add_param");
+
 		prv_dpi.toggle_vpi_ev = &tblink_rpc_toggle_vpi_ev;
 
 		prv_plugin = new TblinkPluginDpi(
@@ -219,6 +225,17 @@ EXTERN_C chandle tblink_rpc_DpiEndpointServicesProxy_new() {
 	return reinterpret_cast<chandle>(
 			static_cast<IEndpointServices *>(new DpiEndpointServicesProxy(
 					plugin->dpi_api())));
+}
+
+EXTERN_C chandle tblink_rpc_DpiLaunchParamsProxy_new() {
+	TblinkPluginDpi *plugin = get_plugin();
+	return reinterpret_cast<chandle>(
+			static_cast<ILaunchParams *>(new DpiLaunchParamsProxy(
+					plugin->dpi_api())));
+}
+
+EXTERN_C void tblink_rpc_DpiLaunchParamsProxy_del(chandle hndl) {
+	delete reinterpret_cast<ILaunchParams *>(hndl);
 }
 
 EXTERN_C int tblink_rpc_IEndpoint_init(
@@ -692,6 +709,35 @@ EXTERN_C chandle tblink_rpc_TbLink_getDefaultEP(
 		chandle				tblink) {
 	return reinterpret_cast<chandle>(
 			reinterpret_cast<ITbLink *>(tblink)->getDefaultEP());
+}
+
+EXTERN_C void tblink_rpc_ParseLaunchPlusargs(
+		chandle				params_proxy,
+		char				**errmsg) {
+	TblinkPluginDpi *plugin = get_plugin();
+	ILaunchParams *params = reinterpret_cast<ILaunchParams *>(params_proxy);
+	s_vpi_vlog_info info;
+
+	plugin->vpi_api()->vpi_get_vlog_info(&info);
+	prv_msgbuf[0] = 0;
+	*errmsg = prv_msgbuf;
+
+	for (int32_t i=0; i<info.argc; i++) {
+		if (!strncmp(info.argv[i], "+tblink.arg=", strlen("+tblink.arg="))) {
+			params->add_arg(&info.argv[i][strlen("+tblink.arg=")]);
+		} else if (!strncmp(info.argv[i], "+tblink.param+", strlen("+tblink.param+"))) {
+			std::string key_val = &info.argv[i][strlen("+tblink.param+")];
+			int32_t eq_idx = key_val.find('=');
+
+			if (eq_idx != std::string::npos) {
+				params->add_param(
+						key_val.substr(0, eq_idx),
+						key_val.substr(eq_idx+1));
+			} else {
+				sprintf(prv_msgbuf, "malformed param entry \"%s\"", info.argv[i]);
+			}
+		}
+	}
 }
 
 EXTERN_C void tblink_rpc_ILaunchParams_add_arg(
