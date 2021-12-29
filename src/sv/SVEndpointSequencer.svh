@@ -137,6 +137,7 @@ class SVEndpointSequencer extends IEndpointListener;
 	endtask
 	
 	task run();
+		int ret;
 		IEndpoint::comm_state_e state = m_ep.comm_state();
 		// TODO: Process messages (blocking) until the mode is changed
 		// - Release
@@ -149,10 +150,17 @@ class SVEndpointSequencer extends IEndpointListener;
 			$display("--> Sequencer::Waiting");
 			while (state == IEndpoint::Waiting) begin
 				$display("--> process_one_message");
-				m_ep.process_one_message();
+				ret = m_ep.process_one_message();
 				$display("<-- process_one_message");
 				// Allow a delta to expire in between to 
 				// support loopback connections (specifically DPI<->VPI)
+				
+				if (ret == -1) begin
+					$display("TbLink Error: peer endpoint disconnected");
+					$finish();
+					return;
+				end
+				
 				$display("--> delta");
 				#0;
 				$display("<-- delta");
@@ -170,7 +178,7 @@ class SVEndpointSequencer extends IEndpointListener;
 				$display("<-- m_ev_sem.wait");
 				
 				// Allow a delta to expire in between to 
-				// support loopback connections (specifically DPI<->VPI
+				// support loopback connections (specifically DPI<->VPI)
 				#0;
 				
 				state = m_ep.comm_state();
