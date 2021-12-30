@@ -275,11 +275,6 @@ EXTERN_C int tblink_rpc_IEndpoint_comm_state(
 	return reinterpret_cast<IEndpoint *>(endpoint_h)->comm_state();
 }
 
-EXTERN_C int _tblink_rpc_IEndpoint_await_run_until_event(
-		chandle			endpoint_h) {
-	return reinterpret_cast<IEndpoint *>(endpoint_h)->await_run_until_event();
-}
-
 EXTERN_C char *tblink_rpc_IEndpoint_last_error(chandle endpoint_h) {
 	strncpy(prv_msgbuf,
 			reinterpret_cast<IEndpoint *>(endpoint_h)->last_error().c_str(),
