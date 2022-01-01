@@ -94,7 +94,10 @@ class IEndpoint;
 		IInterfaceImpl			ifinst_impl);
 		return null;
 	endfunction
-	
+
+	/**
+	 * Process a message, returning -1 on error
+	 */
 	virtual function int process_one_message();
 		return -1;
 	endfunction
