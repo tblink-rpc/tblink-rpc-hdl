@@ -58,10 +58,15 @@ void VpiEndpointSequencer::update_state() {
 	case State::WaitIsInit: {
 		DEBUG("WaitIsInit");
 		if ((ret=m_ep->is_init()) != -1) {
+			wait_delta = true;
 			if (ret == 1) {
 				m_state = State::WaitIfReg;
+				m_count = 0;
+			} else if (++m_count >= 16) {
+				fprintf(stdout, "TbLink Error: not initialized after %d iterations\n", m_count);
+				m_vpi->vpi_control(vpiFinish);
+				wait_delta = false;
 			}
-			wait_delta = true;
 		} else {
 			fprintf(stdout, "TbLink Error: Failed during is_init\n");
 			m_vpi->vpi_control(vpiFinish);

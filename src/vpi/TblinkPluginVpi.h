@@ -45,6 +45,8 @@ private:
 
 	PLI_INT32 IEndpoint_newInterfaceTypeBuilder();
 
+	PLI_INT32 IInterfaceInst_invoke_b();
+
 	PLI_INT32 IInterfaceInst_invoke_nb();
 
 	PLI_INT32 IInterfaceInst_mkValBool();
@@ -74,6 +76,8 @@ private:
 	PLI_INT32 IInterfaceTypeBuilder_add_method();
 
 	PLI_INT32 IMethodTypeBuilder_add_param();
+
+	PLI_INT32 IParamValVec_push_back();
 
 private:
 	vpi_api_t					*m_vpi;
