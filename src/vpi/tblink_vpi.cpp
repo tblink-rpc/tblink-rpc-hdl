@@ -36,7 +36,7 @@ static void tblink_vpi_sigpipe(int sig) {
 }
 
 static void vpi_startup(void) {
-	TbLink *tblink = TbLink::inst();
+	ITbLink *tblink = TbLink::inst();
     vpi_api_t *vpi_api = get_vpi_api(tblink->sym_finder());
 
     prv_plugin = new TblinkPluginVpi(vpi_api);

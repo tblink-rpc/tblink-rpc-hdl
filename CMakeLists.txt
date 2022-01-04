@@ -69,13 +69,13 @@ target_include_directories(tblink_rpc_hdl_dpi PRIVATE
 	)
 
 add_dependencies(tblink_rpc_hdl_dpi
-	tblink_rpc_core
+	tblink_rpc_core_static
 	)
 
 target_link_libraries(
 	tblink_rpc_hdl_dpi
 	-Wl,--whole-archive
-	tblink_rpc_core
+	tblink_rpc_core_static
 	-Wl,--no-whole-archive
 	)
 
@@ -87,13 +87,13 @@ target_include_directories(tblink_rpc_hdl_vpi PRIVATE
 	)
 
 add_dependencies(tblink_rpc_hdl_vpi
-	tblink_rpc_core
+	tblink_rpc_core_static
 	)
 
 target_link_libraries(
 	tblink_rpc_hdl_vpi
 	-Wl,--whole-archive
-	tblink_rpc_core
+	tblink_rpc_core_static
 	-Wl,--no-whole-archive
 	)
 

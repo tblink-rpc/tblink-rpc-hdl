@@ -39,9 +39,15 @@ VpiHandleSP VpiHandle::tf_args() {
 }
 
 VpiHandleSP VpiHandle::scan() {
+	vpiHandle next = m_vpi->vpi_scan(m_hndl);
+
+	if (!next) {
+		m_hndl = 0;
+	}
+
 	return VpiHandle::mk(
 			m_vpi,
-			m_vpi->vpi_scan(m_hndl));
+			next);
 }
 
 int32_t VpiHandle::get(int32_t property) {
