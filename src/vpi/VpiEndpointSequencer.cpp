@@ -50,7 +50,7 @@ void VpiEndpointSequencer::event(const tblink_rpc_core::IEndpointEvent *) {
 }
 
 void VpiEndpointSequencer::update_state() {
-	DEBUG_ENTER("update_state");
+	DEBUG_ENTER("update_state %d", m_state);
 	bool wait_delta = false;
 	int ret;
 
@@ -77,35 +77,46 @@ void VpiEndpointSequencer::update_state() {
 		DEBUG("WaitIfReg: last_ifinsts=%d n_ifinsts=%d count=%d", m_n_ifinsts, n_ifinsts, m_count);
 
 		if (m_n_ifinsts == n_ifinsts) {
-			if (m_count == 16) {
+			DEBUG("m_n_ifinsts==n_ifinsts");
+			if (++m_count >= 16) {
+				DEBUG("Stable -- moving on to Build");
 				// We're really done
+				m_state = State::WaitIsBuilt;
+				m_count = 0;
 				if ((ret=m_ep->build_complete()) == -1) {
 					fprintf(stdout, "TbLink Error: build_complete failed\n");
 					m_vpi->vpi_control(vpiFinish);
 				}
-				m_state = State::WaitIsBuilt;
 				wait_delta = (ret != -1);
 			} else {
+				DEBUG("Waiting for stable");
 				// Try again to ensure we're stable
-				m_count++;
 				wait_delta = true;
 			}
 		} else {
+			DEBUG("Not stable");
 			m_count = 0;
+			m_n_ifinsts = n_ifinsts;
 			wait_delta = true;
 		}
 	} break;
 	case State::WaitIsBuilt: {
 		DEBUG("WaitIsBuilt");
 		if ((ret=m_ep->is_build_complete()) != -1) {
+			wait_delta = true;
 			if (ret == 1) {
+				m_state = State::WaitIsConnected;
+				m_count = 0;
 				if ((ret=m_ep->connect_complete()) == -1) {
 					fprintf(stdout, "TbLink Error: connect_complete failed\n");
 					m_vpi->vpi_control(vpiFinish);
 				}
-				m_state = State::WaitIsConnected;
+				wait_delta = (ret != -1);
+			} else if (++m_count >= 16) {
+				fprintf(stdout, "TbLink Error: not built after %d iterations\n", m_count);
+				m_vpi->vpi_control(vpiFinish);
+				wait_delta = false;
 			}
-			wait_delta = (ret != -1);
 		} else {
 			fprintf(stdout, "TbLink Error: Failed during is_build_complete\n");
 			m_vpi->vpi_control(vpiFinish);
@@ -114,10 +125,14 @@ void VpiEndpointSequencer::update_state() {
 	case State::WaitIsConnected: {
 		DEBUG("WaitIsConnected");
 		if ((ret=m_ep->is_connect_complete()) != -1) {
+			wait_delta = true;
 			if (ret == 1) {
 				m_state = State::WaitRelease;
+			} else if (++m_count >= 16) {
+				fprintf(stdout, "TbLink Error: not connected after %d iterations\n", m_count);
+				m_vpi->vpi_control(vpiFinish);
+				wait_delta = false;
 			}
-			wait_delta = true;
 		} else {
 			fprintf(stdout, "TbLink Error: Failed during is_connect_complete\n");
 			m_vpi->vpi_control(vpiFinish);
@@ -158,7 +173,7 @@ void VpiEndpointSequencer::update_state() {
 		DEBUG("Skip setting delta");
 	}
 
-	DEBUG_LEAVE("update_state");
+	DEBUG_LEAVE("update_state %d", m_state);
 }
 
 PLI_INT32 VpiEndpointSequencer::delta() {

@@ -50,8 +50,20 @@ VpiHandleSP VpiHandle::scan() {
 			next);
 }
 
+VpiHandleSP VpiHandle::handle(int type) {
+	vpiHandle hndl = m_vpi->vpi_handle(type, m_hndl);
+	return VpiHandle::mk(
+			m_vpi,
+			hndl);
+}
+
 int32_t VpiHandle::get(int32_t property) {
 	return m_vpi->vpi_get(property, m_hndl);
+}
+
+std::string VpiHandle::get_str(int property) {
+	std::string ret = m_vpi->vpi_get_str(property, m_hndl);
+	return ret;
 }
 
 bool VpiHandle::val_bool() {

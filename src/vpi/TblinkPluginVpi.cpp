@@ -15,6 +15,7 @@
 #include "TbLink.h"
 #include "TblinkPluginVpi.h"
 #include "VpiEndpointSequencer.h"
+#include "VpiInterfaceInstWrapper.h"
 
 #define EN_DEBUG_TBLINK_PLUGIN_VPI
 
@@ -274,6 +275,7 @@ PLI_INT32 TblinkPluginVpi::ITbLink_get_default_ep() {
 }
 
 PLI_INT32 TblinkPluginVpi::IEndpoint_defineInterfaceInst() {
+	DEBUG_ENTER("IEndpoint_defineInterfaceInst");
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
 
@@ -283,12 +285,31 @@ PLI_INT32 TblinkPluginVpi::IEndpoint_defineInterfaceInst() {
 	bool is_mirror = args->scan()->val_bool();
 	vpiHandle ev_h = args->scan()->hndl();
 
-	fprintf(stdout, "ev_h=%p\n", ev_h);
+	VpiInterfaceInstWrapper *iwrap = new VpiInterfaceInstWrapper(
+			m_vpi,
+			ev_h);
 
 	if (inst_name == "") {
-		// Obtain the current module scope
+		// Obtain the current module-scope name
+		VpiHandleSP scope = systf_h->handle(vpiScope);
+		inst_name = scope->get_str(vpiFullName);
 	}
 
+	DEBUG_ENTER("--> Calling defineInterfaceInst");
+	ep->defineInterfaceInst(
+			iftype,
+			inst_name,
+			is_mirror,
+			std::bind(&VpiInterfaceInstWrapper::req_invoke, iwrap,
+					std::placeholders::_1,
+					std::placeholders::_2,
+					std::placeholders::_3,
+					std::placeholders::_4));
+	DEBUG_LEAVE("--> Calling defineInterfaceInst");
+
+	systf_h->val_ptrT<VpiInterfaceInstWrapper>(iwrap);
+
+	DEBUG_LEAVE("IEndpoint_defineInterfaceInst");
 	return 0;
 }
 
@@ -379,6 +400,7 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_b() {
 }
 
 PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_nb() {
+	DEBUG_ENTER("IInterfaceInst_invoke_nb");
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
 
@@ -420,6 +442,7 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_nb() {
 		systf_h->val_i64(-1);
 	}
 
+	DEBUG_LEAVE("IInterfaceInst_invoke_nb");
 	return 0;
 }
 

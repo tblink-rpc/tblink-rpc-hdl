@@ -35,7 +35,11 @@ public:
 
 	VpiHandleSP scan();
 
+	VpiHandleSP handle(int type);
+
 	int32_t get(int32_t property);
+
+	std::string get_str(int property);
 
 	bool val_bool();
 
