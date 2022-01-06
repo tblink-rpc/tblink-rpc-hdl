@@ -82,36 +82,44 @@ void TblinkPluginVpi::register_tf() {
     tf_data.calltf = &system_tf<&TblinkPluginVpi::IEndpoint_newInterfaceTypeBuilder>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_rpc_IInterfaceInst_invoke_b";
-    tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceInst_invoke_b>;
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_invoke_b";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_invoke_b>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_rpc_IInterfaceInst_invoke_nb";
-    tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceInst_invoke_nb>;
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_invoke_nb";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_invoke_nb>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_rpc_IInterfaceInst_mkValBool";
-    tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceInst_mkValBool>;
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_mkValBool";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_mkValBool>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_rpc_IInterfaceInst_mkValIntU";
-    tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceInst_mkValIntU>;
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_mkValIntU";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_mkValIntU>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_rpc_IInterfaceInst_mkValIntS";
-    tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceInst_mkValIntS>;
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_mkValIntS";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_mkValIntS>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_rpc_IInterfaceInst_mkValMap";
-    tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceInst_mkValMap>;
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_mkValMap";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_mkValMap>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_rpc_IInterfaceInst_mkValStr";
-    tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceInst_mkValStr>;
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_mkValStr";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_mkValStr>;
     m_vpi->vpi_register_systf(&tf_data);
 
-    tf_data.tfname = "$tblink_rpc_IInterfaceInst_mkValVec";
-    tf_data.calltf = &system_tf<&TblinkPluginVpi::IInterfaceInst_mkValVec>;
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_mkValVec";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_mkValVec>;
+    m_vpi->vpi_register_systf(&tf_data);
+
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_nextInvokeReq";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_nextInvokeReq>;
+    m_vpi->vpi_register_systf(&tf_data);
+
+    tf_data.tfname = "$tblink_rpc_InterfaceInstWrapper_invoke_rsp";
+    tf_data.calltf = &system_tf<&TblinkPluginVpi::InterfaceInstWrapper_invoke_rsp>;
     m_vpi->vpi_register_systf(&tf_data);
 
     tf_data.tfname = "$tblink_rpc_IInterfaceTypeBuilder_mkTypeBool";
@@ -352,7 +360,7 @@ PLI_INT32 TblinkPluginVpi::IEndpoint_newInterfaceTypeBuilder() {
 	return 0;
 }
 
-PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_b() {
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_invoke_b() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
 
@@ -363,7 +371,8 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_b() {
 	 * retval
 	 * done_ev
 	 */
-	IInterfaceInst *ifinst = args->scan()->val_ptrT<IInterfaceInst>();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+	IInterfaceInst *ifinst = ifinst_w->ifinst();
 	IMethodType *method = args->scan()->val_ptrT<IMethodType>();
 	IParamValVec *params = dynamic_cast<IParamValVec *>(
 			args->scan()->val_ptrT<IParamVal>());
@@ -399,8 +408,8 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_b() {
 	return 0;
 }
 
-PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_nb() {
-	DEBUG_ENTER("IInterfaceInst_invoke_nb");
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_invoke_nb() {
+	DEBUG_ENTER("InterfaceInstWrapper_invoke_nb");
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
 
@@ -409,7 +418,8 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_nb() {
 	 * method
 	 * params
 	 */
-	IInterfaceInst *ifinst = args->scan()->val_ptrT<IInterfaceInst>();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+	IInterfaceInst *ifinst = ifinst_w->ifinst();
 	IMethodType *method = args->scan()->val_ptrT<IMethodType>();
 	IParamValVec *params = dynamic_cast<IParamValVec *>(
 			args->scan()->val_ptrT<IParamVal>());
@@ -442,14 +452,15 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_invoke_nb() {
 		systf_h->val_i64(-1);
 	}
 
-	DEBUG_LEAVE("IInterfaceInst_invoke_nb");
+	DEBUG_LEAVE("InterfaceInstWrapper_invoke_nb");
 	return 0;
 }
 
-PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValBool() {
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_mkValBool() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
-	IInterfaceInst *ifinst = args->scan()->val_ptrT<IInterfaceInst>();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+	IInterfaceInst *ifinst = ifinst_w->ifinst();
 
 	systf_h->val_ptrT<IParamVal>(
 			static_cast<IParamVal *>(ifinst->mkValBool(
@@ -457,10 +468,11 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValBool() {
 	return 0;
 }
 
-PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValIntU() {
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_mkValIntU() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
-	IInterfaceInst *ifinst = args->scan()->val_ptrT<IInterfaceInst>();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+	IInterfaceInst *ifinst = ifinst_w->ifinst();
 
 	uint64_t val = args->scan()->val_ui64();
 	int32_t width = args->scan()->val_i32();
@@ -471,10 +483,11 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValIntU() {
 	return 0;
 }
 
-PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValIntS() {
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_mkValIntS() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
-	IInterfaceInst *ifinst = args->scan()->val_ptrT<IInterfaceInst>();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+	IInterfaceInst *ifinst = ifinst_w->ifinst();
 
 	uint64_t val = args->scan()->val_ui64();
 	int32_t width = args->scan()->val_i32();
@@ -485,10 +498,11 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValIntS() {
 	return 0;
 }
 
-PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValMap() {
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_mkValMap() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
-	IInterfaceInst *ifinst = args->scan()->val_ptrT<IInterfaceInst>();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+	IInterfaceInst *ifinst = ifinst_w->ifinst();
 
 	systf_h->val_ptrT<IParamVal>(
 			static_cast<IParamVal *>(ifinst->mkValMap()));
@@ -496,10 +510,11 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValMap() {
 	return 0;
 }
 
-PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValStr() {
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_mkValStr() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
-	IInterfaceInst *ifinst = args->scan()->val_ptrT<IInterfaceInst>();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+	IInterfaceInst *ifinst = ifinst_w->ifinst();
 
 	std::string val = args->scan()->val_str();
 
@@ -509,13 +524,49 @@ PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValStr() {
 	return 0;
 }
 
-PLI_INT32 TblinkPluginVpi::IInterfaceInst_mkValVec() {
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_mkValVec() {
 	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
 	VpiHandleSP args = systf_h->tf_args();
-	IInterfaceInst *ifinst = args->scan()->val_ptrT<IInterfaceInst>();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+	IInterfaceInst *ifinst = ifinst_w->ifinst();
 
 	systf_h->val_ptrT<IParamVal>(
 			static_cast<IParamVal *>(ifinst->mkValVec()));
+
+	return 0;
+}
+
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_nextInvokeReq() {
+	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
+	VpiHandleSP args = systf_h->tf_args();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+
+	IMethodType  *method = 0;
+	intptr_t     call_id = 0;
+	IParamValVec *params = 0;
+	bool valid = ifinst_w->nextInvokeReq(
+			&method,
+			call_id,
+			&params);
+
+	args->scan()->val_ptrT<IMethodType>(method);
+	args->scan()->val_i64(call_id);
+	args->scan()->val_ptrT<IParamVal>(static_cast<IParamVal *>(params));
+
+	systf_h->val_bool(valid);
+
+	return 0;
+}
+
+PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_invoke_rsp() {
+	VpiHandleSP systf_h = m_vpi_glbl->systf_h();
+	VpiHandleSP args = systf_h->tf_args();
+	VpiInterfaceInstWrapper *ifinst_w = args->scan()->val_ptrT<VpiInterfaceInstWrapper>();
+
+	intptr_t call_id = args->scan()->val_i64();
+	IParamVal *retval = args->scan()->val_ptrT<IParamVal>();
+
+	ifinst_w->invoke_rsp(call_id, retval);
 
 	return 0;
 }

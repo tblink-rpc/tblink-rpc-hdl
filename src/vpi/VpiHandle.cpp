@@ -70,6 +70,10 @@ bool VpiHandle::val_bool() {
 	return val_i64();
 }
 
+void VpiHandle::val_bool(bool v) {
+	val_i32(v);
+}
+
 int64_t VpiHandle::val_i64() {
     int arg_t = m_vpi->vpi_get(vpiType, m_hndl);
     intptr_t pval;

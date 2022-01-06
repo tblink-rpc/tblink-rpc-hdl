@@ -31,6 +31,15 @@ public:
 			tblink_rpc_core::IParamValVec		*params
 			);
 
+	bool nextInvokeReq(
+			tblink_rpc_core::IMethodType	**method,
+			intptr_t						&call_id,
+			tblink_rpc_core::IParamValVec	**params);
+
+	void invoke_rsp(
+			intptr_t						call_id,
+			tblink_rpc_core::IParamVal		*retval);
+
 private:
 	struct InvokeData {
 		tblink_rpc_core::IMethodType		*method;
@@ -44,6 +53,7 @@ private:
 	uint32_t									m_ev_v;
 	vpiHandle									m_ev_h;
 	std::vector<InvokeData>						m_invoke_q;
+	std::vector<InvokeData>						m_pending_q;
 
 };
 

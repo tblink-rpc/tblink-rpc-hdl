@@ -45,21 +45,25 @@ private:
 
 	PLI_INT32 IEndpoint_newInterfaceTypeBuilder();
 
-	PLI_INT32 IInterfaceInst_invoke_b();
+	PLI_INT32 InterfaceInstWrapper_invoke_b();
 
-	PLI_INT32 IInterfaceInst_invoke_nb();
+	PLI_INT32 InterfaceInstWrapper_invoke_nb();
 
-	PLI_INT32 IInterfaceInst_mkValBool();
+	PLI_INT32 InterfaceInstWrapper_mkValBool();
 
-	PLI_INT32 IInterfaceInst_mkValIntU();
+	PLI_INT32 InterfaceInstWrapper_mkValIntU();
 
-	PLI_INT32 IInterfaceInst_mkValIntS();
+	PLI_INT32 InterfaceInstWrapper_mkValIntS();
 
-	PLI_INT32 IInterfaceInst_mkValMap();
+	PLI_INT32 InterfaceInstWrapper_mkValMap();
 
-	PLI_INT32 IInterfaceInst_mkValStr();
+	PLI_INT32 InterfaceInstWrapper_mkValStr();
 
-	PLI_INT32 IInterfaceInst_mkValVec();
+	PLI_INT32 InterfaceInstWrapper_mkValVec();
+
+	PLI_INT32 InterfaceInstWrapper_nextInvokeReq();
+
+	PLI_INT32 InterfaceInstWrapper_invoke_rsp();
 
 	PLI_INT32 IInterfaceTypeBuilder_mkTypeBool();
 

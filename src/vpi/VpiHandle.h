@@ -43,6 +43,8 @@ public:
 
 	bool val_bool();
 
+	void val_bool(bool v);
+
 	int64_t val_i64();
 
 	void val_i64(int64_t v);
