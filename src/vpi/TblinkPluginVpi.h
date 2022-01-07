@@ -65,6 +65,8 @@ private:
 
 	PLI_INT32 InterfaceInstWrapper_invoke_rsp();
 
+	PLI_INT32 IInterfaceType_findMethod();
+
 	PLI_INT32 IInterfaceTypeBuilder_mkTypeBool();
 
 	PLI_INT32 IInterfaceTypeBuilder_mkTypeInt();
@@ -79,7 +81,15 @@ private:
 
 	PLI_INT32 IInterfaceTypeBuilder_add_method();
 
+	PLI_INT32 IMethodType_id();
+
 	PLI_INT32 IMethodTypeBuilder_add_param();
+
+	PLI_INT32 IParamValInt_val_s();
+
+	PLI_INT32 IParamValInt_val_u();
+
+	PLI_INT32 IParamValVec_at();
 
 	PLI_INT32 IParamValVec_push_back();
 
