@@ -6,14 +6,15 @@ CAPI=2:
 name: tblink-rpc::tblink-rpc-hdl:0.1
 
 filesets:
-  sv:
+  hvl:
     files:
-      - src/sv/tblink_rpc.sv
+      - "sv ? (src/sv/tblink_rpc.sv)"
+      - "sv-uvm ? (src/sv/tblink_rpc_uvm.sv)"
     file_type: verilogSource
     
 targets:
   default:
     filesets:
-      - sv
+      - hvl
       
     
