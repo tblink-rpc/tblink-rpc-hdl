@@ -179,9 +179,11 @@ void TblinkPluginVpi::register_tf() {
     tf_data.calltf = &system_tf<&TblinkPluginVpi::IParamValVec_at>;
     m_vpi->vpi_register_systf(&tf_data);
 
+    tf_data.type = vpiSysTask;
     tf_data.tfname = "$tblink_rpc_IParamValVec_push_back";
     tf_data.calltf = &system_tf<&TblinkPluginVpi::IParamValVec_push_back>;
     m_vpi->vpi_register_systf(&tf_data);
+    tf_data.type = vpiSysFunc;
 
 #ifdef UNDEFINED
     tf_data.tfname = "$tblink_ifinst_call_claim";
