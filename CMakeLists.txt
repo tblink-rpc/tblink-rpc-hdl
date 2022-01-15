@@ -35,51 +35,66 @@ foreach(CompilerFlag ${CompilerFlags})
   string(REPLACE "/MDd" "/MTd" ${CompilerFlag} "${${CompilerFlag}}")
 endforeach()
 
-file(GLOB tblink_rpc_hdl_SRC
-  src/*.cpp
-  src/*.h)
+file(GLOB tblink_rpc_hdl_dpi_SRC
+  src/dpi/*.cpp
+  src/dpi/*.h)
+ 
+list(APPEND tblink_rpc_hdl_dpi_SRC
+  src/vpi/vpi_api.cpp
+  src/vpi/VpiHandle.cpp
+  )
+ 
+file(GLOB tblink_rpc_hdl_vpi_SRC
+  src/vpi/*.cpp
+  src/vpi/*.h)
 
-add_library(tblink_rpc_hdl_static ${tblink_rpc_hdl_SRC})
-
-target_include_directories(tblink_rpc_hdl_static PRIVATE
-	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
-	${PACKAGES_DIR}/tblink-rpc-core/cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/cpp
-	${CMAKE_BINARY_DIR}/glog/include
-	)
-
-install(TARGETS tblink_rpc_hdl_static
-    DESTINATION lib
-    EXPORT tblink_rpc_hdl-targets)
+# add_library(tblink_rpc_hdl_static ${tblink_rpc_hdl_SRC})
+# 
+# target_include_directories(tblink_rpc_hdl_static PRIVATE
+# 	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+# 	${PACKAGES_DIR}/tblink-rpc-core/cpp
+# 	${CMAKE_CURRENT_SOURCE_DIR}/cpp
+# 	${CMAKE_BINARY_DIR}/glog/include
+# 	)
+# 
+# install(TARGETS tblink_rpc_hdl_static
+#     DESTINATION lib
+#     EXPORT tblink_rpc_hdl-targets)
     
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(libglog glogd)
-else()
-	set(libglog glog)
-endif()    
-
-add_library(tblink_rpc_hdl SHARED ${tblink_rpc_hdl_SRC})
-target_include_directories(tblink_rpc_hdl PRIVATE
+add_library(tblink_rpc_hdl_dpi SHARED ${tblink_rpc_hdl_dpi_SRC})
+target_include_directories(tblink_rpc_hdl_dpi PRIVATE
 	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
 	${PACKAGES_DIR}/tblink-rpc-core/cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/cpp
-	${CMAKE_BINARY_DIR}/glog/include
-	)
-add_dependencies(tblink_rpc_hdl 
-	tblink_rpc_core
-	)
-target_link_directories(
-	tblink_rpc_hdl
-	PRIVATE
-	${CMAKE_BINARY_DIR}/glog/lib64
-	)
-target_link_libraries(
-	tblink_rpc_hdl
-	-Wl,--whole-archive
-	tblink_rpc_core
-	-Wl,--no-whole-archive
-	${libglog}
+	${CMAKE_CURRENT_SOURCE_DIR}/src/vpi
 	)
 
+add_dependencies(tblink_rpc_hdl_dpi
+	tblink_rpc_core_static
+	)
+
+target_link_libraries(
+	tblink_rpc_hdl_dpi
+	-Wl,--whole-archive
+	tblink_rpc_core_static
+	-Wl,--no-whole-archive
+	)
+
+add_library(tblink_rpc_hdl_vpi SHARED ${tblink_rpc_hdl_vpi_SRC})
+target_include_directories(tblink_rpc_hdl_vpi PRIVATE
+	${PACKAGES_DIR}/tblink-rpc-core/cpp/include
+	${PACKAGES_DIR}/tblink-rpc-core/cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/vpi
+	)
+
+add_dependencies(tblink_rpc_hdl_vpi
+	tblink_rpc_core_static
+	)
+
+target_link_libraries(
+	tblink_rpc_hdl_vpi
+	-Wl,--whole-archive
+	tblink_rpc_core_static
+	-Wl,--no-whole-archive
+	)
 
  

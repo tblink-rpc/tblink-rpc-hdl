@@ -159,8 +159,11 @@ class build_ext(_build_ext):
         package_dir = build_py.get_package_dir(package)
 
         copy_file(
-            os.path.join(cwd, "build", "libtblink_rpc_hdl.so"),
-            os.path.join(package_dir, "libtblink_rpc_hdl.so"))
+            os.path.join(cwd, "build", "libtblink_rpc_hdl_dpi.so"),
+            os.path.join(package_dir, "libtblink_rpc_hdl_dpi.so"))
+        copy_file(
+            os.path.join(cwd, "build", "libtblink_rpc_hdl_vpi.so"),
+            os.path.join(package_dir, "libtblink_rpc_hdl_vpi.so"))
                 
         dest_filename = os.path.join(package_dir, filename)
         
