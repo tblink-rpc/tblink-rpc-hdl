@@ -13,9 +13,11 @@
 class SVEndpointLoopback extends IEndpoint;
 	SVEndpointLoopback			m_peer_ep;
 	bit							m_is_hdl;
+	IEndpointServices			m_services;
 	SVInterfaceType				m_iftype_m[string];
 	SVInterfaceInst				m_ifinst_m[string];
 	SVInterfaceInst				m_ifinsts[$];
+	IEndpointListener			m_listeners[$];
 
 	function new(bit is_hdl);
 		$display("SVEndpointLoopback: is_hdl=%0d", is_hdl);
@@ -26,24 +28,41 @@ class SVEndpointLoopback extends IEndpoint;
 		return m_peer_ep;
 	endfunction
 	
+	virtual function int init(IEndpointServices ep_services);
+		m_services = ep_services;
+	endfunction
+	
+	virtual function int is_init();
+		return 1;
+	endfunction
+	
 	virtual function int build_complete();
-		return 0;
+		return 1;
 	endfunction
 	
 	virtual function int is_build_complete();
-		return 0;
+		return 1;
 	endfunction
 	
 	virtual function int connect_complete();
-		return 0;
+		return 1;
 	endfunction
 	
 	virtual function int is_connect_complete();
-		return 0;
+		return 1;
 	endfunction	
 	
-	virtual function int await_run_until_event();
-		return 0;
+	virtual function void addListener(IEndpointListener l);
+		m_listeners.push_back(l);
+	endfunction
+	
+	virtual function void removeListener(IEndpointListener l);
+		for (int i=0; i<m_listeners.size(); i++) begin
+			if (m_listeners[i] == l) begin
+				m_listeners.delete(i);
+				break;
+			end
+		end
 	endfunction
 	
 	virtual function IInterfaceType findInterfaceType(string name);

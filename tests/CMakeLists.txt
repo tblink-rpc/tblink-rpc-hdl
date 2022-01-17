@@ -95,6 +95,5 @@ target_link_libraries(
 
 add_dependencies(tblink_rpc_hdl_testrunner
 	GOOGLETEST
-	GLOG
 	)
 

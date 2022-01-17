@@ -121,25 +121,7 @@ void EndpointServicesDpi::invoke_req(
 		tblink_rpc_core::IMethodType			*method,
 		intptr_t								call_id,
 		tblink_rpc_core::IParamValVec			*params) {
-	/*
-	InvokeInfoDpi *ii = new InvokeInfoDpi(
-			inst,
-			method,
-			call_id,
-			params);
-	fprintf(stdout, "params=%p ii->params()=%p\n", params, ii->params());
-	fflush(stdout);
-	m_dpi->svSetScope(m_dpi->get_pkg_scope());
-	if (method->is_blocking()) {
-		m_dpi->invoke_b(reinterpret_cast<void *>(ii));
-	} else {
-		m_dpi->invoke_nb(reinterpret_cast<void *>(ii));
-		tblink_rpc_core::IParamVal *ret = ii->ret();
-		inst->invoke_rsp(call_id, ret);
-
-		delete ii;
-	}
-	 */
+	// TODO:
 }
 
 void EndpointServicesDpi::_add_time_cb(

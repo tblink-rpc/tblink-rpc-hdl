@@ -8,11 +8,12 @@
 #pragma once
 #include <vector>
 #include "vpi_api.h"
+#include "tblink_rpc/IInterfaceImpl.h"
 #include "tblink_rpc/IInterfaceInst.h"
 
 namespace tblink_rpc_hdl {
 
-class VpiInterfaceInstWrapper {
+class VpiInterfaceInstWrapper : public tblink_rpc_core::IInterfaceImpl {
 public:
 	VpiInterfaceInstWrapper(
 			vpi_api_t							*vpi,
@@ -24,12 +25,11 @@ public:
 
 	void ifinst(tblink_rpc_core::IInterfaceInst *i) { m_ifinst = i; }
 
-	void req_invoke(
+	virtual void invoke(
 			tblink_rpc_core::IInterfaceInst		*ifinst,
 			tblink_rpc_core::IMethodType		*method,
 			intptr_t							call_id,
-			tblink_rpc_core::IParamValVec		*params
-			);
+			tblink_rpc_core::IParamValVec		*params) override;
 
 	bool nextInvokeReq(
 			tblink_rpc_core::IMethodType	**method,

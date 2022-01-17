@@ -22,6 +22,7 @@
 #include "DpiEndpointLoopbackVpi.h"
 #include "DpiEndpointListenerProxy.h"
 #include "DpiEndpointServicesProxy.h"
+#include "DpiInterfaceImpl.h"
 #include "DpiLaunchParamsProxy.h"
 #include "EndpointServicesDpi.h"
 #include "EndpointServicesDpiFactory.h"
@@ -177,12 +178,12 @@ EXTERN_C void tblink_rpc_IInterfaceInstInvokeClosure_dispose(chandle closure_h) 
 	delete reinterpret_cast<InterfaceInstInvokeClosure *>(closure_h);
 }
 
-EXTERN_C int tblink_rpc_IInterfaceInst_invoke_nb(
+EXTERN_C int tblink_rpc_IInterfaceInst_invoke(
 		chandle			ifinst_h,
 		chandle			method_h,
 		chandle			params_h,
 		chandle			closure_h) {
-	return reinterpret_cast<IInterfaceInst *>(ifinst_h)->invoke_nb(
+	return reinterpret_cast<IInterfaceInst *>(ifinst_h)->invoke(
 			reinterpret_cast<IMethodType *>(method_h),
 			dynamic_cast<IParamValVec *>(
 					reinterpret_cast<IParamVal *>(params_h)),
@@ -413,10 +414,12 @@ EXTERN_C void *_tblink_rpc_iftype_builder_define_method(
 
 EXTERN_C void *tblink_rpc_IEndpoint_defineInterfaceType(
 		void 			*endpoint_h,
-		void			*iftype_builder_h) {
+		void			*iftype_builder_h,
+		void			*ifinst_factory_h) {
 	return reinterpret_cast<void *>(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->defineInterfaceType(
-					reinterpret_cast<IInterfaceTypeBuilder *>(iftype_builder_h)));
+					reinterpret_cast<IInterfaceTypeBuilder *>(iftype_builder_h),
+					reinterpret_cast<IInterfaceInstFactory *>(ifinst_factory_h)));
 }
 
 static void invoke_req(
@@ -442,16 +445,13 @@ EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
 		const char		*inst_name,
 		unsigned int	is_mirror) {
 	IEndpoint *endpoint = reinterpret_cast<IEndpoint *>(endpoint_h);
+	DpiInterfaceImpl *impl = new DpiInterfaceImpl(prv_plugin->dpi_api());
 	return reinterpret_cast<void *>(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->defineInterfaceInst(
 					reinterpret_cast<IInterfaceType *>(iftype_h),
 					inst_name,
 					is_mirror,
-					std::bind(&invoke_req,
-							std::placeholders::_1,
-							std::placeholders::_2,
-							std::placeholders::_3,
-							std::placeholders::_4)));
+					impl));
 }
 
 EXTERN_C int32_t tblink_rpc_IEndpoint_process_one_message(
@@ -667,21 +667,6 @@ EXTERN_C chandle tblink_rpc_IInterfaceInst_mkValVec(
 	return reinterpret_cast<chandle>(
 			dynamic_cast<IParamVal *>(
 					reinterpret_cast<IInterfaceInst *>(ifinst_h)->mkValVec()));
-}
-
-EXTERN_C chandle _tblink_rpc_ifinst_invoke_nb(
-		chandle			ifinst_h,
-		chandle			method_h,
-		chandle			params_h) {
-	// TODO:
-	/* TODO:
-	return reinterpret_cast<chandle>(
-			reinterpret_cast<IInterfaceInst *>(ifinst_h)->invoke_nb(
-					reinterpret_cast<IMethodType *>(method_h),
-					dynamic_cast<IParamValVec *>(
-							reinterpret_cast<IParamVal *>(params_h))));
-     */
-	return 0;
 }
 
 EXTERN_C chandle tblink_rpc_findLaunchType(const char *id) {

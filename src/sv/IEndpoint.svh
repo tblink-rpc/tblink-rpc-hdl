@@ -57,11 +57,9 @@ class IEndpoint;
 		$finish(1);
 	endfunction
 	
-	virtual function int await_run_until_event();
-		return -1;
-	endfunction
-	
 	virtual function int shutdown();
+		$display("TbLink Error: IEndpoint::shutdown not implemented");
+		$finish(1);
 		return -1;
 	endfunction
 	
@@ -72,10 +70,14 @@ class IEndpoint;
 	endfunction
 	
 	virtual function string last_error();
+		$display("TbLink Error: IEndpoint::last_error not implemented");
+		$finish(1);
 		return "";
 	endfunction
 	
 	virtual function IInterfaceType findInterfaceType(string name);
+		$display("TbLink Error: IEndpoint::findInterfaceType not implemented");
+		$finish(1);
 		return null;
 	endfunction
 	

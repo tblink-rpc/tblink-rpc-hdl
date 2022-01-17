@@ -25,7 +25,6 @@ static const char PS = ';';
 #endif
 #include <spawn.h>
 #include <string.h>
-#include "glog/logging.h"
 #include <stdint.h>
 
 TblinkRpcHdlTestBase::TblinkRpcHdlTestBase() {
@@ -42,10 +41,6 @@ void TblinkRpcHdlTestBase::SetUp() {
 	fprintf(stdout, "SetUp\n");
 	std::vector<std::string> cmdline = ::testing::internal::GetArgvs();
 	int32_t port = -1;
-
-	FLAGS_log_dir = ".";
-	google::InitGoogleLogging(cmdline.at(0).c_str());
-
 
 	// Take the first non-option argument
 	for (uint32_t i=1; i<cmdline.size(); i++) {
@@ -111,9 +106,11 @@ void TblinkRpcHdlTestBase::TearDown() {
 
 	m_waiting_shutdown = true;
 
+	/*
 	while (!m_have_shutdown && m_endpoint->yield() != -1) {
 		;
 	}
+	 */
 
 	m_waiting_shutdown = false;
 
@@ -152,13 +149,6 @@ std::vector<std::string> TblinkRpcHdlTestBase::args() {
 	return ::testing::internal::GetArgvs();
 }
 
-void TblinkRpcHdlTestBase::shutdown() {
-	m_have_shutdown = true;
-	if (!m_waiting_shutdown) {
-		FAIL() << "received unexpected shutdown";
-		exit(1);
-	}
-}
 
 int32_t TblinkRpcHdlTestBase::add_time_cb(
 		uint64_t 		time,

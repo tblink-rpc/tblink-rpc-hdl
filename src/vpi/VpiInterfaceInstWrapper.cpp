@@ -22,7 +22,7 @@ VpiInterfaceInstWrapper::~VpiInterfaceInstWrapper() {
 	// TODO Auto-generated destructor stub
 }
 
-void VpiInterfaceInstWrapper::req_invoke(
+void VpiInterfaceInstWrapper::invoke(
 			tblink_rpc_core::IInterfaceInst		*ifinst,
 			tblink_rpc_core::IMethodType		*method,
 			intptr_t							call_id,

@@ -193,12 +193,14 @@ class TbLink;
 				return;
 			end
 
+			/* TODO:
 			$display("--> await_run_until_event");
 			if (m_default_ep.await_run_until_event() == -1) begin
 				$display("TbLink Error: failed while waiting for run-until-event");
 				$finish(1);
 			end
 			$display("<-- await_run_until_event");
+			 */
 		end
 	endfunction
 

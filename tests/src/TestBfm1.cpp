@@ -52,6 +52,7 @@ TEST_F(TestBfm1, smoke) {
 
 	ASSERT_TRUE(i0);
 
+	/*
 	i0->set_invoke_req_f([&](
 			IInterfaceInst		*inst,
 			IMethodType			*method,
@@ -62,6 +63,7 @@ TEST_F(TestBfm1, smoke) {
 		fflush(stdout);
 		inst->invoke_rsp(call_id, 0);
 	});
+	 */
 
 	for (uint32_t i=1; i<16; i++) {
 		IParamValVec *params = m_endpoint->mkValVec();
@@ -71,7 +73,7 @@ TEST_F(TestBfm1, smoke) {
 
 		fprintf(stdout, "--> run_until_event\n");
 		fflush(stdout);
-		m_endpoint->run_until_event();
+//		m_endpoint->run_until_event();
 		fprintf(stdout, "<-- run_until_event\n");
 		fflush(stdout);
 	}

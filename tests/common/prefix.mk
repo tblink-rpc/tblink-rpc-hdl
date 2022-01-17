@@ -1,0 +1,5 @@
+
+TBLINK_RPC_HDL_TESTS_COMMON_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+TBLINK_RPC_HDL_DIR := $(abspath $(TBLINK_RPC_HDL_TESTS_COMMON_DIR)/../..)
+PACKAGES_DIR := $(TBLINK_RPC_HDL_DIR)/packages
+

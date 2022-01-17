@@ -332,11 +332,7 @@ PLI_INT32 TblinkPluginVpi::IEndpoint_defineInterfaceInst() {
 			iftype,
 			inst_name,
 			is_mirror,
-			std::bind(&VpiInterfaceInstWrapper::req_invoke, iwrap,
-					std::placeholders::_1,
-					std::placeholders::_2,
-					std::placeholders::_3,
-					std::placeholders::_4));
+			iwrap);
 	DEBUG_LEAVE("--> Calling defineInterfaceInst");
 	iwrap->ifinst(ifinst);
 
@@ -355,7 +351,7 @@ PLI_INT32 TblinkPluginVpi::IEndpoint_defineInterfaceType() {
 			args->scan()->val_ptrT<IInterfaceTypeBuilder>();
 
 	systf_h->val_ptrT<IInterfaceType>(
-			ep->defineInterfaceType(iftype_b));
+			ep->defineInterfaceType(iftype_b, 0));
 
 	return 0;
 }
@@ -404,7 +400,7 @@ PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_invoke_b() {
 
 	IParamVal *retval = 0;
 
-	ifinst->invoke_nb(
+	ifinst->invoke(
 			method,
 			params,
 			[&](IParamVal *retval_p) {
@@ -451,7 +447,7 @@ PLI_INT32 TblinkPluginVpi::InterfaceInstWrapper_invoke_nb() {
 
 	IParamVal *retval = 0;
 
-	ifinst->invoke_nb(
+	ifinst->invoke(
 			method,
 			params,
 			[&](IParamVal *retval_p) {
