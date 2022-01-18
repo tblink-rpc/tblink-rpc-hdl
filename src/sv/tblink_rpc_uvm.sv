@@ -11,7 +11,8 @@
 package tblink_rpc_uvm;
 	import uvm_pkg::*;
 	import tblink_rpc::*;
-	
+
+	`include "TbLinkAgentConfig.svh"
 	`include "TbLinkAgent.svh"
 
 

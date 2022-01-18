@@ -18,10 +18,14 @@ class SVEndpointLoopback extends IEndpoint;
 	SVInterfaceInst				m_ifinst_m[string];
 	SVInterfaceInst				m_ifinsts[$];
 	IEndpointListener			m_listeners[$];
+	IEndpoint::comm_state_e		m_comm_state = IEndpoint::Waiting;
+	IEndpoint::comm_mode_e		m_comm_mode = IEndpoint::Automatic;
 
 	function new(bit is_hdl);
 		$display("SVEndpointLoopback: is_hdl=%0d", is_hdl);
 		m_is_hdl = is_hdl;
+		m_comm_state = IEndpoint::Released;
+		m_comm_mode = IEndpoint::Explicit;
 	endfunction
 	
 	function IEndpoint peer_ep();
@@ -64,6 +68,14 @@ class SVEndpointLoopback extends IEndpoint;
 			end
 		end
 	endfunction
+	
+	virtual function comm_state_e comm_state();
+		return m_comm_state;
+	endfunction
+	
+	virtual function comm_mode_e comm_mode();
+		return m_comm_mode;
+	endfunction	
 	
 	virtual function IInterfaceType findInterfaceType(string name);
 		if (m_is_hdl) begin

@@ -55,6 +55,10 @@ class TbLink;
 		end
 `endif
 		begin
+			SVLaunchTypeConnectLoopback launch_t = new();
+			m_sv_launch_type_m[launch_t.name()] = launch_t;
+		end
+		begin
 			SVEndpointServicesFactory f = new();
 			m_default_services_f = f;
 		end

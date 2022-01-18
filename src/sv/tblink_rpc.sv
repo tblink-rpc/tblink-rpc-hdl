@@ -108,6 +108,7 @@ package tblink_rpc;
 	`include "SVEndpointLoopback.svh"
 	`include "SVLaunchTypeRegistration.svh"
 	`include "SVLaunchParams.svh"
+	`include "SVLaunchTypeConnectLoopback.svh"
 	`include "SVLaunchTypeLoopback.svh"
 	`include "SVLaunchTypeNativeLoopbackDpi.svh"
 `ifndef VERILATOR

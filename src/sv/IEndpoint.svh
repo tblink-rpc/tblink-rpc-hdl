@@ -18,6 +18,11 @@ class IEndpoint;
 		Released
 	} comm_state_e;
 	
+	typedef enum {
+		Automatic,
+		Explicit
+	} comm_mode_e;
+	
 	virtual function int init(
 		IEndpointServices		ep_services);
 		$display("TBLink Error: IEndpoint::init unimplemented");
@@ -58,8 +63,6 @@ class IEndpoint;
 	endfunction
 	
 	virtual function int shutdown();
-		$display("TbLink Error: IEndpoint::shutdown not implemented");
-		$finish(1);
 		return -1;
 	endfunction
 	
@@ -69,8 +72,14 @@ class IEndpoint;
 		return Released;
 	endfunction
 	
+	virtual function comm_mode_e comm_mode();
+		$display("TbLink Error: IEndpoint::comm_mode not implemented");
+		$finish(1);
+		return Automatic;
+	endfunction
+	
 	virtual function string last_error();
-		$display("TbLink Error: IEndpoint::last_error not implemented");
+		$display("TbLink Error: IEndpoint::comm_state not implemented");
 		$finish(1);
 		return "";
 	endfunction
@@ -82,10 +91,14 @@ class IEndpoint;
 	endfunction
 	
 	virtual function IInterfaceTypeBuilder newInterfaceTypeBuilder(string name);
+		$display("TbLink Error: IEndpoint::newInterfaceTypeBuilder not implemented");
+		$finish(1);
 		return null;
 	endfunction
 	
 	virtual function IInterfaceType defineInterfaceType(IInterfaceTypeBuilder iftype_b);
+		$display("TbLink Error: IEndpoint::defineInterfaceType not implemented");
+		$finish(1);
 		return null;
 	endfunction
 	
@@ -94,6 +107,8 @@ class IEndpoint;
 		string					inst_name,
 		int unsigned			is_mirror,
 		IInterfaceImpl			ifinst_impl);
+		$display("TbLink Error: IEndpoint::defineInterfaceInst not implemented");
+		$finish(1);
 		return null;
 	endfunction
 
@@ -101,14 +116,20 @@ class IEndpoint;
 	 * Process a message, returning -1 on error
 	 */
 	virtual function int process_one_message();
+		$display("TbLink Error: IEndpoint::process_one_message not implemented");
+		$finish(1);
 		return -1;
 	endfunction
 	
 	virtual task process_one_message_b(output int ret);
+		$display("TbLink Error: IEndpoint::process_one_message_b not implemented");
+		$finish(1);
 		ret = -1;
 	endtask
 	
 	virtual function void getInterfaceInsts(ref IInterfaceInst ifinsts[$]);
+		$display("TbLink Error: IEndpoint::getInterfaceInsts not implemented");
+		$finish(1);
 	endfunction
 
 endclass
