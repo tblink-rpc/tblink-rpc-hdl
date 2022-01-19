@@ -45,8 +45,10 @@ class TbLinkAgent extends uvm_component;
 		foreach (cfg.launch_params[k]) begin
 			params.add_param(k, cfg.launch_params[k]);
 		end
-	
+
+		$display("--> Calling launcher for %0s", cfg.launch_type);
 		m_ep = launch_t.launch(params, null, errmsg);
+		$display("<-- Calling launcher");
 		
 		if (m_ep == null) begin
 			`uvm_fatal("TbLinkAgent", $sformatf("Failed to launch type %0s (%0s)",

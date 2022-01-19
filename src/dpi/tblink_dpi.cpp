@@ -202,9 +202,10 @@ EXTERN_C chandle tblink_rpc_DpiEndpointLoopback_new() {
 
 EXTERN_C chandle tblink_rpc_DpiEndpointLoopbackVpi_new() {
 	TblinkPluginDpi *plugin = get_plugin();
-	return reinterpret_cast<chandle>(
-			reinterpret_cast<IEndpoint *>(
-					new DpiEndpointLoopbackVpi(plugin->dpi_api(), 0)));
+	IEndpoint *ep = reinterpret_cast<IEndpoint *>(
+					new DpiEndpointLoopbackVpi(plugin->dpi_api(), 0));
+	TbLink::inst()->addEndpoint(ep);
+	return reinterpret_cast<chandle>(ep);
 }
 
 EXTERN_C chandle tblink_rpc_DpiEndpointListenerProxy_connect(chandle ep_h) {

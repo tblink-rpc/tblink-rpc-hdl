@@ -21,7 +21,7 @@ if (NOT PACKAGES_DIR)
 
   set (TBLINK_RPC_CORE_DIR "${PACKAGES_DIR}/tblink-rpc-core")
  
-  add_subdirectory(tests)
+#  add_subdirectory(tests)
 else()
  
 endif()

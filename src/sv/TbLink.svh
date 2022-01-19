@@ -34,6 +34,7 @@ class TbLink;
 	bit							m_delta_cb_pending;
 	int							m_last_ifinst_count;
 	int							m_zero_count_repeat;
+	chandle						m_tblink_core;
 
 	function new();
 
@@ -63,6 +64,13 @@ class TbLink;
 			m_default_services_f = f;
 		end
 	endfunction
+	
+	function chandle tblink_core();
+		if (m_tblink_core == null) begin
+			m_tblink_core = tblink_rpc_TbLink_inst();
+		end
+		return m_tblink_core;
+	endfunction
 
 	function void setTimePrecision(int p);
 		m_time_precision = p;
@@ -70,6 +78,21 @@ class TbLink;
 	
 	function void setDefaultEp(IEndpoint ep);
 		m_default_ep = ep;
+	endfunction
+	
+	function void addEndpoint(IEndpoint ep, bit is_default=0);
+		DpiEndpoint dpi_ep;
+		
+		if ($cast(dpi_ep, ep)) begin
+		end
+		
+	endfunction
+	
+	function void removeEndpoint(IEndpoint ep);
+		DpiEndpoint dpi_ep;
+		
+		if ($cast(dpi_ep, ep)) begin
+		end
 	endfunction
 	
 	function IEndpoint getDefaultEp();
@@ -406,10 +429,12 @@ import "DPI-C" context function void tblink_rpc_TbLink_setDefaultEP(
 	chandle		ep);
 import "DPI-C" context function chandle tblink_rpc_TbLink_getDefaultEP(
 	chandle		tblink);
+import "DPI-C" context function chandle tblink_rpc_TbLink_inst();
 	
 import "DPI-C" context function void tblink_rpc_ParseLaunchPlusargs(
 	chandle			params_proxy,
 	output string	errmsg);
+	
 
 `ifdef VERILATOR
 /**
