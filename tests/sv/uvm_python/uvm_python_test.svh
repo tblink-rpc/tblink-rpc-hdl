@@ -21,13 +21,17 @@ class uvm_python_test extends uvm_test;
 		TbLinkAgentConfig sv_cfg = new("connect.sv.loopback");
 		TbLinkAgentConfig py_cfg = new("native.loopback");
 		
-		py_cfg.launch_params["is_defualt"] = "1";
-		
-		sv_cfg.set(this, "*m_svagent*");
-		py_cfg.set(this, "*m_pyagent*");
-		
 		m_pyagent = TbLinkAgent::type_id::create("m_pyagent", this);
 		m_svagent = TbLinkAgent::type_id::create("m_svagent", this);
+		
+		if (!m_pyagent.init(py_cfg, this)) begin
+			return;
+		end
+		if (!m_svagent.init(sv_cfg, this)) begin
+			return;
+		end
+		
+		// Now, can build remaining components
 	endfunction
 	
 	function void connect_phase(uvm_phase phase);
