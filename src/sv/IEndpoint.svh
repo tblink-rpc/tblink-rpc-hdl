@@ -5,6 +5,17 @@
 
 typedef class IEndpointServices;
 typedef class IEndpointListener;
+
+class IEndpointFlags;
+	typedef enum {
+		Empty		= 0,
+		Claimed 	= (1 << 0),
+		LoopbackPri = (1 << 1),
+		LoopbackSec = (1 << 2)
+	} _t;
+endclass
+
+typedef IEndpointFlags::_t IEndpointFlags_t;
   
 /**
  * Class: IEndpoint
@@ -22,6 +33,17 @@ class IEndpoint;
 		Automatic,
 		Explicit
 	} comm_mode_e;
+	
+	virtual function IEndpointFlags_t getFlags();
+		$display("TBLink Error: IEndpoint::getFlags unimplemented");
+		$finish(1);
+		return IEndpointFlags::Empty;
+	endfunction
+	
+	virtual function void setFlag(IEndpointFlags_t f);
+		$display("TBLink Error: IEndpoint::getFlags unimplemented");
+		$finish(1);
+	endfunction
 	
 	virtual function int init(
 		IEndpointServices		ep_services);

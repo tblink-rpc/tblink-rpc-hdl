@@ -204,8 +204,13 @@ EXTERN_C chandle tblink_rpc_DpiEndpointLoopbackVpi_new() {
 	TblinkPluginDpi *plugin = get_plugin();
 	IEndpoint *ep = reinterpret_cast<IEndpoint *>(
 					new DpiEndpointLoopbackVpi(plugin->dpi_api(), 0));
-	TbLink::inst()->addEndpoint(ep);
 	return reinterpret_cast<chandle>(ep);
+}
+
+EXTERN_C chandle tblink_rpc_IEndpointLoopback_peer(chandle ep_h) {
+	IEndpointLoopback *ep_loop = dynamic_cast<IEndpointLoopback *>(
+			reinterpret_cast<IEndpoint *>(ep_h));
+	return reinterpret_cast<chandle>(ep_loop->peer());
 }
 
 EXTERN_C chandle tblink_rpc_DpiEndpointListenerProxy_connect(chandle ep_h) {
@@ -238,6 +243,19 @@ EXTERN_C chandle tblink_rpc_DpiLaunchParamsProxy_new() {
 
 EXTERN_C void tblink_rpc_DpiLaunchParamsProxy_del(chandle hndl) {
 	delete reinterpret_cast<ILaunchParams *>(hndl);
+}
+
+EXTERN_C int tblink_rpc_IEndpoint_getFlags(
+		chandle				endpoint_h) {
+	return static_cast<int>(
+			reinterpret_cast<IEndpoint *>(endpoint_h)->getFlags());
+}
+
+EXTERN_C void tblink_rpc_IEndpoint_setFlag(
+		chandle				endpoint_h,
+		int					f) {
+	reinterpret_cast<IEndpoint *>(endpoint_h)->setFlag(
+			static_cast<IEndpointFlags>(f));
 }
 
 EXTERN_C int tblink_rpc_IEndpoint_init(
@@ -677,6 +695,20 @@ EXTERN_C chandle tblink_rpc_findLaunchType(const char *id) {
 EXTERN_C chandle tblink_rpc_TbLink_inst() {
 	return reinterpret_cast<chandle>(
 			static_cast<ITbLink *>(TbLink::inst()));
+}
+
+EXTERN_C void tblink_rpc_TbLink_addEndpoint(
+		chandle				tblink,
+		chandle				ep) {
+	reinterpret_cast<ITbLink *>(tblink)->addEndpoint(
+			reinterpret_cast<IEndpoint *>(ep));
+}
+
+EXTERN_C void tblink_rpc_TbLink_removeEndpoint(
+		chandle				tblink,
+		chandle				ep) {
+	reinterpret_cast<ITbLink *>(tblink)->removeEndpoint(
+			reinterpret_cast<IEndpoint *>(ep));
 }
 
 EXTERN_C void tblink_rpc_TbLink_setDefaultEP(

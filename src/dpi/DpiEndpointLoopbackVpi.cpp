@@ -31,6 +31,13 @@ DpiEndpointLoopbackVpi::DpiEndpointLoopbackVpi(
 	m_dpi_api(dpi_api), m_peer(peer), m_primary(!peer),
 	m_in_dpi_call(0) {
 
+	if (m_primary) {
+		setFlag(IEndpointFlags::Claimed);
+		setFlag(IEndpointFlags::LoopbackPri);
+	} else {
+		setFlag(IEndpointFlags::LoopbackSec);
+	}
+
 	fprintf(stdout, "DpiEndpointLoopbackVpi: this=%p peer=%p\n", this, peer);
 	if (m_primary) {
 		m_peer = new DpiEndpointLoopbackVpi(dpi_api, this);

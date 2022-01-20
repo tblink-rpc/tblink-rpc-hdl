@@ -26,6 +26,8 @@ endclass
  * TODO: Add class documentation
  */
 class DpiEndpointLoopbackVpi extends DpiEndpoint;
+	
+	DpiEndpointLoopbackVpi			m_peer;
 
 	function new(chandle hndl);
 		m_hndl = hndl;
@@ -40,6 +42,14 @@ class DpiEndpointLoopbackVpi extends DpiEndpoint;
 		$display("TODO: handle startup");
 `endif
 		end
+	endfunction
+	
+	virtual function IEndpoint peer();
+		if (m_peer == null) begin
+			m_peer = new(tblink_rpc_IEndpointLoopback_peer(m_hndl));
+		end
+		
+		return m_peer;
 	endfunction
 
 	virtual task process_one_message_b(output int ret);
@@ -80,3 +90,5 @@ class DpiEndpointLoopbackVpi extends DpiEndpoint;
 endclass
 
 import "DPI-C" context function chandle tblink_rpc_DpiEndpointLoopbackVpi_new();
+
+import "DPI-C" context function chandle tblink_rpc_IEndpointLoopback_peer(chandle);

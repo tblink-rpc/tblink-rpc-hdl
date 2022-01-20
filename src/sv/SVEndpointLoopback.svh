@@ -20,12 +20,24 @@ class SVEndpointLoopback extends IEndpoint;
 	IEndpointListener			m_listeners[$];
 	IEndpoint::comm_state_e		m_comm_state = IEndpoint::Waiting;
 	IEndpoint::comm_mode_e		m_comm_mode = IEndpoint::Automatic;
+	IEndpointFlags_t			m_flags;
 
 	function new(bit is_hdl);
 		$display("SVEndpointLoopback: is_hdl=%0d", is_hdl);
 		m_is_hdl = is_hdl;
 		m_comm_state = IEndpoint::Released;
 		m_comm_mode = IEndpoint::Explicit;
+		if (is_hdl) begin
+			m_flags = IEndpointFlags_t'(m_flags | IEndpointFlags::Claimed);
+		end
+	endfunction
+	
+	virtual function IEndpointFlags_t getFlags();
+		return m_flags;
+	endfunction
+	
+	virtual function void setFlag(IEndpointFlags_t f);
+		m_flags = IEndpointFlags_t'(m_flags | f);
 	endfunction
 	
 	function IEndpoint peer_ep();

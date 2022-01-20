@@ -35,6 +35,7 @@ class TbLink;
 	int							m_last_ifinst_count;
 	int							m_zero_count_repeat;
 	chandle						m_tblink_core;
+	IEndpoint					m_endpoints[$];
 
 	function new();
 
@@ -71,7 +72,7 @@ class TbLink;
 		end
 		return m_tblink_core;
 	endfunction
-
+	
 	function void setTimePrecision(int p);
 		m_time_precision = p;
 	endfunction
@@ -80,10 +81,15 @@ class TbLink;
 		m_default_ep = ep;
 	endfunction
 	
-	function void addEndpoint(IEndpoint ep, bit is_default=0);
+	function void addEndpoint(IEndpoint ep);
 		DpiEndpoint dpi_ep;
 		
+		m_endpoints.push_back(ep);
+		
 		if ($cast(dpi_ep, ep)) begin
+			tblink_rpc_TbLink_addEndpoint(
+					tblink_core(),
+					dpi_ep.m_hndl);
 		end
 		
 	endfunction
@@ -416,19 +422,20 @@ function automatic bit tblink_rpc_init();
 	return 1;
 endfunction
 
-
 import "DPI-C" context function int _tblink_rpc_pkg_init(
 		input int unsigned 		have_blocking_tasks,
 		output int 				time_precision);
 import "DPI-C" context function chandle tblink_rpc_findLaunchType(string id);
 import "DPI-C" context function string tblink_rpc_libpath();
 
-import "DPI-C" context function chandle tblink_rpc_TbLink_inst();
 import "DPI-C" context function void tblink_rpc_TbLink_setDefaultEP(
 	chandle		tblink,
 	chandle		ep);
 import "DPI-C" context function chandle tblink_rpc_TbLink_getDefaultEP(
 	chandle		tblink);
+import "DPI-C" context function void tblink_rpc_TbLink_addEndpoint(
+	chandle		tblink,
+	chandle		ep);
 import "DPI-C" context function chandle tblink_rpc_TbLink_inst();
 	
 import "DPI-C" context function void tblink_rpc_ParseLaunchPlusargs(

@@ -40,11 +40,13 @@ class DpiEndpoint extends IEndpoint;
 		m_this = t;
 	endfunction
 	
-	/*
-	function new(chandle hndl=null);
-		m_hndl = hndl;
+	virtual function IEndpointFlags_t getFlags();
+		return IEndpointFlags_t'(tblink_rpc_IEndpoint_getFlags(m_hndl));
 	endfunction
-	 */
+	
+	virtual function void setFlag(IEndpointFlags_t f);
+		tblink_rpc_IEndpoint_setFlag(m_hndl, int'(f));
+	endfunction
 	
 	virtual function int init(
 		IEndpointServices		ep_services);
@@ -233,6 +235,12 @@ function DpiEndpoint mkDpiEndpoint(chandle hndl);
 	return ret;
 endfunction
 
+import "DPI-C" context function int tblink_rpc_IEndpoint_getFlags(
+	chandle endpoint_h); 
+
+import "DPI-C" context function void tblink_rpc_IEndpoint_setFlag(
+	chandle endpoint_h, 
+	int f);
 
 import "DPI-C" context function int tblink_rpc_IEndpoint_init(
 	chandle endpoint_h, 

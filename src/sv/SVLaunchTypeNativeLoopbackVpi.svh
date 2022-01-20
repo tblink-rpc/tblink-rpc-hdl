@@ -19,6 +19,7 @@ class SVLaunchTypeNativeLoopbackVpi extends ILaunchType;
 		input IEndpointServices		services,
 		output string				errmsg);
 		DpiEndpointLoopbackVpi ep = DpiEndpointLoopbackVpi::mk();
+		TbLink tblink = TbLink::inst();
 		int ret;
 	
 		// TODO: handle services
@@ -32,13 +33,15 @@ class SVLaunchTypeNativeLoopbackVpi extends ILaunchType;
 			ILaunchParams::string_m pm = params.params();
 			if (params.has_param(string'("is_default")) && 
 					params.get_param(string'("is_default")) == "1") begin
-				TbLink tblink = TbLink::inst();
 				tblink.setDefaultEp(ep);
 				tblink_rpc_TbLink_setDefaultEP(
 						tblink_rpc_TbLink_inst(),
 						ep.m_hndl);
 			end
 		end
+		
+		tblink.addEndpoint(ep);
+		tblink.addEndpoint(ep.peer());
 		
 		if (services == null) begin
 			// TODO: construct default services
