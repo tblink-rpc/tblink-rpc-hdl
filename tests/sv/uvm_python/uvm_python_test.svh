@@ -24,10 +24,10 @@ class uvm_python_test extends uvm_test;
 		m_pyagent = TbLinkAgent::type_id::create("m_pyagent", this);
 		m_svagent = TbLinkAgent::type_id::create("m_svagent", this);
 		
-		if (!m_pyagent.init(py_cfg, this)) begin
+		if (!m_pyagent.init(py_cfg)) begin
 			return;
 		end
-		if (!m_svagent.init(sv_cfg, this)) begin
+		if (!m_svagent.init(sv_cfg)) begin
 			return;
 		end
 		

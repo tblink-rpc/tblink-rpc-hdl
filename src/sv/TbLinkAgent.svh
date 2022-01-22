@@ -18,9 +18,7 @@ class TbLinkAgent extends uvm_component;
 		super.new(name, parent);
 	endfunction
 	
-	function bit init(
-		TbLinkAgentConfig		cfg,
-		uvm_component			comp);
+	function bit init(TbLinkAgentConfig	cfg);
 		TbLink tblink = TbLink::inst();
 		ILaunchParams params;
 		ILaunchType launch_t;
