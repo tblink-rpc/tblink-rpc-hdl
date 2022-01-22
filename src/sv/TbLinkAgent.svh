@@ -61,6 +61,13 @@ class TbLinkAgent extends uvm_component;
 		// - Complete is_init handshake
 		eps = eps_f.create();
 		
+		$display("TbLinkAgent: eps=%0p", eps);
+		
+		if (eps == null) begin
+			`uvm_fatal("TbLinkAgent", "null services handle");
+			return 0;
+		end
+		
 		if (m_ep.init(eps) == -1) begin
 			`uvm_fatal("TbLinkAgent", $sformatf("init failed"));
 			return 0;

@@ -18,8 +18,14 @@ class uvm_python_test extends uvm_test;
 	endfunction
 	
 	function void build_phase(uvm_phase phase);
+		string python;
 		TbLinkAgentConfig sv_cfg = new("connect.sv.loopback");
-		TbLinkAgentConfig py_cfg = new("native.loopback");
+		TbLinkAgentConfig py_cfg = new("python.loopback");
+		py_cfg.launch_params["module"] = "tblink_rpc.rt.cocotb";
+		
+		if ($value$plusargs("python=%s", python)) begin
+			py_cfg.launch_params["python"] = python;
+		end
 		
 		m_pyagent = TbLinkAgent::type_id::create("m_pyagent", this);
 		m_svagent = TbLinkAgent::type_id::create("m_svagent", this);
@@ -38,17 +44,9 @@ class uvm_python_test extends uvm_test;
 	endfunction
 	
 	task run_phase(uvm_phase phase);
-		$display("--> run_phase: raise-objection");
 		phase.raise_objection(this, "Main", 1);
-		$display("<-- run_phase: raise-objection");
-		
-		$display("--> run_phase: 1ms");
-		#1ms
-		$display("<-- run_phase: 1ms");
-		
-		$display("--> run_phase: drop-objection");
+		#1ms;
 		phase.drop_objection(this, "Main", 1);
-		$display("<-- run_phase: drop-objection");
 	endtask
 
 
