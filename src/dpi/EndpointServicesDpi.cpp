@@ -6,9 +6,22 @@
  */
 
 #include <string.h>
+#include "Debug.h"
 #include "tblink_rpc/IEndpoint.h"
 #include "EndpointServicesDpi.h"
 #include "TimeCallbackClosureDpi.h"
+
+#define EN_DEBUG_ENDPOINT_SERVICES_DPI
+
+#ifdef EN_DEBUG_ENDPOINT_SERVICES_DPI
+#define DEBUG_ENTER(fmt, ...) DEBUG_ENTER_BASE(EndpointServicesDpi, fmt, ##__VA_ARGS__)
+#define DEBUG_LEAVE(fmt, ...) DEBUG_LEAVE_BASE(EndpointServicesDpi, fmt, ##__VA_ARGS__)
+#define DEBUG(fmt, ...) DEBUG_BASE(EndpointServicesDpi, fmt, ##__VA_ARGS__)
+#else
+#define DEBUG_ENTER(fmt, ...)
+#define DEBUG_LEAVE(fmt, ...)
+#define DEBUG(fmt, ...)
+#endif
 
 namespace tblink_rpc_hdl {
 
@@ -64,6 +77,7 @@ std::vector<std::string> EndpointServicesDpi::args() {
 int32_t EndpointServicesDpi::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
+	DEBUG_ENTER("add_time_cb");
 	_add_time_cb(time, callback_id,
 			std::bind(&EndpointServicesDpi::notify_time_cb, this, std::placeholders::_1));
 //	TimeCallbackClosureDpi *closure = new TimeCallbackClosureDpi(
@@ -90,6 +104,8 @@ int32_t EndpointServicesDpi::add_time_cb(
 //		cbd.time = &vt;
 //		m_vpi->vpi()->vpi_register_cb(&cbd);
 //	}
+
+	DEBUG_LEAVE("add_time_cb");
 
 	return 0;
 }
@@ -128,6 +144,7 @@ void EndpointServicesDpi::_add_time_cb(
 			uint64_t							time,
 			intptr_t							callback_id,
 			const std::function<void(intptr_t)>	&cb) {
+	DEBUG_ENTER("_add_time_cb");
 
 	TimeCallbackClosureDpi *closure = new TimeCallbackClosureDpi(
 			this,
@@ -136,11 +153,14 @@ void EndpointServicesDpi::_add_time_cb(
 
 	if (m_have_blocking_tasks) {
 		// Use the DPI-based route
+		DEBUG("Use DPI-based path");
 		m_dpi->add_time_cb(closure, time);
 	} else {
 		// Use the VPI-based route
 		s_cb_data cbd;
 		s_vpi_time vt;
+
+		DEBUG("Use VPI-based path");
 
 		memset(&cbd, 0, sizeof(cbd));
 		memset(&vt, 0, sizeof(vt));
@@ -154,6 +174,7 @@ void EndpointServicesDpi::_add_time_cb(
 		cbd.time = &vt;
 		m_vpi->vpi()->vpi_register_cb(&cbd);
 	}
+	DEBUG_LEAVE("_add_time_cb");
 }
 
 void EndpointServicesDpi::notify_time_cb(intptr_t callback_id) {

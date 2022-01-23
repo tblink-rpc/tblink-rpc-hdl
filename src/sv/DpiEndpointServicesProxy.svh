@@ -13,6 +13,15 @@ endfunction
 	
 import "DPI-C" context function chandle tblink_rpc_DpiEndpointServicesProxy_new();
 
+function automatic int tblink_rpc_DpiEndpointServicesProxy_add_time_cb(
+	chandle				hndl,
+	longint unsigned	cb_time,
+	longint				cb_id);
+	IEndpointServices services = prv_dpi_services_m[hndl];
+	return services.add_time_cb(cb_time, cb_id);
+endfunction
+export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_add_time_cb;
+
 function automatic void tblink_rpc_DpiEndpointServicesProxy_shutdown(chandle hndl);
 	IEndpointServices services = prv_dpi_services_m[hndl];
 	services.shutdown();

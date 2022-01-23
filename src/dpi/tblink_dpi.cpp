@@ -113,6 +113,8 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.add_time_cb = sym_finder->findSymT<void (*)(void*,uint64_t)>("tblink_rpc_add_time_cb");
 		prv_dpi.delta_cb = sym_finder->findSymT<void (*)()>("tblink_rpc_delta_cb");
 		prv_dpi.dispatch_cb = sym_finder->findSymT<int (*)()>("tblink_rpc_dispatch_cb");
+		prv_dpi.eps_proxy_add_time_cb = sym_finder->findSymT<int(*)(void*,uint64_t,intptr_t)>(
+				"tblink_rpc_DpiEndpointServicesProxy_add_time_cb");
 		prv_dpi.eps_proxy_shutdown = sym_finder->findSymT<void(*)(void*)>("tblink_rpc_DpiEndpointServicesProxy_shutdown");
 		prv_dpi.eps_proxy_run_until_event = sym_finder->findSymT<void(*)(void*)>(
 				"tblink_rpc_DpiEndpointServicesProxy_run_until_event");
@@ -293,6 +295,12 @@ EXTERN_C int tblink_rpc_IEndpoint_is_connect_complete(
 EXTERN_C int tblink_rpc_IEndpoint_comm_state(
 		chandle			endpoint_h) {
 	return reinterpret_cast<IEndpoint *>(endpoint_h)->comm_state();
+}
+
+EXTERN_C void tblink_rpc_IEndpoint_notify_callback(
+		chandle			endpoint_h,
+		intptr_t		id) {
+	reinterpret_cast<IEndpoint *>(endpoint_h)->notify_callback(id);
 }
 
 EXTERN_C char *tblink_rpc_IEndpoint_last_error(chandle endpoint_h) {

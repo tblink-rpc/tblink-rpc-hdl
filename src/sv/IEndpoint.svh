@@ -100,6 +100,11 @@ class IEndpoint;
 		return Automatic;
 	endfunction
 	
+	virtual function void notify_callback(longint id);
+		$display("TbLink Error: IEndpoint::notify_callback not implemented");
+		$finish(1);
+	endfunction
+	
 	virtual function string last_error();
 		$display("TbLink Error: IEndpoint::comm_state not implemented");
 		$finish(1);

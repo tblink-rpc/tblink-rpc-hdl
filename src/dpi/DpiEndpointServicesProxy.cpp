@@ -33,8 +33,10 @@ std::vector<std::string> DpiEndpointServicesProxy::args() {
 int32_t DpiEndpointServicesProxy::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
-	// TODO:
-	return -1;
+	return m_dpi_api->eps_proxy_add_time_cb(
+			reinterpret_cast<void *>(this),
+			time,
+			callback_id);
 }
 
 void DpiEndpointServicesProxy::cancel_callback(intptr_t id) {
