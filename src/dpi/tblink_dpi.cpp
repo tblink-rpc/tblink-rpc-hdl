@@ -726,6 +726,13 @@ EXTERN_C void tblink_rpc_TbLink_addListener(
 			reinterpret_cast<ITbLinkListener *>(listener));
 }
 
+EXTERN_C void tblink_rpc_TbLink_removeListener(
+		chandle				tblink,
+		chandle				listener) {
+	reinterpret_cast<ITbLink *>(tblink)->removeListener(
+			reinterpret_cast<ITbLinkListener *>(listener));
+}
+
 EXTERN_C void tblink_rpc_TbLink_addEndpoint(
 		chandle				tblink,
 		chandle				ep) {

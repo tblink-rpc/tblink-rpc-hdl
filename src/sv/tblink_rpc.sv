@@ -38,10 +38,12 @@ package tblink_rpc;
 	`include "IMethodType.svh"
 	`include "IInterfaceTypeBuilder.svh"
 	
+	`include "IInterfaceFactoryBase.svh"
 	`include "IInterfaceFactory.svh"
 	`include "IInterfaceType.svh"
 	`include "IInterfaceInst.svh"
 	`include "IInterfaceImpl.svh"
+	`include "IInterfaceImplProxy.svh"
 	`include "IEndpoint.svh"
 	`include "IEndpointEvent.svh"
 	`include "IEndpointListener.svh"

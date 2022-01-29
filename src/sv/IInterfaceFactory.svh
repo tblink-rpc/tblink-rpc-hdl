@@ -9,20 +9,13 @@
  * 
  * TODO: Add class documentation
  */
-class IInterfaceFactory;
+class IInterfaceFactory #(type T) extends IInterfaceFactoryBase;
 	
-	virtual function string name();
-		$display("TbLink Error: IInterfaceFactory::name not implemented");
-		$finish(1);
-		return "";
-	endfunction
+	static T				m_inst = new();
 
-	virtual function IInterfaceType defineType(IEndpoint ep);
-		$display("TbLink Error: IInterfaceFactory::define_type not implemented");
-		$finish(1);
-		return null;
+	static function T inst();
+		return m_inst;
 	endfunction
-	
 
 
 endclass

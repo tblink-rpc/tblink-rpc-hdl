@@ -14,6 +14,8 @@ package tblink_rpc_uvm;
 
 	`include "TbLinkAgentConfig.svh"
 	`include "TbLinkAgent.svh"
+	`include "TbLinkLaunchSeqBase.svh"
+	`include "TbLinkLaunchSeq.svh"
 
 
 endpackage

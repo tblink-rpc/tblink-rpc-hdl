@@ -36,8 +36,8 @@ class TbLink extends ITbLinkListener;
 	int							m_zero_count_repeat;
 	chandle						m_tblink_core;
 	IEndpoint					m_endpoints[$];
-	IInterfaceFactory			m_if_factories[$];
-	IInterfaceFactory			m_if_factory_m[string];
+	IInterfaceFactoryBase			m_if_factories[$];
+	IInterfaceFactoryBase			m_if_factory_m[string];
 
 	function new();
 
@@ -87,7 +87,7 @@ class TbLink extends ITbLinkListener;
 		m_default_ep = ep;
 	endfunction
 	
-	function void addIfFactory(IInterfaceFactory f);
+	function void addIfFactory(IInterfaceFactoryBase f);
 		chandle tblink_h = tblink_core();
 		$display("addIfFactory: %0s", f.name());
 		m_if_factories.push_back(f);
