@@ -24,6 +24,7 @@
 #include "DpiEndpointServicesProxy.h"
 #include "DpiInterfaceImpl.h"
 #include "DpiLaunchParamsProxy.h"
+#include "DpiTbLinkListenerProxy.h"
 #include "EndpointServicesDpi.h"
 #include "EndpointServicesDpiFactory.h"
 #include "InterfaceInstInvokeClosure.h"
@@ -133,6 +134,9 @@ static TblinkPluginDpi *get_plugin() {
 				"tblink_rpc_DpiLaunchParamsProxy_add_arg");
 		prv_dpi.dlp_proxy_add_param = sym_finder->findSymT<void(*)(void *, const char *, const char *)>(
 				"tblink_rpc_DpiLaunchParamsProxy_add_param");
+
+		prv_dpi.tbl_proxy_notify = sym_finder->findSymT<void(*)(void *, void *)>(
+				"tblink_rpc_DpiTbLinkListenerProxy_notify");
 
 		prv_dpi.toggle_vpi_ev = &tblink_rpc_toggle_vpi_ev;
 
@@ -245,6 +249,16 @@ EXTERN_C chandle tblink_rpc_DpiLaunchParamsProxy_new() {
 
 EXTERN_C void tblink_rpc_DpiLaunchParamsProxy_del(chandle hndl) {
 	delete reinterpret_cast<ILaunchParams *>(hndl);
+}
+
+EXTERN_C int tblink_rpc_ITbLinkEvent_kind(chandle ev) {
+	return static_cast<int>(reinterpret_cast<ITbLinkEvent *>(ev)->kind());
+}
+
+EXTERN_C chandle tblink_rpc_DpiTbLinkListenerProxy_new() {
+	TblinkPluginDpi *plugin = get_plugin();
+	DpiTbLinkListenerProxy *p = new DpiTbLinkListenerProxy(plugin->dpi_api());
+	return reinterpret_cast<chandle>(static_cast<ITbLinkListener *>(p));
 }
 
 EXTERN_C int tblink_rpc_IEndpoint_getFlags(
@@ -705,6 +719,13 @@ EXTERN_C chandle tblink_rpc_TbLink_inst() {
 			static_cast<ITbLink *>(TbLink::inst()));
 }
 
+EXTERN_C void tblink_rpc_TbLink_addListener(
+		chandle				tblink,
+		chandle				listener) {
+	reinterpret_cast<ITbLink *>(tblink)->addListener(
+			reinterpret_cast<ITbLinkListener *>(listener));
+}
+
 EXTERN_C void tblink_rpc_TbLink_addEndpoint(
 		chandle				tblink,
 		chandle				ep) {
@@ -717,6 +738,18 @@ EXTERN_C void tblink_rpc_TbLink_removeEndpoint(
 		chandle				ep) {
 	reinterpret_cast<ITbLink *>(tblink)->removeEndpoint(
 			reinterpret_cast<IEndpoint *>(ep));
+}
+
+EXTERN_C uint32_t tblink_rpc_TbLink_getEndpoints_size(
+		chandle				tblink) {
+	return reinterpret_cast<ITbLink *>(tblink)->getEndpoints().size();
+}
+
+EXTERN_C chandle tblink_rpc_TbLink_getEndpoints_at(
+		chandle				tblink,
+		uint32_t			idx) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<TbLink *>(tblink)->getEndpoints().at(idx));
 }
 
 EXTERN_C void tblink_rpc_TbLink_setDefaultEP(

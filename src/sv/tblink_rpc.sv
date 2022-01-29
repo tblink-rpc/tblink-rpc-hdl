@@ -38,6 +38,7 @@ package tblink_rpc;
 	`include "IMethodType.svh"
 	`include "IInterfaceTypeBuilder.svh"
 	
+	`include "IInterfaceFactory.svh"
 	`include "IInterfaceType.svh"
 	`include "IInterfaceInst.svh"
 	`include "IInterfaceImpl.svh"
@@ -49,6 +50,9 @@ package tblink_rpc;
 	
 	`include "ILaunchParams.svh"
 	`include "ILaunchType.svh"
+
+	`include "ITbLinkEvent.svh"
+	`include "ITbLinkListener.svh"
 	
 	`include "TbLinkThread.svh"
 
@@ -82,6 +86,9 @@ package tblink_rpc;
 `endif
 	
 	`include "DpiLaunchType.svh"
+
+	`include "DpiTbLinkEvent.svh"
+	`include "DpiTbLinkListenerProxy.svh"
 
 	`include "SVTypeInt.svh"
 	`include "SVTypeMap.svh"

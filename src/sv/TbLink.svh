@@ -17,7 +17,7 @@ bit prv_tblink_init = tblink_rpc_init();
  * 
  * TODO: Add class documentation
  */
-class TbLink;
+class TbLink extends ITbLinkListener;
 	IEndpoint					m_default_ep;
 	IEndpointServicesFactory	m_default_services_f;
 	SVEndpointSequencer			m_default_ep_seqr;
@@ -36,6 +36,8 @@ class TbLink;
 	int							m_zero_count_repeat;
 	chandle						m_tblink_core;
 	IEndpoint					m_endpoints[$];
+	IInterfaceFactory			m_if_factories[$];
+	IInterfaceFactory			m_if_factory_m[string];
 
 	function new();
 
@@ -64,11 +66,15 @@ class TbLink;
 			SVEndpointServicesFactory f = new();
 			m_default_services_f = f;
 		end
+		
 	endfunction
 	
 	function chandle tblink_core();
 		if (m_tblink_core == null) begin
+			TbLink tblink = TbLink::inst();
+			chandle proxy = newDpiTbLinkListenerProxy(tblink);
 			m_tblink_core = tblink_rpc_TbLink_inst();
+			tblink_rpc_TbLink_addListener(m_tblink_core, proxy);
 		end
 		return m_tblink_core;
 	endfunction
@@ -81,10 +87,40 @@ class TbLink;
 		m_default_ep = ep;
 	endfunction
 	
+	function void addIfFactory(IInterfaceFactory f);
+		chandle tblink_h = tblink_core();
+		$display("addIfFactory: %0s", f.name());
+		m_if_factories.push_back(f);
+		m_if_factory_m[f.name()] = f;
+		
+		foreach (m_endpoints[i]) begin
+			if (!(m_endpoints[i].getFlags() & IEndpointFlags::LoopbackSec)) begin
+				$display("defineType");
+				void'(f.defineType(m_endpoints[i]));
+			end
+		end
+		for (int i=0; i<tblink_rpc_TbLink_getEndpoints_size(tblink_h); i++) begin
+			DpiEndpoint ep = mkDpiEndpoint(
+					tblink_rpc_TbLink_getEndpoints_at(tblink_h, i));
+			if (!(ep.getFlags() & IEndpointFlags::LoopbackSec)) begin
+				void'(f.defineType(ep));
+			end
+		end
+	endfunction
+	
 	function void addEndpoint(IEndpoint ep);
 		DpiEndpoint dpi_ep;
 		
 		m_endpoints.push_back(ep);
+		
+		$display("addEndpoint: flags='h%08h", ep.getFlags());
+		// Register known types with the endpoint 
+		// as long as it's claimed
+		if (!(ep.getFlags() & IEndpointFlags::LoopbackSec)) begin
+			foreach (m_if_factories[i]) begin
+				void'(m_if_factories[i].defineType(ep));
+			end
+		end
 		
 		if ($cast(dpi_ep, ep)) begin
 			tblink_rpc_TbLink_addEndpoint(
@@ -115,6 +151,20 @@ class TbLink;
 	
 	function int getTimePrecision();
 		return m_time_precision;
+	endfunction
+	
+	virtual function void notify(ITbLinkEvent ev);
+		$display("notify");
+		if (ev.kind() == TbLinkEventKind::AddEndpoint) begin
+			chandle tblink_h = tblink_core();
+			DpiEndpoint last_ep = mkDpiEndpoint(
+					tblink_rpc_TbLink_getEndpoints_at(
+						tblink_h,
+						tblink_rpc_TbLink_getEndpoints_size(tblink_h)-1));
+			if (!(last_ep.getFlags() & IEndpointFlags::LoopbackSec)) begin
+				register_types(last_ep);
+			end
+		end
 	endfunction
 	
 	function void auto_launch();
@@ -367,9 +417,16 @@ class TbLink;
 	static function TbLink inst();
 		if (_tblink_inst == null) begin
 			_tblink_inst = new();
+			_tblink_inst.tblink_core();
 			_tblink_inst.auto_launch();
 		end
 		return _tblink_inst;
+	endfunction
+	
+	function void register_types(IEndpoint ep);
+		foreach (m_if_factories[i]) begin
+			void'(m_if_factories[i].defineType(ep));
+		end
 	endfunction
 
 endclass
@@ -433,9 +490,22 @@ import "DPI-C" context function void tblink_rpc_TbLink_setDefaultEP(
 	chandle		ep);
 import "DPI-C" context function chandle tblink_rpc_TbLink_getDefaultEP(
 	chandle		tblink);
+import "DPI-C" context function void tblink_rpc_TbLink_addListener(
+	chandle		tblink,
+	chandle		listener);
+import "DPI-C" context function void tblink_rpc_TbLink_removeListener(
+	chandle		tblink,
+	chandle		listener);
+	
 import "DPI-C" context function void tblink_rpc_TbLink_addEndpoint(
 	chandle		tblink,
 	chandle		ep);
+import "DPI-C" context function int unsigned tblink_rpc_TbLink_getEndpoints_size(
+	chandle			tblink);
+import "DPI-C" context function chandle tblink_rpc_TbLink_getEndpoints_at(
+	chandle			tblink,
+	int unsigned	idx);
+	
 import "DPI-C" context function chandle tblink_rpc_TbLink_inst();
 	
 import "DPI-C" context function void tblink_rpc_ParseLaunchPlusargs(

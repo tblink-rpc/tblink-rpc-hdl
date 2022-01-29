@@ -39,6 +39,8 @@ typedef struct dpi_api_s {
 	void (*dlp_proxy_add_arg)(void *hndl, const char *arg);
 	void (*dlp_proxy_add_param)(void *hndl, const char *key, const char *val);
 
+	void (*tbl_proxy_notify)(void *proxy_h, void *ev_h);
+
 	void (*toggle_vpi_ev)();
 
 } dpi_api_t;
