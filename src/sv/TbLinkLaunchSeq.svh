@@ -10,9 +10,8 @@
  * TODO: Add class documentation
  */
 class TbLinkLaunchSeq #(
-		type Tt,
-		type Tf, 
-		type Tp, 
+		type Tf,
+		type Tp,
 		type REQ=uvm_sequence_item, 
 		type RSP=REQ) extends TbLinkLaunchSeqBase #(REQ, RSP);
 
@@ -28,15 +27,9 @@ class TbLinkLaunchSeq #(
 	// - Interface implementation
 	
 	virtual function IInterfaceImplProxy create_proxy();
-		Tt leaf_t;
-		Tp proxy;
-		if (!$cast(leaf_t, this)) begin
-			`uvm_fatal("TbLinkLaunchSeq", "Cannot cast 'this' to Tt");
-			return null;
-		end
-		
-		proxy = new(leaf_t);
-		
+		IInterfaceFactoryBase f = IInterfaceFactory #(Tf)::inst();
+		Tp proxy = new(this);
+	
 		return proxy;
 	endfunction
 	
@@ -49,7 +42,7 @@ endclass
 //
 // my_seq_proxy #(my_seq) - Class constructor accepts instance of my_seq
 // 
-//class my_seq extends TbLinkLaunchSeq #(my_seq, my_seq_t, my_seq_proxy #(my_seq));
+//class my_seq extends TbLinkLaunchSeq #(uvm_python_seq_factory #(my_seq));
 //	// Base now knows
 //	// - How to construct the proxy
 //endclass

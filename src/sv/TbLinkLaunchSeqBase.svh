@@ -19,6 +19,17 @@ class TbLinkLaunchSeqBase #(
 		IInterfaceType iftype;
 		IInterfaceInst ifinst;
 		IInterfaceFactoryBase factory = get_factory();
+		IMethodType body_m;
+		
+		iftype = factory.defineType(ep);
+		
+		body_m = iftype.findMethod("body");
+		
+		if (body_m == null) begin
+			`uvm_fatal("TbLinkLaunchSeqBase", 
+				$sformatf("Interface type %s doesn't define a 'body' method", iftype.name()));
+			return;
+		end
 		
 		// TODO: Find launch type
 		// TODO: Configure launcher parameters
@@ -29,7 +40,6 @@ class TbLinkLaunchSeqBase #(
 		// TODO: Create implementation and proxy for ifinst
 		proxy = create_proxy();
 		
-		iftype = factory.defineType(ep);
 
 		// TODO: Create ifinst on endpoint
 		//       - How do we know whether it's a mirror or not?
@@ -38,6 +48,14 @@ class TbLinkLaunchSeqBase #(
 				"inst",
 				proxy.is_mirror(),
 				proxy);
+		
+		// TODO: Complete 'build'
+		
+		// TODO: Complete 'connect'
+		
+		// TODO: Run 'body' method. 
+		
+		// TODO: Shutdown when complete
 		
 	endtask
 	

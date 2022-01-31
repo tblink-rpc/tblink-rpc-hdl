@@ -13,6 +13,8 @@
 class IInterfaceImpl;
 	
 	virtual function void init(IInterfaceInst ifinst);
+		$display("TbLink Error: IInterfaceImpl::init not implemented");
+		$finish();
 	endfunction
 	
 	virtual function IParamVal invoke_nb(
