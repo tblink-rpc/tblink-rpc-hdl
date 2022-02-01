@@ -168,19 +168,19 @@ class uvm_python_seq_proxy_m #(type T=uvm_python_seq_m_null) extends tblink_rpc:
 
 endclass
 
-class uvm_python_seq_factory extends IInterfaceFactory #(uvm_python_seq_factory);
-	
-	virtual function string name();
-		return "uvm_python_seq";
-	endfunction
+class uvm_python_seq_factory extends InterfaceTypeRgy #(
+		uvm_python_seq_factory, 
+		"uvm_python_seq",
+		InterfaceImplFactoryBase #(uvm_python_seq_proxy #(uvm_python_seq_null)),
+		InterfaceImplFactoryBase #(uvm_python_seq_proxy_m #(uvm_python_seq_m_null)));
 	
 	virtual function tblink_rpc::IInterfaceType defineType(tblink_rpc::IEndpoint ep);
-		tblink_rpc::IInterfaceType iftype = ep.findInterfaceType(string'("uvm_python_seq"));
+		tblink_rpc::IInterfaceType iftype = ep.findInterfaceType(name());
 		$display("defineType for uvm_python_seq");
 		
 		if (iftype == null) begin
 			tblink_rpc::IInterfaceTypeBuilder iftype_b = 
-				ep.newInterfaceTypeBuilder(string'("uvm_python_seq"));
+				ep.newInterfaceTypeBuilder(name());
 			tblink_rpc::IMethodTypeBuilder mt_b = iftype_b.newMethodTypeBuilder(
 					"body",
 					0,
@@ -203,56 +203,5 @@ class uvm_python_seq_factory extends IInterfaceFactory #(uvm_python_seq_factory)
 		
 		return iftype;
 	endfunction
-	
-	virtual function tblink_rpc::IInterfaceImpl createDfltImpl(
-		bit								is_mirror);
-		tblink_rpc::IInterfaceImplProxy ifimpl;
-		
-		if (is_mirror) begin
-			uvm_python_seq_proxy_m #() proxy = new();
-			ifimpl = proxy;
-		end else begin
-			uvm_python_seq_proxy #() proxy = new();
-			ifimpl = proxy;
-		end
-		
-		return ifimpl;
-	endfunction
-	
 endclass
-
-//class uvm_python_seq_factory #(type T) extends uvm_python_seq_factory_base;
-//	
-//	typedef T Tt;
-//	
-//	virtual function tblink_rpc::IInterfaceInst defineInterfaceInst(
-//		tblink_rpc::IEndpoint	ep,
-//		uvm_object				impl,
-//		string					name,
-//		bit						is_mirror);
-//		tblink_rpc::IInterfaceImpl ifimpl;
-//		tblink_rpc::IInterfaceInst ifinst;
-//		T impl_t;
-//		
-//		if (!$cast(impl_t, impl)) begin
-//		end
-//		
-//		if (is_mirror) begin
-//			uvm_python_seq_proxy #(T) proxy = new(impl_t);
-//			ifimpl = proxy;
-//		end else begin
-//			uvm_python_seq_proxy_m #(T) proxy = new(impl_t);
-//			ifimpl = proxy;
-//		end
-//		
-//		ifinst = ep.defineInterfaceInst(
-//				defineType(ep),
-//				name,
-//				0,
-//				ifimpl);
-//		
-//		return ifinst;
-//	endfunction
-//endclass
-
 

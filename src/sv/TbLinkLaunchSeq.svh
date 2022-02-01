@@ -1,4 +1,3 @@
-
 /****************************************************************************
  * TbLinkLaunchSeq.svh
  ****************************************************************************/
@@ -10,8 +9,8 @@
  * TODO: Add class documentation
  */
 class TbLinkLaunchSeq #(
-		type Tf,
-		type Tp,
+		type Tf,					// Type-Registry type
+		type Tp,					// Proxy-class type
 		type REQ=uvm_sequence_item, 
 		type RSP=REQ) extends TbLinkLaunchSeqBase #(REQ, RSP);
 	Tp						m_proxy;
@@ -28,15 +27,14 @@ class TbLinkLaunchSeq #(
 	// - Type information to register with the EP
 	// - Interface implementation
 	
-	virtual function IInterfaceImplProxy create_proxy();
-		IInterfaceFactoryBase f = IInterfaceFactory #(Tf)::inst();
-		Tp proxy = new(this);
-	
-		return proxy;
+	virtual function IInterfaceImpl createImpl();
+		Tp impl = new(this);
+		return impl;
 	endfunction
 	
-	virtual function IInterfaceFactoryBase get_factory();
-		return IInterfaceFactory #(Tf)::inst();
+	virtual function IInterfaceType defineType(IEndpoint ep);
+		IInterfaceTypeRgy rgy = InterfaceTypeRgyBase #(Tf)::inst();
+		return rgy.defineType(ep);
 	endfunction
 
 endclass

@@ -36,8 +36,8 @@ class TbLink extends ITbLinkListener;
 	int							m_zero_count_repeat;
 	chandle						m_tblink_core;
 	IEndpoint					m_endpoints[$];
-	IInterfaceFactoryBase			m_if_factories[$];
-	IInterfaceFactoryBase			m_if_factory_m[string];
+	IInterfaceTypeRgy			m_iftype_rgy[$];
+	IInterfaceTypeRgy			m_iftype_rgy_m[string];
 
 	function new();
 
@@ -87,11 +87,11 @@ class TbLink extends ITbLinkListener;
 		m_default_ep = ep;
 	endfunction
 	
-	function void addIfFactory(IInterfaceFactoryBase f);
+	function void addIfTypeRgy(IInterfaceTypeRgy f);
 		chandle tblink_h = tblink_core();
 		$display("addIfFactory: %0s", f.name());
-		m_if_factories.push_back(f);
-		m_if_factory_m[f.name()] = f;
+		m_iftype_rgy.push_back(f);
+		m_iftype_rgy_m[f.name()] = f;
 		
 		foreach (m_endpoints[i]) begin
 			if (!(m_endpoints[i].getFlags() & IEndpointFlags::LoopbackSec)) begin
@@ -117,8 +117,8 @@ class TbLink extends ITbLinkListener;
 		// Register known types with the endpoint 
 		// as long as it's claimed
 		if (!(ep.getFlags() & IEndpointFlags::LoopbackSec)) begin
-			foreach (m_if_factories[i]) begin
-				void'(m_if_factories[i].defineType(ep));
+			foreach (m_iftype_rgy[i]) begin
+				void'(m_iftype_rgy[i].defineType(ep));
 			end
 		end
 		
@@ -424,8 +424,8 @@ class TbLink extends ITbLinkListener;
 	endfunction
 	
 	function void register_types(IEndpoint ep);
-		foreach (m_if_factories[i]) begin
-			void'(m_if_factories[i].defineType(ep));
+		foreach (m_iftype_rgy[i]) begin
+			void'(m_iftype_rgy[i].defineType(ep));
 		end
 	endfunction
 

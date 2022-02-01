@@ -19,10 +19,9 @@ class TbLinkLaunchSeqBase #(
 	endfunction
 
 	virtual task body();
-		IInterfaceFactoryBase factory = get_factory();
 		TbLink tblink = TbLink::inst();
 		IEndpointServicesFactory eps_f = tblink.getDefaultServicesFactory();
-		IInterfaceImplProxy proxy;
+		IInterfaceImpl ifimpl;
 		IEndpoint ep;
 		IInterfaceType iftype;
 		IInterfaceInst ifinst;
@@ -81,7 +80,7 @@ class TbLinkLaunchSeqBase #(
 		end		
 		
 		// TODO: Register type with endpoint
-		iftype = factory.defineType(ep);
+		iftype = defineType(ep);
 		
 		body_m = iftype.findMethod("body");
 		
@@ -92,15 +91,15 @@ class TbLinkLaunchSeqBase #(
 		end
 		
 		// TODO: Create implementation and proxy for ifinst
-		proxy = create_proxy();
+		ifimpl = createImpl();
 		
 		// TODO: Create ifinst on endpoint
 		//       - How do we know whether it's a mirror or not?
 		ifinst = ep.defineInterfaceInst(
 				iftype, // Need to get type
 				"inst",
-				proxy.is_mirror(),
-				proxy);
+				isMirror(),
+				ifimpl);
 		
 		// TODO: Complete 'build'
 		$display("post_build_phase");
@@ -162,16 +161,20 @@ class TbLinkLaunchSeqBase #(
 		
 	endtask
 	
-	virtual function IInterfaceFactoryBase get_factory();
-		$display("TbLink Error: TbLinkLaunchSeqBase::get_factory unimplemented");
+	virtual function IInterfaceType defineType(IEndpoint ep);
+		$display("TbLink Error: TbLinkLaunchSeqBase::defineType unimplemented");
 		$finish(1);
 		return null;
 	endfunction
 	
-	virtual function IInterfaceImplProxy create_proxy();
-		$display("TbLink Error: TbLinkLaunchSeqBase::create_proxy unimplemented");
+	virtual function IInterfaceImpl createImpl();
+		$display("TbLink Error: TbLinkLaunchSeqBase::createImpl unimplemented");
 		$finish(1);
 		return null;
+	endfunction
+	
+	virtual function bit isMirror();
+		return 0;
 	endfunction
 
 
