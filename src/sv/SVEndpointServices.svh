@@ -40,7 +40,6 @@ class SVEndpointServices extends IEndpointServices;
 	
 	function void notify_time_cb(
 		longint						callback_id);
-		$display("notify_time_cb %0t", $time);
 		m_cb_m.delete(callback_id);
 		m_ep.notify_callback(callback_id);
 	endfunction
@@ -61,15 +60,6 @@ class SVEndpointServices extends IEndpointServices;
 		return tblink.getTimePrecision();
 	endfunction
 		
-	virtual function void run_until_event();
-	endfunction
-		
-	virtual function void hit_event();
-	endfunction
-		
-	virtual function void idle();
-	endfunction
-
 endclass
 
 

@@ -18,35 +18,34 @@ class uvm_python_test extends uvm_test;
 	endfunction
 	
 	function void build_phase(uvm_phase phase);
-		string python;
+		// Now, can build remaining components
 		TbLinkAgentConfig sv_cfg = new("connect.sv.loopback");
-		TbLinkAgentConfig py_cfg = new("python.loopback");
 		
-		
-		py_cfg.launch_params["module"] = "tblink_rpc.rt.cocotb";
-		
-		if ($value$plusargs("python=%s", python)) begin
-			py_cfg.launch_params["python"] = python;
-		end
-		
-		m_pyagent = TbLinkAgent::type_id::create("m_pyagent", this);
 		m_svagent = TbLinkAgent::type_id::create("m_svagent", this);
 		
-		if (!m_pyagent.init(py_cfg)) begin
-			return;
-		end
 		if (!m_svagent.init(sv_cfg)) begin
+			`uvm_fatal(get_name(), "Failed to initialize TbLink SV Agent");
 			return;
 		end
-		
-		// Now, can build remaining components
+
 	endfunction
 	
 	function void connect_phase(uvm_phase phase);
 	endfunction
 	
 	task run_phase(uvm_phase phase);
+		string python;
 		uvm_python_remote_seq seq = new();
+		TbLinkAgentConfig cfg = new("python.loopback");
+		
+		cfg.launch_params["module"] = "tblink_rpc.rt.cocotb";
+		if ($value$plusargs("python=%s", python)) begin
+			cfg.launch_params["python"] = python;
+		end
+		
+//		cfg.launch_params["class"] = 
+		
+		seq.setConfig(cfg);
 		
 		phase.raise_objection(this, "Main", 1);
 		seq.start(null);

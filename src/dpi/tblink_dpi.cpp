@@ -116,13 +116,9 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.dispatch_cb = sym_finder->findSymT<int (*)()>("tblink_rpc_dispatch_cb");
 		prv_dpi.eps_proxy_add_time_cb = sym_finder->findSymT<int(*)(void*,uint64_t,intptr_t)>(
 				"tblink_rpc_DpiEndpointServicesProxy_add_time_cb");
+		prv_dpi.eps_proxy_time = sym_finder->findSymT<uint64_t(*)(void*)>(
+				"tblink_rpc_DpiEndpointServicesProxy_time");
 		prv_dpi.eps_proxy_shutdown = sym_finder->findSymT<void(*)(void*)>("tblink_rpc_DpiEndpointServicesProxy_shutdown");
-		prv_dpi.eps_proxy_run_until_event = sym_finder->findSymT<void(*)(void*)>(
-				"tblink_rpc_DpiEndpointServicesProxy_run_until_event");
-		prv_dpi.eps_proxy_hit_event = sym_finder->findSymT<void(*)(void*)>(
-				"tblink_rpc_DpiEndpointServicesProxy_hit_event");
-		prv_dpi.eps_proxy_idle = sym_finder->findSymT<void(*)(void*)>(
-				"tblink_rpc_DpiEndpointServicesProxy_idle");
 
 		prv_dpi.epl_event = sym_finder->findSymT<void(*)(void*,void*)>(
 				"tblink_rpc_DpiEndpointListenerProxy_event");

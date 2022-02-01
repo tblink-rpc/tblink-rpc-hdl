@@ -16,7 +16,7 @@ class uvm_python_seq_null;
 		m_proxy = proxy;
 	endfunction
 	
-	virtual task doit1(int a);
+	virtual task doit(int a);
 		$display("TbLink Error: uvm_python_seq::doit1 not implemented");
 		$finish();
 	endtask
@@ -71,9 +71,25 @@ class uvm_python_seq_proxy #(type T=uvm_python_seq_null) extends tblink_rpc::IIn
 		input IInterfaceInst	ifinst,
 		input IMethodType		method,
 		IParamValVec			params);
-		// TODO: Decode and dispatch
-		$display("Error: invoke not overridden");
-		$finish();
+		case (method.id())
+			1: begin
+				IParamVal pt;
+				IParamValInt p_a;
+				
+				pt = params.at(0);
+				if (!$cast(p_a, pt)) begin
+					$display("TbLink Error: first parameter is not an Int");
+					$finish();
+					return;
+				end
+				
+				m_impl.doit(
+						p_a.val_s()
+					);
+			end
+			default:
+				$display("TbLink Error: unknown method id %0d", method.id());
+		endcase
 	endtask	
 	
 endclass
@@ -165,6 +181,23 @@ class uvm_python_seq_factory extends IInterfaceFactory #(uvm_python_seq_factory)
 		if (iftype == null) begin
 			tblink_rpc::IInterfaceTypeBuilder iftype_b = 
 				ep.newInterfaceTypeBuilder(string'("uvm_python_seq"));
+			tblink_rpc::IMethodTypeBuilder mt_b = iftype_b.newMethodTypeBuilder(
+					"body",
+					0,
+					null,
+					0,
+					1);
+			void'(iftype_b.add_method(mt_b));
+			
+			mt_b = iftype_b.newMethodTypeBuilder(
+					"doit",
+					1,
+					null,
+					1,
+					1);
+			mt_b.add_param("a", iftype_b.mkTypeInt(1, 32));
+			void'(iftype_b.add_method(mt_b));
+			
 			iftype = ep.defineInterfaceType(iftype_b);
 		end
 		

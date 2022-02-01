@@ -45,8 +45,7 @@ void DpiEndpointServicesProxy::cancel_callback(intptr_t id) {
 }
 
 uint64_t DpiEndpointServicesProxy::time() {
-	// TODO:
-	return 0;
+	return m_dpi_api->eps_proxy_time(reinterpret_cast<void *>(this));
 }
 
 /**

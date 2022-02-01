@@ -14,8 +14,10 @@ class TbLinkLaunchSeq #(
 		type Tp,
 		type REQ=uvm_sequence_item, 
 		type RSP=REQ) extends TbLinkLaunchSeqBase #(REQ, RSP);
-
-	function void init();
+	Tp						m_proxy;
+	
+	virtual function void init(Tp proxy);
+		m_proxy = proxy;
 	endfunction
 	
 	// IInterfaceImpl is completely empty

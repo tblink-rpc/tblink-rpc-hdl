@@ -39,15 +39,6 @@ class IEndpointServices;
 		return -1;
 	endfunction
 		
-	virtual function void run_until_event();
-	endfunction
-		
-	virtual function void hit_event();
-	endfunction
-		
-	virtual function void idle();
-	endfunction
-		
 endclass
 
 

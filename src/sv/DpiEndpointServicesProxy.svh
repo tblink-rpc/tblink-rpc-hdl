@@ -22,27 +22,17 @@ function automatic int tblink_rpc_DpiEndpointServicesProxy_add_time_cb(
 endfunction
 export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_add_time_cb;
 
+function automatic longint unsigned tblink_rpc_DpiEndpointServicesProxy_time(
+	chandle				hndl);
+	IEndpointServices services = prv_dpi_services_m[hndl];
+	return services.get_time();
+endfunction
+export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_time;
+
 function automatic void tblink_rpc_DpiEndpointServicesProxy_shutdown(chandle hndl);
 	IEndpointServices services = prv_dpi_services_m[hndl];
 	services.shutdown();
 endfunction
 export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_shutdown;
 
-function automatic void tblink_rpc_DpiEndpointServicesProxy_run_until_event(chandle hndl);
-	IEndpointServices services = prv_dpi_services_m[hndl];
-	services.run_until_event();
-endfunction
-export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_run_until_event;
-
-function automatic void tblink_rpc_DpiEndpointServicesProxy_hit_event(chandle hndl);
-	IEndpointServices services = prv_dpi_services_m[hndl];
-	services.hit_event();
-endfunction
-export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_hit_event;
-
-function automatic void tblink_rpc_DpiEndpointServicesProxy_idle(chandle hndl);
-	IEndpointServices services = prv_dpi_services_m[hndl];
-	services.idle();
-endfunction
-export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_idle;
 

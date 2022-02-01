@@ -81,7 +81,7 @@ class DpiInterfaceInst extends IInterfaceInst;
 		$display("m_hndl=%0p method_h=%0p params_h=%0p closure_h=%0p",
 				m_hndl, method_dpi.m_hndl, params_h,
 				closure.m_hndl);
-		void'(tblink_rpc_IInterfaceInst_invoke_nb(
+		void'(tblink_rpc_IInterfaceInst_invoke(
 				m_hndl,
 				method_dpi.m_hndl,
 				params_h,
@@ -108,9 +108,46 @@ class DpiInterfaceInst extends IInterfaceInst;
 		output IParamVal			retval,
 		input  IMethodType			method,
 		input  IParamValVec			params);
-		retval = null;
-		$display("TbLink Error: IInterfaceInst::invoke_b not implemented");
-		$finish();
+		DpiInterfaceInstInvokeClosure	closure = new();
+		DpiMethodType method_dpi;
+		chandle params_h;
+
+		$display("Add %0p to map", closure.m_hndl);
+		prv_closure_m[closure.m_hndl] = closure;
+		
+		$cast(method_dpi, method);
+		params_h = DpiParamVal::getHndl(params);
+	
+		$display("m_hndl=%0p method_h=%0p params_h=%0p closure_h=%0p",
+				m_hndl, method_dpi.m_hndl, params_h,
+				closure.m_hndl);
+		void'(tblink_rpc_IInterfaceInst_invoke(
+					m_hndl,
+					method_dpi.m_hndl,
+					params_h,
+					closure.m_hndl));
+
+`ifndef VERILATOR
+		$display("--> m_sem.get()");
+		closure.m_sem.get(1);
+		$display("<-- m_sem.get()");
+`else
+		if (!closure.m_valid) begin
+			chandle ep_h = tblink_rpc_IInterfaceInst_endpoint(m_hndl);
+			while (!closure.m_valid) begin
+				if (tblink_rpc_IEndpoint_process_one_message(ep_h) == -1) begin
+					break;
+				end
+			end
+		end
+`endif
+
+		// Expect closure to have been invoked
+		$display("Remove %0p from map", closure.m_hndl);
+		prv_closure_m.delete(closure.m_hndl);
+		closure.dispose();
+	
+		retval = closure.m_retval;
 	endtask
 	
 	virtual function void invoke_rsp(
@@ -216,7 +253,7 @@ import "DPI-C" context function void tblink_rpc_IInterfaceInstInvokeClosure_disp
 import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_endpoint(
 		chandle			ifinst);
 
-import "DPI-C" context function int tblink_rpc_IInterfaceInst_invoke_nb(
+import "DPI-C" context function int tblink_rpc_IInterfaceInst_invoke(
 		chandle			ifinst,
 		chandle			method,
 		chandle			params,
