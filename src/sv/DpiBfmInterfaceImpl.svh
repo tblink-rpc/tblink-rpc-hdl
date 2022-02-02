@@ -1,11 +1,11 @@
 
 /****************************************************************************
- * DpiInterfaceImpl.svh
+ * DpiBfmInterfaceImpl.svh
  ****************************************************************************/
 
   
 /**
- * Class: DpiInterfaceImpl
+ * Class: DpiBfmInterfaceImpl
  * 
  * This interface-implementation proxy deals with
  * environments that don't have support for virtual
@@ -14,7 +14,7 @@
  * 
  * Note: This is only supported with a DPI endpoint
  */
-class DpiInterfaceImpl extends IInterfaceImpl;
+class DpiBfmInterfaceImpl extends IInterfaceImpl;
 	string				m_inst_path;
 
 	function new(string inst_path);

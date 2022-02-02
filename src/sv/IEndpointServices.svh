@@ -14,7 +14,7 @@ class IEndpointServices;
 	virtual function void init(IEndpoint ep);
 	endfunction
 		
-	virtual function args(ref string argv[$]);
+	virtual function void args(ref string argv[$]);
 		argv = '{};
 	endfunction
 		

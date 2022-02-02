@@ -2,7 +2,6 @@
  * InterfaceImplFactoryBase.svh
  ****************************************************************************/
 
-  
 /**
  * Class: InterfaceImplFactoryBase
  * 

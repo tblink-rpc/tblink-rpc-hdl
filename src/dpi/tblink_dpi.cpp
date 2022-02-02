@@ -22,7 +22,8 @@
 #include "DpiEndpointLoopbackVpi.h"
 #include "DpiEndpointListenerProxy.h"
 #include "DpiEndpointServicesProxy.h"
-#include "DpiInterfaceImpl.h"
+#include "DpiInterfaceImplProxy.h"
+#include "DpiInterfaceImplFactoryProxy.h"
 #include "DpiLaunchParamsProxy.h"
 #include "DpiTbLinkListenerProxy.h"
 #include "EndpointServicesDpi.h"
@@ -110,7 +111,7 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.svGetScope = sym_finder->findSymT<void *(*)()>("svGetScope");
 		prv_dpi.svSetScope = sym_finder->findSymT<void *(*)(void *)>("svSetScope");
 		prv_dpi.get_pkg_scope = &get_pkg_scope;
-		prv_dpi.invoke = sym_finder->findSymT<void (*)(void*,void*,intptr_t,void*)>("tblink_rpc_invoke");
+//		prv_dpi.invoke = sym_finder->findSymT<void (*)(void*,void*,intptr_t,void*)>("tblink_rpc_invoke");
 		prv_dpi.add_time_cb = sym_finder->findSymT<void (*)(void*,uint64_t)>("tblink_rpc_add_time_cb");
 		prv_dpi.delta_cb = sym_finder->findSymT<void (*)()>("tblink_rpc_delta_cb");
 		prv_dpi.dispatch_cb = sym_finder->findSymT<int (*)()>("tblink_rpc_dispatch_cb");
@@ -125,6 +126,10 @@ static TblinkPluginDpi *get_plugin() {
 
 		prv_dpi.ifi_closure_invoke_rsp = sym_finder->findSymT<void(*)(void*,void*)>(
 				"tblink_rpc_closure_invoke_rsp");
+		prv_dpi.ifimpl_proxy_invoke = sym_finder->findSymT<void(*)(void*,void*,void*,intptr_t,void*)>(
+				"tblink_rpc_DpiInterfaceImplProxy_invoke");
+		prv_dpi.ifimpl_factory_proxy_createImpl = sym_finder->findSymT<void *(*)(void*)>(
+				"tblink_rpc_DpiInterfaceImplFactory_createImpl");
 
 		prv_dpi.dlp_proxy_add_arg = sym_finder->findSymT<void(*)(void *, const char *)>(
 				"tblink_rpc_DpiLaunchParamsProxy_add_arg");
@@ -193,6 +198,20 @@ EXTERN_C int tblink_rpc_IInterfaceInst_invoke(
 					&InterfaceInstInvokeClosure::response_f,
 					reinterpret_cast<InterfaceInstInvokeClosure *>(closure_h),
 					std::placeholders::_1));
+}
+
+EXTERN_C chandle tblink_rpc_DpiInterfaceImplProxy_new() {
+	TblinkPluginDpi *plugin = get_plugin();
+	return reinterpret_cast<chandle>(
+			dynamic_cast<IInterfaceImpl *>(
+					new DpiInterfaceImplProxy(plugin->dpi_api())));
+}
+
+EXTERN_C chandle tblink_rpc_DpiInterfaceImplFactoryProxy_new() {
+	TblinkPluginDpi *plugin = get_plugin();
+	return reinterpret_cast<chandle>(
+			dynamic_cast<IInterfaceImplFactory *>(
+					new DpiInterfaceImplFactoryProxy(plugin->dpi_api())));
 }
 
 EXTERN_C chandle tblink_rpc_DpiEndpointLoopback_new() {
@@ -429,66 +448,31 @@ EXTERN_C void tblink_rpc_IMethodTypeBuilder_add_param(
 			reinterpret_cast<IType *>(type_h));
 }
 
-EXTERN_C void *_tblink_rpc_iftype_builder_define_method(
-			void			*iftype_b,
-			const char 		*name,
-			int64_t			id,
-			const char		*signature,
-			uint32_t		is_export,
-			uint32_t		is_blocking) {
-	/* TODO:
-	return reinterpret_cast<void *>(
-			reinterpret_cast<IInterfaceTypeBuilder *>(iftype_b)->define_method(
-					name,
-					id,
-					signature,
-					is_export,
-					is_blocking));
-     */
-	return 0;
-}
-
-
 EXTERN_C void *tblink_rpc_IEndpoint_defineInterfaceType(
 		void 			*endpoint_h,
 		void			*iftype_builder_h,
-		void			*ifinst_factory_h) {
+		void			*ifimpl_f,
+		void			*ifimpl_mirror_f) {
 	return reinterpret_cast<void *>(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->defineInterfaceType(
 					reinterpret_cast<IInterfaceTypeBuilder *>(iftype_builder_h),
-					reinterpret_cast<IInterfaceInstFactory *>(ifinst_factory_h)));
-}
-
-static void invoke_req(
-		tblink_rpc_core::IInterfaceInst			*inst,
-		tblink_rpc_core::IMethodType			*method,
-		intptr_t								call_id,
-		tblink_rpc_core::IParamValVec			*params) {
-	dpi_api_t *dpi_api = prv_plugin->dpi_api();
-	tblink_rpc_core::IParamVal *params_v = static_cast<tblink_rpc_core::IParamVal *>(params);
-	dpi_api->svSetScope(dpi_api->get_pkg_scope());
-
-	dpi_api->invoke(
-			reinterpret_cast<chandle>(inst),
-			reinterpret_cast<chandle>(method),
-			call_id,
-			reinterpret_cast<chandle>(params_v));
-	fflush(stdout);
+					reinterpret_cast<IInterfaceImplFactory *>(ifimpl_f),
+					reinterpret_cast<IInterfaceImplFactory *>(ifimpl_mirror_f)));
 }
 
 EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
-		void 			*endpoint_h,
-		void			*iftype_h,
+		chandle 		endpoint_h,
+		chandle			iftype_h,
 		const char		*inst_name,
-		unsigned int	is_mirror) {
+		unsigned int	is_mirror,
+		chandle			ifimpl_h) {
 	IEndpoint *endpoint = reinterpret_cast<IEndpoint *>(endpoint_h);
-	DpiInterfaceImpl *impl = new DpiInterfaceImpl(prv_plugin->dpi_api());
 	return reinterpret_cast<void *>(
 			reinterpret_cast<IEndpoint *>(endpoint_h)->defineInterfaceInst(
 					reinterpret_cast<IInterfaceType *>(iftype_h),
 					inst_name,
 					is_mirror,
-					impl));
+					reinterpret_cast<IInterfaceImpl *>(ifimpl_h)));
 }
 
 EXTERN_C int32_t tblink_rpc_IEndpoint_process_one_message(

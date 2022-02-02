@@ -13,6 +13,7 @@ class IEndpointServicesFactory;
 	virtual function IEndpointServices create();
 		$display("TbLink Error: IEndpointServicesFactory::create unimplemented");
 		$finish();
+		return null;
 	endfunction
 
 endclass

@@ -122,7 +122,10 @@ class IEndpoint;
 		return null;
 	endfunction
 	
-	virtual function IInterfaceType defineInterfaceType(IInterfaceTypeBuilder iftype_b);
+	virtual function IInterfaceType defineInterfaceType(
+		IInterfaceTypeBuilder 		iftype_b,
+		IInterfaceImplFactory		impl_f,
+		IInterfaceImplFactory		impl_mirror_f);
 		$display("TbLink Error: IEndpoint::defineInterfaceType not implemented");
 		$finish(1);
 		return null;

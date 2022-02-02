@@ -1,16 +1,13 @@
-
 /****************************************************************************
  * InterfaceTypeRgyBase.svh
  ****************************************************************************/
 
-  
 /**
  * Class: InterfaceTypeRgyBase
  * 
  * TODO: Add class documentation
  */
 class InterfaceTypeRgyBase #(type T) extends IInterfaceTypeRgy;
-
 	static T				m_inst = inst();
 
 	static function T inst();

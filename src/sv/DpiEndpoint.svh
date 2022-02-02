@@ -126,15 +126,30 @@ class DpiEndpoint extends IEndpoint;
 		return ret;
 	endfunction
 		
-	virtual function IInterfaceType defineInterfaceType(IInterfaceTypeBuilder iftype_b);
+	virtual function IInterfaceType defineInterfaceType(
+		IInterfaceTypeBuilder 		iftype_b,
+		IInterfaceImplFactory		impl_f,
+		IInterfaceImplFactory		impl_mirror_f);
 		DpiInterfaceTypeBuilder builder_dpi;
 		DpiInterfaceType ret;
 		chandle iftype_h;
+		chandle impl_f_proxy;
+		chandle impl_mirror_f_proxy;
+		
+		if (impl_f != null) begin
+			impl_f_proxy = newDpiInterfaceImplFactoryProxy(impl_f);
+		end
+		
+		if (impl_mirror_f != null) begin
+			impl_mirror_f_proxy = newDpiInterfaceImplFactoryProxy(impl_mirror_f);
+		end
 		
 		$cast(builder_dpi, iftype_b);
 		iftype_h = tblink_rpc_IEndpoint_defineInterfaceType(
 				m_hndl,
-				builder_dpi.m_hndl);
+				builder_dpi.m_hndl,
+				impl_f_proxy,
+				impl_mirror_f_proxy);
 		ret = new(iftype_h);
 		
 		return ret;
@@ -149,17 +164,22 @@ class DpiEndpoint extends IEndpoint;
 		DpiInterfaceType iftype_dpi;
 		DpiInterfaceInst ifinst;
 		chandle ifinst_h;
+		chandle ifimpl_h = newDpiInterfaceImplProxy(ifinst_impl);
 		
-		$cast(iftype_dpi, iftype);
+		if (!$cast(iftype_dpi, iftype)) begin
+			$display("TbLink Error: Interface type %0s doesn't match DPI endpoint", iftype.name());
+			$finish();
+			return null;
+		end
 		
 		ifinst_h = _tblink_rpc_IEndpoint_defineInterfaceInst(
 				m_hndl,
 				iftype_dpi.m_hndl,
 				inst_name,
-				is_mirror);
+				is_mirror,
+				ifimpl_h);
 		
 		ifinst = new(ifinst_h);
-		ifinst.set_impl(ifinst_impl);
 		
 		return ifinst;
 	endfunction
@@ -270,7 +290,9 @@ import "DPI-C" context function chandle tblink_rpc_IEndpoint_newInterfaceTypeBui
 	
 import "DPI-C" context function chandle tblink_rpc_IEndpoint_defineInterfaceType(
 	chandle		endpoint_h,
-	chandle 	iftype_builder_h);
+	chandle 	iftype_builder_h,
+	chandle		ifimpl_f_h,
+	chandle		ifimpl_mirror_f_h);
 	
 import "DPI-C" context function int unsigned tblink_rpc_IEndpoint_getInterfaceInstCount(
 	chandle		endpoint_h);
@@ -278,32 +300,12 @@ import "DPI-C" context function chandle tblink_rpc_IEndpoint_getInterfaceInstAt(
 	chandle				endpoint_h,
 	int unsigned		idx);
 	
-
-`ifdef UNDEFINED
-function chandle tblink_rpc_IEndpoint_defineInterfaceInst(
-	chandle			endpoint_h,
-	chandle			iftype_h,
-	string			inst_name,
-	int unsigned	is_mirror,
-	IInterfaceImpl	impl);
-	automatic DpiInterfaceInst ifinst_dpi;
-	
-	ifinst_dpi = new(ifinst_h);
-	automatic chandle ifinst = _tblink_rpc_IEndpoint_defineInterfaceInst(
-			endpoint_h,
-			iftype_h,
-			inst_name,
-			is_mirror);
-	ifinst2impl_m[ifinst] = impl;
-	return ifinst;
-endfunction
-`endif
-	
 import "DPI-C" context function chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
 	chandle			endpoint_h,
 	chandle			iftype_h,
 	string			inst_name,
-	int unsigned	is_mirror);	
+	int unsigned	is_mirror,
+	chandle			ifimpl_h);	
 	
 import "DPI-C" context function int tblink_rpc_IEndpoint_process_one_message(
 	chandle			endpoint_h);

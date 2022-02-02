@@ -110,7 +110,10 @@ class SVEndpointLoopback extends IEndpoint;
 		return ret;
 	endfunction
 	
-	virtual function IInterfaceType defineInterfaceType(IInterfaceTypeBuilder iftype_b);
+	virtual function IInterfaceType defineInterfaceType(
+		IInterfaceTypeBuilder iftype_b,
+		IInterfaceImplFactory		impl_f,
+		IInterfaceImplFactory		impl_mirror_f);
 		SVInterfaceTypeBuilder iftype_b_sv;
 		SVInterfaceType iftype;
 		$cast(iftype_b_sv, iftype_b);

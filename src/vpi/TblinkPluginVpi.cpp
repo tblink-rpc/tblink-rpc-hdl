@@ -350,8 +350,9 @@ PLI_INT32 TblinkPluginVpi::IEndpoint_defineInterfaceType() {
 	IInterfaceTypeBuilder *iftype_b =
 			args->scan()->val_ptrT<IInterfaceTypeBuilder>();
 
+	// TODO: null implementation OK?
 	systf_h->val_ptrT<IInterfaceType>(
-			ep->defineInterfaceType(iftype_b, 0));
+			ep->defineInterfaceType(iftype_b, 0, 0));
 
 	return 0;
 }

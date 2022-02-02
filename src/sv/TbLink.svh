@@ -417,7 +417,7 @@ class TbLink extends ITbLinkListener;
 	static function TbLink inst();
 		if (_tblink_inst == null) begin
 			_tblink_inst = new();
-			_tblink_inst.tblink_core();
+			void'(_tblink_inst.tblink_core());
 			_tblink_inst.auto_launch();
 		end
 		return _tblink_inst;

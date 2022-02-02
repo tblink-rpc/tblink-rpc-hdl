@@ -19,17 +19,24 @@ class IInterfaceInst;
 	virtual function IEndpoint endpoint();
 		$display("TbLink Error: IInterfaceInst::endpoint not implemented");
 		$finish();
+		return null;
 	endfunction
 	
 	virtual function string name();
+		$display("TbLink Error: IInterfaceInst::name not implemented");
+		$finish();
 		return "";
 	endfunction
 	
 	virtual function IInterfaceType iftype();
+		$display("TbLink Error: IInterfaceInst::iftype not implemented");
+		$finish();
 		return null;
 	endfunction
 	
 	virtual function bit is_mirror();
+		$display("TbLink Error: IInterfaceInst::is_mirror not implemented");
+		$finish();
 		return 0;
 	endfunction
 	

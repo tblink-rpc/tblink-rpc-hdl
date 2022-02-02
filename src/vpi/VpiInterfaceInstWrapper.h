@@ -21,6 +21,10 @@ public:
 
 	virtual ~VpiInterfaceInstWrapper();
 
+	virtual void init(tblink_rpc_core::IInterfaceInst *ifinst) override {
+		// ...
+	}
+
 	tblink_rpc_core::IInterfaceInst *ifinst() const { return m_ifinst; }
 
 	void ifinst(tblink_rpc_core::IInterfaceInst *i) { m_ifinst = i; }

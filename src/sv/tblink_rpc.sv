@@ -81,7 +81,9 @@ package tblink_rpc;
 	`include "DpiParamValMap.svh"
 	`include "DpiParamValStr.svh"
 	`include "DpiParamValVec.svh"
-	`include "DpiInterfaceImpl.svh"
+	`include "DpiBfmInterfaceImpl.svh"
+	`include "DpiInterfaceImplFactoryProxy.svh"
+	`include "DpiInterfaceImplProxy.svh"
 
 	`include "DpiEndpointServicesProxy.svh"
 	`include "DpiEndpoint.svh"
@@ -187,11 +189,6 @@ package tblink_rpc;
 	import "DPI-C" context function int unsigned tblink_rpc_IInterfaceInst_is_mirror(
 			chandle			ifinst);
 	
-	import "DPI-C" context function chandle _tblink_rpc_ifinst_invoke_nb(
-			chandle			ifinst_h,
-			chandle			method_h,
-			chandle			params_h);
-
 	/**
 	 * Time-based features aren't supported in Verilator
 	 */
@@ -214,7 +211,8 @@ package tblink_rpc;
 	endtask
 	
 	// IEndpoint functions
-	
+
+`ifdef UNDEFINED
 	function automatic void tblink_rpc_invoke(
 		chandle			ifinst_h,
 		chandle			method_h,
@@ -264,6 +262,7 @@ package tblink_rpc;
 		end
 	endfunction
 	export "DPI-C" function tblink_rpc_invoke;
+`endif
 
 	/**
 	 * Obtain command-line arguments

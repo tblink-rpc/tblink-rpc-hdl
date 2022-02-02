@@ -21,7 +21,7 @@ class SVEndpointServices extends IEndpointServices;
 		m_ep = ep;
 	endfunction
 		
-	virtual function args(ref string argv[$]);
+	virtual function void args(ref string argv[$]);
 		argv = '{};
 	endfunction
 		

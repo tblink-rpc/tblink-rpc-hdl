@@ -18,6 +18,7 @@ class IInterfaceImplProxy extends IInterfaceImpl;
 	virtual function bit is_mirror();
 		$display("TbLink Error: IInterfaceImplProxy::is_mirror unimplemented");
 		$finish(1);
+		return 0;
 	endfunction
 
 endclass
