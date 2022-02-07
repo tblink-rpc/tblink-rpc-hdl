@@ -198,7 +198,10 @@ class uvm_python_seq_factory extends InterfaceTypeRgy #(
 			mt_b.add_param("a", iftype_b.mkTypeInt(1, 32));
 			void'(iftype_b.add_method(mt_b));
 			
-			iftype = ep.defineInterfaceType(iftype_b);
+			iftype = ep.defineInterfaceType(
+					iftype_b,
+					getImplFactory(),
+					getMirrorImplFactory());
 		end
 		
 		return iftype;
