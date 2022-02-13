@@ -777,6 +777,19 @@ EXTERN_C void tblink_rpc_ParseLaunchPlusargs(
 			} else {
 				sprintf(prv_msgbuf, "malformed param entry \"%s\"", info.argv[i]);
 			}
+		} else if (info.argv[i][0] == '+') {
+			// Pass all plusargs directly
+			std::string val = &info.argv[i][1];
+			int eq_idx = val.rfind('=');
+
+			if (eq_idx == std::string::npos) {
+				// No value
+				params->add_param(val, "");
+			} else {
+				params->add_param(
+						val.substr(0, eq_idx),
+						val.substr(eq_idx+1));
+			}
 		}
 	}
 }

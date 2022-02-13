@@ -22,6 +22,8 @@ class SVEndpointSequencer extends IEndpointListener;
 		IInterfaceInst ifinsts[$];
 		int last_ifinst_count = -1;
 		int ret;
+		int cnt;
+		int iter_limit = 20;
 	
 		$display("--> Wait for interfaces");
 		for (int i=0; i<16; i++) begin
@@ -40,6 +42,7 @@ class SVEndpointSequencer extends IEndpointListener;
 		
 		$display("done...");
 
+		cnt = 0;
 		do begin
 			ret = m_ep.is_init();
 
@@ -56,7 +59,9 @@ class SVEndpointSequencer extends IEndpointListener;
 				end
 			end
 			
-		end while (ret == 0);
+			cnt += 1;
+			
+		end while (ret == 0 && cnt <= iter_limit);
 		
 		if (ret != 1) begin
 			$display("TbLink Error: failed to initialize endpoint (%0d)", ret);
@@ -69,7 +74,8 @@ class SVEndpointSequencer extends IEndpointListener;
 			$finish();
 			return;
 		end
-	
+
+		cnt = 0;
 		$display("--> is_build_complete");
 		do begin
 			ret = m_ep.is_build_complete();
@@ -87,7 +93,9 @@ class SVEndpointSequencer extends IEndpointListener;
 					ret = 0;
 				end
 			end
-		end while (ret == 0);
+			
+			cnt += 1;
+		end while (ret == 0 && cnt <= iter_limit);
 		$display("<-- is_build_complete");
 		
 		if (ret != 1) begin
@@ -103,7 +111,8 @@ class SVEndpointSequencer extends IEndpointListener;
 			return;
 		end
 		$display("<-- connect_complete");
-		
+
+		cnt = 0;
 		$display("--> is_connect_complete");
 		do begin
 			ret = m_ep.is_connect_complete();
@@ -121,7 +130,10 @@ class SVEndpointSequencer extends IEndpointListener;
 					ret = 0;
 				end
 			end
-		end while (ret == 0);
+			
+			cnt += 1;
+			
+		end while (ret == 0 && cnt <= iter_limit);
 		
 		if (ret != 1) begin
 			$display("TbLink Error: failed to complete connect phase (%0d)", ret);

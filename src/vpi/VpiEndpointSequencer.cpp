@@ -127,6 +127,7 @@ void VpiEndpointSequencer::update_state() {
 		if ((ret=m_ep->is_connect_complete()) != -1) {
 			wait_delta = true;
 			if (ret == 1) {
+				DEBUG("  IsConnected - moving on to WaitRelease");
 				m_state = State::WaitRelease;
 			} else if (++m_count >= 16) {
 				fprintf(stdout, "TbLink Error: not connected after %d iterations\n", m_count);

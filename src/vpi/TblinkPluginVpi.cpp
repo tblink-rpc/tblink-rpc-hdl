@@ -244,6 +244,17 @@ PLI_INT32 TblinkPluginVpi::on_startup() {
 				std::string pval = pname_val.substr(eq_idx+1);
 				launch_params.push_back({pname, pval});
 			}
+		} else if (info.argv[i][0] == '+') {
+			std::string pname_val = &info.argv[i][1];
+			int32_t eq_idx = pname_val.find('=');
+
+			if (eq_idx != std::string::npos) {
+				launch_params.push_back({
+					pname_val.substr(0, eq_idx),
+					pname_val.substr(eq_idx+1)});
+			} else {
+				launch_params.push_back({pname_val, ""});
+			}
 		}
 	}
 
