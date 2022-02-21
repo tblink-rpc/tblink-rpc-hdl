@@ -347,7 +347,7 @@ void EndpointServicesVpi::idle() {
 int32_t EndpointServicesVpi::add_time_cb(
 		uint64_t 		time,
 		intptr_t		callback_id) {
-	DEBUG_ENTER("add_time_callback");
+	DEBUG_ENTER("add_time_callback callback_id=%lld", callback_id);
 
 	// Need to take another spin to be sure
 	s_cb_data cbd;
@@ -378,8 +378,18 @@ int32_t EndpointServicesVpi::add_time_cb(
 }
 
 void EndpointServicesVpi::cancel_callback(intptr_t id) {
+	DEBUG_ENTER("cancel_callback %lld", id);
 	// TODO: find the callback id...
+	auto it = m_cb_closure_m.find(id);
 
+	if (it != m_cb_closure_m.end()) {
+		CallbackClosureVpi *c = it->second;
+		m_vpi->vpi_remove_cb(c->cb_h());
+		m_cb_closure_m.erase(it);
+		delete c;
+	}
+
+	DEBUG_LEAVE("cancel_callback %lld", id);
 }
 
 uint64_t EndpointServicesVpi::time() {
