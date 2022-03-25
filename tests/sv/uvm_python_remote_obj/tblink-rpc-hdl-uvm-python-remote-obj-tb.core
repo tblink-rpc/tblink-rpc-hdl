@@ -1,0 +1,23 @@
+CAPI=2:
+#****************************************************************************
+#* tblink-rpc-hdl-uvm-python-remote-obj-tb.core
+#****************************************************************************
+
+name: tblink-rpc-hdl::uvm-python-remote-obj-tb:0.0.1
+
+
+filesets:
+  tb:
+    files:
+      - uvm_python_pkg.sv
+      - uvm_python_tb.sv
+    file_type: systemVerilogSource
+    depend:
+      - tblink-rpc::tblink-rpc-hdl
+      - tblink-bfms::rv
+      
+targets:
+  default:
+    filesets:
+      - tb
+

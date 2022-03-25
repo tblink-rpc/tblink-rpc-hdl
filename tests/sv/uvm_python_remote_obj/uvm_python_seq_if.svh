@@ -21,6 +21,10 @@ class uvm_python_seq_null #(type Tbase=uvm_object) extends Tbase;
 		m_proxy = proxy;
 	endfunction
 	
+	virtual function void set_proxy(proxy_t proxy);
+		m_proxy = proxy;
+	endfunction
+	
 	virtual task doit(int a);
 		$display("TbLink Error: uvm_python_seq::doit1 not implemented");
 		$finish();
@@ -31,6 +35,10 @@ class uvm_python_seq_null #(type Tbase=uvm_object) extends Tbase;
 		$finish();
 	endtask
 	
+	virtual function int unsigned add(int unsigned a, int unsigned b);
+		return m_proxy.add(a, b);
+	endfunction
+	
 endclass
 
 class uvm_python_seq_proxy #(type T=uvm_python_seq_null) extends tblink_rpc::IInterfaceImplProxy;
@@ -40,20 +48,29 @@ class uvm_python_seq_proxy #(type T=uvm_python_seq_null) extends tblink_rpc::IIn
 	
 	tblink_rpc::IInterfaceInst	m_ifinst;
 	ImplT						m_impl;
+	IMethodType					m_method_t_add;
 	
-	function new(uvm_void impl=null);
+	function new(T impl=null);
 		if (impl == null) begin
 			m_impl = new();
 		end else begin
-			if (!$cast(m_impl, impl)) begin
-				$display("TbLink Error: cannot cast");
-			end
+			m_impl = impl;
 		end
-		m_impl.init(this);
+		m_impl.set_proxy(this);
 	endfunction
 	
 	virtual function void init(tblink_rpc::IInterfaceInst ifinst);
 		m_ifinst = ifinst;
+		
+		// Lookup method-type handles
+		begin
+			IInterfaceType iftype = ifinst.iftype();
+			if ((m_method_t_add=iftype.findMethod("add")) == null) begin
+				`uvm_fatal("uvm_python_seq_proxy", "Failed to find method 'add'");
+				return;
+			end
+		end
+		
 	endfunction
 	
 	virtual function bit is_mirror();
@@ -64,6 +81,27 @@ class uvm_python_seq_proxy #(type T=uvm_python_seq_null) extends tblink_rpc::IIn
 		// TOOD: pack up params (none) 
 			
 	endtask
+	
+	virtual function int unsigned add(int unsigned a, int unsigned b);
+		IParamVal rv_t;
+		IParamValInt rv_ti;
+		int unsigned rv;
+		IParamValVec params = m_ifinst.mkValVec();
+		
+		params.push_back(m_ifinst.mkValIntU(a, 32));
+		params.push_back(m_ifinst.mkValIntU(b, 32));
+		
+		rv_t = m_ifinst.invoke_nb(
+				m_method_t_add,
+				params);
+		
+		$cast(rv_ti, rv_t);
+		rv = rv_ti.val_u();
+		
+		// TODO: dispose
+	
+		return rv;
+	endfunction
 	
 	virtual function IParamVal invoke_nb(
 		input IInterfaceInst	ifinst,
@@ -205,6 +243,16 @@ class uvm_python_seq_factory extends InterfaceTypeRgy #(
 					1,
 					1);
 			mt_b.add_param("a", iftype_b.mkTypeInt(1, 32));
+			void'(iftype_b.add_method(mt_b));
+			
+			mt_b = iftype_b.newMethodTypeBuilder(
+					"add",
+					2, // id
+					iftype_b.mkTypeInt(0, 32),
+					0,
+					0);
+			mt_b.add_param("a", iftype_b.mkTypeInt(0, 32));
+			mt_b.add_param("b", iftype_b.mkTypeInt(0, 32));
 			void'(iftype_b.add_method(mt_b));
 			
 			iftype = ep.defineInterfaceType(

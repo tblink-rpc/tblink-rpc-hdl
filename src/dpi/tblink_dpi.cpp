@@ -1,4 +1,3 @@
-
 /*****************************************************************************
  * tblink_dpi.cpp
  *
@@ -183,6 +182,12 @@ EXTERN_C chandle tblink_rpc_IInterfaceInstInvokeClosure_new() {
 
 EXTERN_C void tblink_rpc_IInterfaceInstInvokeClosure_dispose(chandle closure_h) {
 	delete reinterpret_cast<InterfaceInstInvokeClosure *>(closure_h);
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_iftype(
+		chandle			ifinst_h) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceInst *>(ifinst_h)->type());
 }
 
 EXTERN_C int tblink_rpc_IInterfaceInst_invoke(

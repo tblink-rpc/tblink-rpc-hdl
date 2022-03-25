@@ -165,6 +165,7 @@ class DpiEndpoint extends IEndpoint;
 		DpiInterfaceInst ifinst;
 		chandle ifinst_h;
 		chandle ifimpl_h = newDpiInterfaceImplProxy(ifinst_impl);
+
 		
 		if (!$cast(iftype_dpi, iftype)) begin
 			$display("TbLink Error: Interface type %0s doesn't match DPI endpoint", iftype.name());
@@ -180,6 +181,7 @@ class DpiEndpoint extends IEndpoint;
 				ifimpl_h);
 		
 		ifinst = new(ifinst_h);
+		ifinst_impl.init(ifinst);
 		
 		return ifinst;
 	endfunction

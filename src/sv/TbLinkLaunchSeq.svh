@@ -2,7 +2,17 @@
  * TbLinkLaunchSeq.svh
  ****************************************************************************/
 
-  
+// UVM Object-friendly class
+// - Constructor that accepts string with default
+// - 'start'/'shutdown' methods to support communication
+// - Complete class implements
+//   - Import methods to be called by class code or an external party
+//   - Export methods to be implemented by the class
+// 
+// - Export-impl class must be a base of the library class
+// - Proxy deals with the complete type
+
+ 
 /**
  * Class: TbLinkLaunchSeq
  * 
