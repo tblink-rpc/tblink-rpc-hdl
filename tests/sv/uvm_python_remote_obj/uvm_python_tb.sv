@@ -26,7 +26,8 @@ module uvm_python_tb(input clock);
 `endif
 	
 	`RV_WIRES(bfm2dut_, 8);
-	
+
+/*	
 	rv_initiator_bfm_sim #(
 		.WIDTH    (8   )
 		) u_bfm (
@@ -34,6 +35,7 @@ module uvm_python_tb(input clock);
 		.reset    (reset   ), 
 		`RV_CONNECT(i_, bfm2dut_)
 		);
+ */
 
 	initial begin
 		run_test();

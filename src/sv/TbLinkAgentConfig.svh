@@ -13,6 +13,7 @@ class TbLinkAgentConfig;
 	string					launch_type;
 	string					launch_args[$];
 	string					launch_params[string];
+	string					ep_args[$];
 	
 	static const string		FIELD = "tblink.agent.config";
 
@@ -37,4 +38,19 @@ class TbLinkAgentConfig;
 
 endclass
 
+function automatic TbLinkAgentConfig mkConfigPythonSingleObject(string cls_module);
+	TbLinkAgentConfig ret = new("python.loopback");
+	string python;
+	
+	ret.launch_params["module"] = "tblink_rpc.rt.cocotb";
+	
+	if ($value$plusargs("python=%s", python)) begin
+		ret.launch_params["python"] = python;
+	end
+	
+	ret.ep_args.push_back("+regression_runner=tblink_rpc.rt.cocotb.single_entrypoint_runner");
+	ret.ep_args.push_back($sformatf("+m=%0s", cls_module));
+	
+	return ret;
+endfunction
 

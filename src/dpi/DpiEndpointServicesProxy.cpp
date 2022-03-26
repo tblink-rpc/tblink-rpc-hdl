@@ -6,8 +6,12 @@
  */
 
 #include "DpiEndpointServicesProxy.h"
+#include "ParamValVec.h"
+#include "ParamValStr.h"
 
 namespace tblink_rpc_hdl {
+
+using namespace tblink_rpc_core;
 
 DpiEndpointServicesProxy::DpiEndpointServicesProxy(dpi_api_t *dpi_api) :
 		m_dpi_api(dpi_api) {
@@ -26,8 +30,19 @@ void DpiEndpointServicesProxy::init(tblink_rpc_core::IEndpoint *endpoint) {
  * Return command-line arguments.
  */
 std::vector<std::string> DpiEndpointServicesProxy::args() {
-	// TODO:
-	return {};
+	std::vector<std::string> args_v;
+	ParamValVec *vec = new ParamValVec();
+
+	m_dpi_api->eps_proxy_args(
+			reinterpret_cast<void *>(this),
+			reinterpret_cast<void *>(static_cast<IParamVal *>(vec)));
+
+	for (uint32_t i=0; i<vec->size(); i++) {
+		args_v.push_back(dynamic_cast<IParamValStr *>(vec->at(i))->val());
+	}
+
+	delete vec;
+	return args_v;
 }
 
 int32_t DpiEndpointServicesProxy::add_time_cb(

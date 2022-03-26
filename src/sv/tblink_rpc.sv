@@ -120,6 +120,7 @@ package tblink_rpc;
 	`include "SVEndpoint.svh"
 	`include "SVEndpointSequencer.svh"
 	`include "SVEndpointServices.svh"
+	`include "SVEndpointServicesProxy.svh"
 	`include "SVEndpointServicesFactory.svh"
 	`include "SVEndpointServicesTimedCB.svh"
 	`include "SVEndpointLoopback.svh"

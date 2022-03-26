@@ -25,6 +25,7 @@ class TbLinkLaunchUvmObj #(
 	task launch();
 		TbLink tblink = TbLink::inst();
 		IEndpointServicesFactory eps_f = tblink.getDefaultServicesFactory();
+		SVEndpointServicesProxy eps_p;
 		IInterfaceTypeRgy iftype_rgy;
 		Tp ifimpl;
 		IEndpoint ep;
@@ -37,6 +38,9 @@ class TbLinkLaunchUvmObj #(
 		IParamVal retval;
 		int ret;
 		string errmsg;
+		
+		// Ensure management threads are running
+		tblink.start();
 		
 		iftype_rgy = InterfaceTypeRgyBase #(Tp::IfFactT)::inst();
 		
@@ -73,17 +77,35 @@ class TbLinkLaunchUvmObj #(
 		// TODO: Configure endpoint with services
 		eps = eps_f.create();
 		
-		$display("TbLinkAgent: eps=%0p", eps);
-		
 		if (eps == null) begin
 			`uvm_fatal("TbLinkLaunchSeqBase", "null services handle");
 			return;
 		end
 		
-		if (ep.init(eps) == -1) begin
+		eps_p = new(eps);
+		
+		// We want to expose a specific set of arguments 
+		// to the connected environment
+		eps_p.m_override_args = 1;
+		foreach (m_cfg.ep_args[i]) begin
+			eps_p.m_args.push_back(m_cfg.ep_args[i]);
+		end
+		
+		begin
+			string args[$];
+			eps_p.args(args);
+			$display("ARGS:");
+			foreach (args[i]) begin
+				$display("    %0s", args[i]);
+			end
+		end
+		
+		$display("--> ep.init TbLinkAgent: eps=%0p", eps);
+		if (ep.init(eps_p) == -1) begin
 			`uvm_fatal("TbLinkLaunchSeqBase", $sformatf("init failed"));
 			return;
 		end		
+		$display("<-- ep.init TbLinkAgent: eps=%0p", eps);
 		
 		// TODO: Register type with endpoint
 		iftype = iftype_rgy.defineType(ep);

@@ -35,5 +35,8 @@ endclass
 
 import "DPI-C" context function string tblink_rpc_IParamValStr_val(
 	chandle 				hndl);
+	
+import "DPI-C" context function chandle tblink_rpc_IParamValStr_new(
+	string					val);
 
 

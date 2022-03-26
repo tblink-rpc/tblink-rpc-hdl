@@ -40,7 +40,7 @@ PATH := $(PACKAGES_DIR)/python/bin:$(PATH)
 export PATH
 
 MKDV_RUN_ARGS += +python=$(PACKAGES_DIR)/python/bin/python3
-MKDV_RUN_ARGS += +tblink.launch=sv.loopback
+#MKDV_RUN_ARGS += +tblink.launch=sv.loopback
 MKDV_RUN_ARGS += +UVM_TESTNAME=uvm_python_test
 
 include $(TEST_DIR)/../../common/defs_rules.mk
