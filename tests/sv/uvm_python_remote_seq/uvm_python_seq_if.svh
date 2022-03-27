@@ -28,11 +28,11 @@ class uvm_python_seq_null;
 	
 endclass
 
-class uvm_python_seq_proxy #(type T=uvm_python_seq_null) extends tblink_rpc::IInterfaceImplProxy;
+class uvm_python_seq_proxy #(type T=uvm_python_seq_null) extends tblink_rpc::IInterfaceImpl;
 	tblink_rpc::IInterfaceInst	m_ifinst;
-	T							m_impl;
+	T				m_impl;
 	
-	function new(uvm_void impl=null);
+	function new(T impl=null);
 		if (impl == null) begin
 			m_impl = new();
 		end else begin
@@ -46,10 +46,12 @@ class uvm_python_seq_proxy #(type T=uvm_python_seq_null) extends tblink_rpc::IIn
 	virtual function void init(tblink_rpc::IInterfaceInst ifinst);
 		m_ifinst = ifinst;
 	endfunction
-	
+
+/*	
 	virtual function bit is_mirror();
 		return 0;
 	endfunction
+ */
 	
 	virtual task body();
 		// TOOD: pack up params (none) 
@@ -112,7 +114,7 @@ class uvm_python_seq_m_null;
 	
 endclass
 
-class uvm_python_seq_proxy_m #(type T=uvm_python_seq_m_null) extends tblink_rpc::IInterfaceImplProxy;
+class uvm_python_seq_proxy_m #(type T=uvm_python_seq_m_null) extends tblink_rpc::IInterfaceImpl;
 	T								m_impl;
 	tblink_rpc::IInterfaceInst		m_ifinst;
 	
@@ -130,10 +132,12 @@ class uvm_python_seq_proxy_m #(type T=uvm_python_seq_m_null) extends tblink_rpc:
 	virtual function void init(tblink_rpc::IInterfaceInst ifinst);
 		m_ifinst = ifinst;
 	endfunction
-	
+
+/*	
 	virtual function bit is_mirror();
 		return 1;
 	endfunction
+ */
 	
 	virtual function IParamVal invoke_nb(
 		input IInterfaceInst	ifinst,

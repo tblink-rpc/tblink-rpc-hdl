@@ -28,7 +28,7 @@ class TbLinkLaunchSeq #(
 	// - Interface implementation
 	
 	virtual function IInterfaceImpl createImpl();
-		Tp impl = new(this);
+		Tp impl = new(null);
 		return impl;
 	endfunction
 	
