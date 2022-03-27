@@ -1,4 +1,3 @@
-
 /*****************************************************************************
  * tblink_dpi.cpp
  *
@@ -120,6 +119,7 @@ static TblinkPluginDpi *get_plugin() {
 		prv_dpi.eps_proxy_time = sym_finder->findSymT<uint64_t(*)(void*)>(
 				"tblink_rpc_DpiEndpointServicesProxy_time");
 		prv_dpi.eps_proxy_shutdown = sym_finder->findSymT<void(*)(void*)>("tblink_rpc_DpiEndpointServicesProxy_shutdown");
+		prv_dpi.eps_proxy_args = sym_finder->findSymT<void(*)(void*,void*)>("tblink_rpc_DpiEndpointServicesProxy_args");
 
 		prv_dpi.epl_event = sym_finder->findSymT<void(*)(void*,void*)>(
 				"tblink_rpc_DpiEndpointListenerProxy_event");
@@ -183,6 +183,12 @@ EXTERN_C chandle tblink_rpc_IInterfaceInstInvokeClosure_new() {
 
 EXTERN_C void tblink_rpc_IInterfaceInstInvokeClosure_dispose(chandle closure_h) {
 	delete reinterpret_cast<InterfaceInstInvokeClosure *>(closure_h);
+}
+
+EXTERN_C chandle tblink_rpc_IInterfaceInst_iftype(
+		chandle			ifinst_h) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IInterfaceInst *>(ifinst_h)->type());
 }
 
 EXTERN_C int tblink_rpc_IInterfaceInst_invoke(
@@ -579,6 +585,11 @@ EXTERN_C void tblink_rpc_IParamValMap_setVal(
 			reinterpret_cast<IParamVal *>(val_h));
 }
 
+EXTERN_C chandle tblink_rpc_IParamValStr_new(const char *val) {
+	return reinterpret_cast<chandle>(
+			static_cast<IParamVal *>(new ParamValStr(val)));
+}
+
 EXTERN_C const char *tblink_rpc_IParamValStr_val(chandle hndl) {
 	strcpy(prv_msgbuf, dynamic_cast<IParamValStr *>(
 			reinterpret_cast<IParamVal *>(hndl))->val().c_str());
@@ -852,29 +863,6 @@ EXTERN_C chandle tblink_rpc_ILaunchType_launch(
 		return 0;
 	} else {
 		*error = (char *)"";
-	}
-
-	// Run the initialization phase
-	if (res.first->init(
-			new EndpointServicesDpi(
-					plugin->dpi_api(),
-					plugin->vpi_api(),
-					plugin->have_blocking_tasks())) != 0) {
-		strncpy(prv_msgbuf, res.first->last_error().c_str(), sizeof(prv_msgbuf));
-		*error = prv_msgbuf;
-		return 0;
-	}
-
-	int ret;
-	while ((ret = res.first->is_init()) == 0) {
-		if ((ret = res.first->process_one_message()) == -1) {
-			break;
-		}
-	}
-
-	if (ret != 1) {
-		strncpy(prv_msgbuf, res.first->last_error().c_str(), sizeof(prv_msgbuf));
-		return 0;
 	}
 
 	return res.first;

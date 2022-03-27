@@ -35,4 +35,19 @@ function automatic void tblink_rpc_DpiEndpointServicesProxy_shutdown(chandle hnd
 endfunction
 export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_shutdown;
 
+function automatic void tblink_rpc_DpiEndpointServicesProxy_args(
+	chandle hndl,
+	chandle vec_h);
+	string args[$];
+	IEndpointServices services = prv_dpi_services_m[hndl];
+	DpiParamValVec vec = new(vec_h);
+	services.args(args);
+
+	foreach (args[i]) begin
+		DpiParamValStr s = new(tblink_rpc_IParamValStr_new(args[i]));
+		vec.push_back(s);
+	end
+endfunction
+export "DPI-C" function tblink_rpc_DpiEndpointServicesProxy_args;
+
 

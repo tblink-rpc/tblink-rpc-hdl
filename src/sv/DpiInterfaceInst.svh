@@ -8,6 +8,7 @@ typedef class DpiParamValInt;
 IInterfaceImpl prv_hndl2impl[chandle];
 
 typedef class DpiEndpoint;
+typedef class DpiInterfaceType;
 typedef class DpiMethodType;
 typedef class DpiParamValMap;
 typedef class DpiParamValStr;
@@ -57,6 +58,13 @@ class DpiInterfaceInst extends IInterfaceInst;
 	
 	virtual function IInterfaceImpl get_impl();
 		return prv_hndl2impl[m_hndl];
+	endfunction
+	
+	virtual function IInterfaceType iftype();
+		chandle iftype_h = tblink_rpc_IInterfaceInst_iftype(m_hndl);
+		DpiInterfaceType iftype_i = new(iftype_h);
+		
+		return iftype_i;
 	endfunction
 	
 	virtual function IEndpoint endpoint();
@@ -251,6 +259,9 @@ import "DPI-C" context function void tblink_rpc_IInterfaceInstInvokeClosure_disp
 		chandle			closure);
 		
 import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_endpoint(
+		chandle			ifinst);
+		
+import "DPI-C" context function chandle tblink_rpc_IInterfaceInst_iftype(
 		chandle			ifinst);
 
 import "DPI-C" context function int tblink_rpc_IInterfaceInst_invoke(

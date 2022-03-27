@@ -29,6 +29,7 @@ typedef struct dpi_api_s {
 	int (*eps_proxy_add_time_cb)(void *hndl, uint64_t time, intptr_t cb_id);
 	uint64_t (*eps_proxy_time)(void *hndl);
 	void (*eps_proxy_shutdown)(void *hndl);
+	void (*eps_proxy_args)(void *hndl, void *vec);
 
 	void (*epl_event)(void *hndl, void *ev);
 

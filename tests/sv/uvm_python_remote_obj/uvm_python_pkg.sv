@@ -1,23 +1,22 @@
 /****************************************************************************
- * tblink_rpc_uvm.sv
+ * uvm_python_pkg.sv
  ****************************************************************************/
 `include "uvm_macros.svh"
   
 /**
- * Package: tblink_rpc_uvm
+ * Package: uvm_python_pkg
  * 
  * TODO: Add package documentation
  */
-package tblink_rpc_uvm;
+package uvm_python_pkg;
 	import uvm_pkg::*;
 	import tblink_rpc::*;
+	import tblink_rpc_uvm::*;
 
-	`include "TbLinkAgentConfig.svh"
-	`include "TbLinkAgent.svh"
-	`include "TbLinkLaunchSeqBase.svh"
-	`include "TbLinkLaunchSeq.svh"
+	`include "uvm_python_seq_if.svh"
+	`include "uvm_python_remote_obj.svh"
 	
-	`include "TbLinkLaunchUvmObj.svh"
+	`include "uvm_python_test.svh"
 
 
 endpackage

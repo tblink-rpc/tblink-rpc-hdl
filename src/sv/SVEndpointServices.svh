@@ -33,6 +33,7 @@ class SVEndpointServices extends IEndpointServices;
 		longint						callback_id);
 		TbLink tblink = TbLink::inst();
 		SVEndpointServicesTimedCB cb = new(this, simtime, callback_id);
+		$display("SVEndpointServices::add_time_cb");
 		m_cb_m[callback_id] = cb;
 		tblink.queue_thread(cb);
 		return 0;
