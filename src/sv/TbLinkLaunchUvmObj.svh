@@ -10,6 +10,8 @@
  */
 class TbLinkLaunchUvmObj #(
 		type Tp,			// Proxy-class type
+		// Note: Tbase is not intended to be overridden. The indirection
+		// allows Tp::ImplT to be used as a base type
 		type Tbase=Tp::ImplT) extends Tbase;
 	
 	TbLinkAgentConfig			m_cfg;
@@ -42,7 +44,7 @@ class TbLinkLaunchUvmObj #(
 		// Ensure management threads are running
 		tblink.start();
 		
-		iftype_rgy = InterfaceTypeRgyBase #(Tp::IfFactT)::inst();
+		iftype_rgy = InterfaceTypeRgyBase #(Tp::IfTypeT)::inst();
 		
 		// TODO: Find launch type
 		launch_t = tblink.findLaunchType(m_cfg.launch_type);
@@ -171,7 +173,7 @@ class TbLinkLaunchUvmObj #(
 		
 	endtask
 	
-	function bit shutdown();
+	function void shutdown();
 	endfunction
 
 endclass

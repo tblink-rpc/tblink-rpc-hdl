@@ -18,6 +18,7 @@ package tblink_rpc_uvm;
 	`include "TbLinkLaunchSeq.svh"
 	
 	`include "TbLinkLaunchUvmObj.svh"
+	`include "TbLinkLaunchUvmSeq.svh"
 
 
 endpackage
