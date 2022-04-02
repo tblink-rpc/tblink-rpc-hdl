@@ -34,6 +34,7 @@ typedef struct dpi_api_s {
 	void (*epl_event)(void *hndl, void *ev);
 
 	void (*ifi_closure_invoke_rsp)(void *, void *);
+	void (*ifimpl_proxy_init)(void *, void *);
 	void (*ifimpl_proxy_invoke)(void *, void *, void *, intptr_t, void *);
 
 	void *(*ifimpl_factory_proxy_createImpl)(void *);

@@ -144,6 +144,8 @@ class DpiEndpoint extends IEndpoint;
 			impl_mirror_f_proxy = newDpiInterfaceImplFactoryProxy(impl_mirror_f);
 		end
 		
+		$display("defineInterfaceType: %p %p", impl_f_proxy, impl_mirror_f_proxy);
+		
 		$cast(builder_dpi, iftype_b);
 		iftype_h = tblink_rpc_IEndpoint_defineInterfaceType(
 				m_hndl,
@@ -185,6 +187,47 @@ class DpiEndpoint extends IEndpoint;
 		
 		return ifinst;
 	endfunction
+	
+	virtual function IInterfaceInst createInterfaceObj(
+		IInterfaceType			iftype,
+		int unsigned			is_mirror,
+		IInterfaceImpl			ifinst_impl);
+		DpiInterfaceType		iftype_dpi;
+		DpiInterfaceInst ifinst;
+		chandle ifimpl_proxy_h = newDpiInterfaceImplProxy(ifinst_impl);
+		chandle ifinst_h;
+		
+		if (!$cast(iftype_dpi, iftype)) begin
+			$display("TbLink Error: iftype %0s is not a DPI object", iftype.name());
+			$finish;
+			return null;
+		end
+		
+		ifinst_h = tblink_rpc_IEndpoint_createInterfaceObj(
+				m_hndl,
+				iftype_dpi.m_hndl,
+				is_mirror,
+				ifimpl_proxy_h);
+		
+		ifinst = new(ifinst_h);
+		
+		return ifinst;
+	endfunction
+	
+	virtual function void destroyInterfaceObj(
+		IInterfaceInst			ifinst);
+		DpiInterfaceInst ifinst_dpi;
+		
+		if (!$cast(ifinst_dpi, ifinst)) begin
+			$display("TbLink Error: ifinst %0s is not a DPI interface inst", ifinst.name());
+			$finish;
+			return;
+		end
+		
+		tblink_rpc_IEndpoint_destroyInterfaceObj(
+				m_hndl,
+				ifinst_dpi.m_hndl);
+	endfunction	
 	
 	virtual function int process_one_message();
 		return tblink_rpc_IEndpoint_process_one_message(m_hndl);
@@ -307,7 +350,17 @@ import "DPI-C" context function chandle _tblink_rpc_IEndpoint_defineInterfaceIns
 	chandle			iftype_h,
 	string			inst_name,
 	int unsigned	is_mirror,
-	chandle			ifimpl_h);	
+	chandle			ifimpl_h);
+
+import "DPI-C" context function chandle tblink_rpc_IEndpoint_createInterfaceObj(
+	chandle			endpoint_h,
+	chandle			iftype_h,
+	int unsigned	is_mirror,
+	chandle			ifimpl_h);
+	
+import "DPI-C" context function void tblink_rpc_IEndpoint_destroyInterfaceObj(
+	chandle			endpoint_h,
+	chandle			ifinst_h);
 	
 import "DPI-C" context function int tblink_rpc_IEndpoint_process_one_message(
 	chandle			endpoint_h);

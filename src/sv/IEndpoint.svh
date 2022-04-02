@@ -131,6 +131,21 @@ class IEndpoint;
 		return null;
 	endfunction
 	
+	virtual function IInterfaceInst createInterfaceObj(
+		IInterfaceType			iftype,
+		int unsigned			is_mirror,
+		IInterfaceImpl			ifinst_impl);
+		$display("TbLink Error: IEndpoint::createInterfaceObj not implemented");
+		$finish(1);
+		return null;
+	endfunction
+	
+	virtual function void destroyInterfaceObj(
+		IInterfaceInst			ifinst);
+		$display("TbLink Error: IEndpoint::destroyInterfaceObj not implemented");
+		$finish(1);
+	endfunction
+	
 	virtual function IInterfaceInst defineInterfaceInst(
 		IInterfaceType			iftype,
 		string					inst_name,

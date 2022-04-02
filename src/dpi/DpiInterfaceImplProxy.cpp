@@ -35,7 +35,10 @@ DpiInterfaceImplProxy::~DpiInterfaceImplProxy() {
 }
 
 void DpiInterfaceImplProxy::init(IInterfaceInst *ifinst) {
-	// Ignore
+	m_dpi->svSetScope(m_dpi->get_pkg_scope());
+	m_dpi->ifimpl_proxy_init(
+			reinterpret_cast<void *>(dynamic_cast<IInterfaceImpl *>(this)),
+			reinterpret_cast<void *>(ifinst));
 }
 
 void DpiInterfaceImplProxy::invoke(

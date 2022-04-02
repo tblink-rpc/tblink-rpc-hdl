@@ -66,5 +66,12 @@ function automatic void tblink_rpc_DpiInterfaceImplProxy_invoke(
 endfunction
 export "DPI-C" function tblink_rpc_DpiInterfaceImplProxy_invoke;
 
+function automatic void tblink_rpc_DpiInterfaceImplProxy_init(chandle ifimpl_h, chandle ifinst_h);
+	IInterfaceImpl		ifimpl = prv_dpi_ifimpl_m[ifimpl_h];
+	DpiInterfaceInst	ifinst = new(ifinst_h);
+	ifimpl.init(ifinst);
+endfunction
+export "DPI-C" function tblink_rpc_DpiInterfaceImplProxy_init;
+
 import "DPI-C" context function chandle tblink_rpc_DpiInterfaceImplProxy_new();
 

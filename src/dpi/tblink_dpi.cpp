@@ -126,6 +126,8 @@ static TblinkPluginDpi *get_plugin() {
 
 		prv_dpi.ifi_closure_invoke_rsp = sym_finder->findSymT<void(*)(void*,void*)>(
 				"tblink_rpc_closure_invoke_rsp");
+		prv_dpi.ifimpl_proxy_init = sym_finder->findSymT<void(*)(void*,void*)>(
+				"tblink_rpc_DpiInterfaceImplProxy_init");
 		prv_dpi.ifimpl_proxy_invoke = sym_finder->findSymT<void(*)(void*,void*,void*,intptr_t,void*)>(
 				"tblink_rpc_DpiInterfaceImplProxy_invoke");
 		prv_dpi.ifimpl_factory_proxy_createImpl = sym_finder->findSymT<void *(*)(void*)>(
@@ -270,6 +272,20 @@ EXTERN_C chandle tblink_rpc_DpiLaunchParamsProxy_new() {
 
 EXTERN_C void tblink_rpc_DpiLaunchParamsProxy_del(chandle hndl) {
 	delete reinterpret_cast<ILaunchParams *>(hndl);
+}
+
+EXTERN_C chandle tblink_rpc_SVEndpointServices_args() {
+	s_vpi_vlog_info info;
+	TblinkPluginDpi *plugin = get_plugin();
+	ParamValVec *vec = new ParamValVec();
+
+	plugin->vpi_api()->vpi_get_vlog_info(&info);
+
+	for (uint32_t i=0; i<info.argc; i++) {
+		vec->push_back(new ParamValStr(info.argv[i]));
+	}
+
+	return reinterpret_cast<chandle>(static_cast<IParamVal *>(vec));
 }
 
 EXTERN_C int tblink_rpc_ITbLinkEvent_kind(chandle ev) {
@@ -481,6 +497,25 @@ EXTERN_C chandle _tblink_rpc_IEndpoint_defineInterfaceInst(
 					reinterpret_cast<IInterfaceImpl *>(ifimpl_h)));
 }
 
+EXTERN_C chandle tblink_rpc_IEndpoint_createInterfaceObj(
+		chandle			endpoint_h,
+		chandle			iftype_h,
+		uint32_t		is_mirror,
+		chandle			ifimpl_h) {
+	return reinterpret_cast<chandle>(
+			reinterpret_cast<IEndpoint *>(endpoint_h)->createInterfaceObj(
+					reinterpret_cast<IInterfaceType *>(iftype_h),
+					is_mirror,
+					reinterpret_cast<IInterfaceImpl *>(ifimpl_h)));
+}
+
+EXTERN_C void tblink_rpc_IEndpoint_destroyInterfaceObj(
+		chandle			endpoint_h,
+		chandle			ifinst_h) {
+	reinterpret_cast<IEndpoint *>(endpoint_h)->destroyInterfaceObj(
+			reinterpret_cast<IInterfaceInst *>(ifinst_h));
+}
+
 EXTERN_C int32_t tblink_rpc_IEndpoint_process_one_message(
 		chandle			endpoint_h) {
 	return reinterpret_cast<IEndpoint *>(endpoint_h)->process_one_message();
@@ -591,6 +626,12 @@ EXTERN_C chandle tblink_rpc_IParamValStr_new(const char *val) {
 }
 
 EXTERN_C const char *tblink_rpc_IParamValStr_val(chandle hndl) {
+	IParamValStr *val = dynamic_cast<IParamValStr *>(reinterpret_cast<IParamVal *>(hndl));
+	fprintf(stdout, "tblink_rpc_IParamValStr_val: val=%p\n", val);
+	fflush(stdout);
+	fprintf(stdout, "tblink_rpc_IParamValStr_val: val.str=%s\n", val->val().c_str());
+	fflush(stdout);
+
 	strcpy(prv_msgbuf, dynamic_cast<IParamValStr *>(
 			reinterpret_cast<IParamVal *>(hndl))->val().c_str());
 	return prv_msgbuf;

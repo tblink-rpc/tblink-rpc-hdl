@@ -2,6 +2,9 @@
  * SVEndpointServices.svh
  ****************************************************************************/
 
+typedef class DpiParamVal;
+typedef class DpiParamValStr;
+typedef class DpiParamValVec;
 typedef class TbLink;
 typedef class SVEndpointServicesTimedCB;
   
@@ -22,7 +25,27 @@ class SVEndpointServices extends IEndpointServices;
 	endfunction
 		
 	virtual function void args(ref string argv[$]);
+		chandle vec_h = tblink_rpc_SVEndpointServices_args();
+		/*
+		IParamVal vec_v = DpiParamVal::mk(vec_h);
+		 */
+		DpiParamValVec vec;
+		DpiParamValStr val;
+		
+		$cast(vec, DpiParamVal::mk(vec_h));
+		
 		argv = '{};
+		for (int i=0; i<vec.size(); i++) begin
+			$cast(val, vec.at(i));
+			argv.push_back(val.val());
+		/*
+			*/
+		end
+
+		/*
+		vec.dispose();
+		*/
+		
 	endfunction
 		
 	virtual function void shutdown();
@@ -62,5 +85,8 @@ class SVEndpointServices extends IEndpointServices;
 	endfunction
 		
 endclass
+
+// Returns a ValVec of strings
+import "DPI-C" context function chandle tblink_rpc_SVEndpointServices_args();
 
 
