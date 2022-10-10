@@ -38,7 +38,9 @@ class TbLinkAgentConfig;
 
 endclass
 
-function automatic TbLinkAgentConfig mkConfigPythonSingleObject(string cls_module);
+function automatic TbLinkAgentConfig mkConfigPythonSingleObject(
+	string cls_module,
+	string cls="");
 	TbLinkAgentConfig ret = new("python.loopback");
 	string python;
 	
@@ -50,6 +52,11 @@ function automatic TbLinkAgentConfig mkConfigPythonSingleObject(string cls_modul
 	
 	ret.ep_args.push_back("+regression_runner=tblink_rpc.rt.cocotb.single_entrypoint_runner");
 	ret.ep_args.push_back($sformatf("+m=%0s", cls_module));
+	
+	// Pass the *actual* classname to use (if specified)
+	if (cls != "") begin
+		ret.ep_args.push_back($sformatf("+class=%0s", cls));
+	end
 	
 	return ret;
 endfunction

@@ -21,7 +21,7 @@ class InterfaceTypeRgy #(
 	
 	IInterfaceImplFactory				m_impl_factory;
 	IInterfaceImplFactory				m_impl_mirror_factory;
-	ImplFactoryProxy					m_impl_factory_proxy;
+	ImplFactoryProxy				m_impl_factory_proxy;
 	ImplMirrorFactoryProxy				m_impl_mirror_factory_proxy;
 	
 	function new();

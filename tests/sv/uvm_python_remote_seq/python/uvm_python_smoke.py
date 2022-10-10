@@ -31,16 +31,25 @@ class UvmPythonSeq(object):
     async def doit(self, a : ctypes.c_int32):
         pass
 
+class MySeq(UvmPythonSeq):
+
+    async def body(self):
+        pass
+
 
 @cocotb.test()
 async def entry(dut):
+    # TODO: pre-init to obtain arguments
+
     print("Hello: dut=%s" % str(dut))
 
     print("--> init", flush=True)
     await cocotb_compat.init()
     print("<-- init", flush=True)
 
-    seq : UvmPythonSeq = None    
+    # Maybe need a different way to
+    # replace the default implementation
+    seq : UvmPythonSeq = None
     for ifc in cocotb_compat.ifinsts():
         print("ifc: %s" % str(ifc))
         seq = ifc
@@ -48,3 +57,4 @@ async def entry(dut):
     print("--> wait done", flush=True)
     await seq.done_ev.wait()
     print("<-- wait done", flush=True)
+

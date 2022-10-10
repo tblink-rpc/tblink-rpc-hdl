@@ -3,14 +3,22 @@ package:
     name: tblink-rpc-hdl
     version: 0.0.1
 
+    setup-deps:
+    - cython
+    - ninja
+
     deps:
         - name: cython
+          src: pypi
+        - name: ninja
           src: pypi
         - name: tblink-rpc-core
           url:  https://github.com/tblink-rpc/tblink-rpc-core.git
 
     dev-deps:
         - name: cython
+          src: pypi
+        - name: ninja
           src: pypi
         - name: tblink-rpc-core
           url:  https://github.com/tblink-rpc/tblink-rpc-core.git
