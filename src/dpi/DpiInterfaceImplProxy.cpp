@@ -5,6 +5,7 @@
  *      Author: mballance
  */
 
+#include <stdio.h>
 #include "Debug.h"
 #include "tblink_rpc/IParamValVec.h"
 #include "DpiInterfaceImplProxy.h"
