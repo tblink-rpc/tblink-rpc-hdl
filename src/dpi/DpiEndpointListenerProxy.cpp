@@ -5,6 +5,7 @@
  *      Author: mballance
  */
 
+#include <stdio.h>
 #include "DpiEndpointListenerProxy.h"
 
 namespace tblink_rpc_core {
