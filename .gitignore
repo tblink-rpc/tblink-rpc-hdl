@@ -133,3 +133,4 @@ rundir/
 cache/
 
 *.so
+ext/tblink_rpc_hdl_stub.c
